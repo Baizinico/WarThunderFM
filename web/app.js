@@ -932,7 +932,7 @@ function initFuelSlider() {
 async function init() {
   setStatus('初始化...');
   try {
-    const resp = await fetch('manifest.json');
+    const resp = await fetch('manifest.json?v=2');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const manifest = await resp.json();
     const datasets = manifest.datasets || [];
