@@ -673,6 +673,14 @@ progress::-moz-progress-bar {
   font-family: var(--font-body);
 }
 
+.app-version {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+  letter-spacing: 0.04em;
+}
+
 /* ============================================================
    响应式：窄屏适配
    ============================================================ */
