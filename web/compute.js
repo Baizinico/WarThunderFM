@@ -304,11 +304,13 @@ async function computeAccelGrid(fm, massKg, afterburner,
         accel_mps2: accelMps2,
       });
     }
-    // 每完成一个高度层：报告进度并让步给浏览器更新 UI
+    // 每完成一个高度层：报告进度，每 3 层让步一次给浏览器
     if (onProgress) {
       onProgress(ai + 1, totalAlts);
     }
-    await yieldToUI();
+    if (ai % 3 === 2 || ai === totalAlts - 1) {
+      await yieldToUI();
+    }
   }
 
   const grid = { altitudes_m: altitudes, machs: machs };
