@@ -371,6 +371,8 @@ function computeOptimal(samples, grid) {
 // ============================================================
 // 剩余功率（Specific Excess Power, SEP）= (T-D)·V / (m·g) = a·V / g
 //   单位 m/s，即该状态下可达到的最大稳态爬升率。
+// 机头向上角度 θ = arcsin(SEP / V) = arcsin(a / g)
+//   单位 °，即稳定爬升时飞机纵轴与水平面的夹角。
 // 最佳爬升路线：对每个高度，在 accel>0 的点中选取 SEP 最大的马赫数，
 //   连接为一条「高度 → 最佳爬升马赫数」的速度程序曲线。
 //   该曲线给出从海平面爬升到包线顶点应遵循的马赫数随高度变化规律。
@@ -391,11 +393,14 @@ function computeClimbRoute(samples, grid) {
       if (s.accel_mps2 <= 0) continue;  // 仅在可加速区域选取
       const sep = s.tas_mps * s.accel_mps2 / G;  // m/s 爬升率
       if (best === null || sep > best.sep_mps) {
+        // 机头向上角度：sin(θ) = SEP / V = a / g
+        const angleRad = Math.asin(Math.min(s.accel_mps2 / G, 1.0));
         best = {
           altitude_m: alt,
           mach: s.mach,
           tas_kmh: s.tas_mps * 3.6,
           sep_mps: sep,
+          climb_angle_deg: angleRad * 180.0 / Math.PI,
           accel_mps2: s.accel_mps2,
         };
       }

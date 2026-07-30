@@ -512,7 +512,7 @@ async function render3DSurface(samples, grid, climbRoute) {
     const cZ = climbRoute.map(p => (p.accel_mps2 != null ? p.accel_mps2 : 0) + 0.5);
     const cCustom = climbRoute.map(p => [
       p.tas_kmh != null ? p.tas_kmh : null,
-      p.sep_mps != null ? p.sep_mps : null,
+      p.climb_angle_deg != null ? p.climb_angle_deg : null,
       p.altitude_m,
       p.mach
     ]);
@@ -540,7 +540,7 @@ async function render3DSurface(samples, grid, climbRoute) {
         '高度 %{y} m · 马赫 %{x}<br>' +
         '加速度: %{customdata[3]:.2f} m/s²<br>' +
         'TAS: %{customdata[0]:.0f} km/h<br>' +
-        'SEP(爬升率): <b>%{customdata[1]:.1f} m/s</b><extra></extra>'
+        '机头向上: <b>%{customdata[1]:.1f}°</b><extra></extra>'
     });
   }
   const layout = {
@@ -676,7 +676,7 @@ async function renderClimbRouteChart(climbRoute) {
   }
   const alts = climbRoute.map(p => p.altitude_m);
   const machs = climbRoute.map(p => p.mach);
-  const seps = climbRoute.map(p => p.sep_mps);
+  const angles = climbRoute.map(p => p.climb_angle_deg);
   const tass = climbRoute.map(p => p.tas_kmh);
   const accels = climbRoute.map(p => p.accel_mps2);
 
@@ -694,22 +694,22 @@ async function renderClimbRouteChart(climbRoute) {
       '马赫数: <b>%{y:.3f}</b><br>' +
       'TAS: %{customdata[0]:.0f} km/h<br>' +
       '加速度: %{customdata[1]:.2f} m/s²<br>' +
-      'SEP(爬升率): <b>%{customdata[2]:.1f} m/s</b><extra></extra>',
-    customdata: tass.map((t, i) => [t, accels[i], seps[i]])
+      '机头向上: <b>%{customdata[2]:.1f}°</b><extra></extra>',
+    customdata: tass.map((t, i) => [t, accels[i], angles[i]])
   };
-  // 副轨迹：SEP 爬升率 vs 高度（右 y 轴，橙色虚线 + 方块）
-  const traceSep = {
+  // 副轨迹：机头向上角度 vs 高度（右 y 轴，橙色虚线 + 方块）
+  const traceAngle = {
     type: 'scatter',
     mode: 'lines+markers',
     x: alts,
-    y: seps,
-    name: 'SEP 爬升率',
+    y: angles,
+    name: '机头向上角度',
     yaxis: 'y2',
     line: { color: COLOR_ACCENT, width: 2, dash: 'dash' },
     marker: { size: 7, color: COLOR_ACCENT, symbol: 'square', line: { color: '#faf9f5', width: 1 } },
     hovertemplate:
       '<b>高度 %{x} m</b><br>' +
-      'SEP(爬升率): <b>%{y:.1f} m/s</b><extra></extra>'
+      '机头向上: <b>%{y:.1f}°</b><extra></extra>'
   };
 
   const layout = {
@@ -745,7 +745,7 @@ async function renderClimbRouteChart(climbRoute) {
       showgrid: true
     },
     yaxis2: {
-      title: { text: 'SEP 爬升率 (m/s)', font: { size: 13, color: COLOR_ACCENT } },
+      title: { text: '机头向上角度 (°)', font: { size: 13, color: COLOR_ACCENT } },
       overlaying: 'y',
       side: 'right',
       gridcolor: 'rgba(0,0,0,0)',
@@ -761,7 +761,7 @@ async function renderClimbRouteChart(climbRoute) {
   // 与 3D 渲染共用渲染队列，避免并发 WebGL/Canvas 操作冲突
   renderQueue = renderQueue.then(() => {
     try {
-      Plotly.newPlot(el, [traceMach, traceSep], layout, config);
+      Plotly.newPlot(el, [traceMach, traceAngle], layout, config);
     } catch (err) {
       console.error('爬升路线图表渲染失败:', err);
     }
