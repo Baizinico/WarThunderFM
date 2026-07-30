@@ -5,13 +5,14 @@
 #   dist/index.html        根跳转页 → 302 到 /web/
 #   dist/web/*            应用静态文件（入口 web/index.html）
 #   dist/data/raw/*.blkx  飞行模型原始数据（前端通过 ../data/raw/ 加载）
+#   dist/data/computed/*.json  预计算加速度数据
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 
 rm -rf "$DIST_DIR"
-mkdir -p "$DIST_DIR/web" "$DIST_DIR/data/raw"
+mkdir -p "$DIST_DIR/web" "$DIST_DIR/data/raw" "$DIST_DIR/data/computed"
 
 # 复制应用静态文件
 cp "$ROOT_DIR/web/"* "$DIST_DIR/web/"
@@ -21,6 +22,12 @@ shopt -s nullglob
 blkx_files=("$ROOT_DIR/data/raw/"*.blkx)
 if [ ${#blkx_files[@]} -gt 0 ]; then
   cp "${blkx_files[@]}" "$DIST_DIR/data/raw/"
+fi
+
+# 复制预计算加速度数据（.json）
+json_files=("$ROOT_DIR/data/computed/"*.json)
+if [ ${#json_files[@]} -gt 0 ]; then
+  cp "${json_files[@]}" "$DIST_DIR/data/computed/"
 fi
 
 # 根路径占位页（Worker 的 _worker.js 会对 / 做 302 重定向，

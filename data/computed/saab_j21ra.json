@@ -1,0 +1,3672 @@
+{
+  "aircraft": "saab_j21ra",
+  "metadata": {
+    "empty_mass_kg": 3420.0,
+    "fuel_mass_kg": 356.0,
+    "flight_mass_kg": 3776.0,
+    "afterburner": true,
+    "thrust_max0_kgf": 1290.0,
+    "computed_at": "2026-07-30T16:18:43.342076+08:00",
+    "wt_fm_version": "datamine-master"
+  },
+  "grid": {
+    "altitudes_m": [
+      0,
+      2000,
+      5000,
+      8000,
+      11000,
+      15000,
+      25000
+    ],
+    "machs": [
+      0.1,
+      0.15000000000000002,
+      0.20000000000000004,
+      0.25000000000000006,
+      0.30000000000000004,
+      0.3500000000000001,
+      0.40000000000000013,
+      0.45000000000000007,
+      0.5000000000000001,
+      0.5500000000000002,
+      0.6000000000000002,
+      0.6500000000000001,
+      0.7000000000000002,
+      0.7500000000000002,
+      0.8000000000000002,
+      0.8500000000000002,
+      0.9000000000000002,
+      0.9500000000000003,
+      1.0000000000000004,
+      1.0500000000000003,
+      1.1000000000000005,
+      1.1500000000000004,
+      1.2000000000000004,
+      1.2500000000000004,
+      1.3000000000000005,
+      1.3500000000000005,
+      1.4000000000000006,
+      1.4500000000000006,
+      1.5000000000000004,
+      1.5500000000000005,
+      1.6000000000000005,
+      1.6500000000000006,
+      1.7000000000000006,
+      1.7500000000000007,
+      1.8000000000000007,
+      1.8500000000000008,
+      1.9000000000000008,
+      1.9500000000000006,
+      2.0000000000000004,
+      2.0500000000000007,
+      2.100000000000001,
+      2.150000000000001,
+      2.2000000000000006,
+      2.250000000000001,
+      2.3000000000000007,
+      2.350000000000001,
+      2.400000000000001,
+      2.450000000000001,
+      2.500000000000001
+    ]
+  },
+  "samples": [
+    {
+      "altitude_m": 0,
+      "mach": 0.1,
+      "tas_mps": 34.02922868652771,
+      "thrust_mil_n": 12418.11420845158,
+      "thrust_ab_n": 12418.11420845158,
+      "drag_n": 0.0,
+      "net_force_n": 12418.11420845158,
+      "accel_mps2": 3.288695500119592
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.15000000000000002,
+      "tas_mps": 51.04384302979157,
+      "thrust_mil_n": 12301.882062677369,
+      "thrust_ab_n": 12301.882062677369,
+      "drag_n": 0.0,
+      "net_force_n": 12301.882062677369,
+      "accel_mps2": 3.2579136818531165
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.20000000000000004,
+      "tas_mps": 68.05845737305542,
+      "thrust_mil_n": 12185.64991690316,
+      "thrust_ab_n": 12185.64991690316,
+      "drag_n": 0.0,
+      "net_force_n": 12185.64991690316,
+      "accel_mps2": 3.2271318635866417
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.25000000000000006,
+      "tas_mps": 85.07307171631928,
+      "thrust_mil_n": 12069.417771128949,
+      "thrust_ab_n": 12069.417771128949,
+      "drag_n": 0.0,
+      "net_force_n": 12069.417771128949,
+      "accel_mps2": 3.1963500453201665
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.30000000000000004,
+      "tas_mps": 102.08768605958313,
+      "thrust_mil_n": 11953.185625354738,
+      "thrust_ab_n": 11953.185625354738,
+      "drag_n": 0.0,
+      "net_force_n": 11953.185625354738,
+      "accel_mps2": 3.165568227053691
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.3500000000000001,
+      "tas_mps": 119.10230040284699,
+      "thrust_mil_n": 11873.347019860175,
+      "thrust_ab_n": 11873.347019860175,
+      "drag_n": 0.0,
+      "net_force_n": 11873.347019860175,
+      "accel_mps2": 3.1444245285646653
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.40000000000000013,
+      "tas_mps": 136.11691474611087,
+      "thrust_mil_n": 11834.602971268772,
+      "thrust_ab_n": 11834.602971268772,
+      "drag_n": 0.0,
+      "net_force_n": 11834.602971268772,
+      "accel_mps2": 3.13416392247584
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.45000000000000007,
+      "tas_mps": 153.13152908937468,
+      "thrust_mil_n": 11795.858922677367,
+      "thrust_ab_n": 11795.858922677367,
+      "drag_n": 0.0,
+      "net_force_n": 11795.858922677367,
+      "accel_mps2": 3.1239033163870147
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.5000000000000001,
+      "tas_mps": 170.14614343263855,
+      "thrust_mil_n": 11757.114874085966,
+      "thrust_ab_n": 11757.114874085966,
+      "drag_n": 0.0,
+      "net_force_n": 11757.114874085966,
+      "accel_mps2": 3.11364271029819
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.5500000000000002,
+      "tas_mps": 187.16075777590243,
+      "thrust_mil_n": 11718.370825494565,
+      "thrust_ab_n": 11718.370825494565,
+      "drag_n": 0.0,
+      "net_force_n": 11718.370825494565,
+      "accel_mps2": 3.103382104209366
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.6000000000000002,
+      "tas_mps": 204.1753721191663,
+      "thrust_mil_n": 11679.62677690316,
+      "thrust_ab_n": 11679.62677690316,
+      "drag_n": 0.0,
+      "net_force_n": 11679.62677690316,
+      "accel_mps2": 3.0931214981205404
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.6500000000000001,
+      "tas_mps": 221.1899864624301,
+      "thrust_mil_n": 11640.882728311757,
+      "thrust_ab_n": 11640.882728311757,
+      "drag_n": 0.0,
+      "net_force_n": 11640.882728311757,
+      "accel_mps2": 3.0828608920317153
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.7000000000000002,
+      "tas_mps": 238.20460080569399,
+      "thrust_mil_n": 11674.925760279648,
+      "thrust_ab_n": 11674.925760279648,
+      "drag_n": 0.0,
+      "net_force_n": 11674.925760279648,
+      "accel_mps2": 3.091876525497788
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.7500000000000002,
+      "tas_mps": 255.21921514895786,
+      "thrust_mil_n": 11713.669808871051,
+      "thrust_ab_n": 11713.669808871051,
+      "drag_n": 0.0,
+      "net_force_n": 11713.669808871051,
+      "accel_mps2": 3.102137131586613
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.8000000000000002,
+      "tas_mps": 272.2338294922217,
+      "thrust_mil_n": 11752.413857462454,
+      "thrust_ab_n": 11752.413857462454,
+      "drag_n": 0.0,
+      "net_force_n": 11752.413857462454,
+      "accel_mps2": 3.112397737675438
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.8500000000000002,
+      "tas_mps": 289.24844383548555,
+      "thrust_mil_n": 11843.397708161572,
+      "thrust_ab_n": 11843.397708161572,
+      "drag_n": 0.0,
+      "net_force_n": 11843.397708161572,
+      "accel_mps2": 3.1364930371190605
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.9000000000000002,
+      "tas_mps": 306.2630581787494,
+      "thrust_mil_n": 11959.629853935783,
+      "thrust_ab_n": 11959.629853935783,
+      "drag_n": 0.0,
+      "net_force_n": 11959.629853935783,
+      "accel_mps2": 3.1672748553855357
+    },
+    {
+      "altitude_m": 0,
+      "mach": 0.9500000000000003,
+      "tas_mps": 323.2776725220133,
+      "thrust_mil_n": 12075.86199970999,
+      "thrust_ab_n": 12075.86199970999,
+      "drag_n": 0.0,
+      "net_force_n": 12075.86199970999,
+      "accel_mps2": 3.19805667365201
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.0000000000000004,
+      "tas_mps": 340.2922868652772,
+      "thrust_mil_n": 10623.31422450551,
+      "thrust_ab_n": 10623.31422450551,
+      "drag_n": 0.0,
+      "net_force_n": 10623.31422450551,
+      "accel_mps2": 2.813377707760993
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.0500000000000003,
+      "tas_mps": 357.306901208541,
+      "thrust_mil_n": 6903.885559730815,
+      "thrust_ab_n": 6903.885559730815,
+      "drag_n": 0.0,
+      "net_force_n": 6903.885559730815,
+      "accel_mps2": 1.8283595232337964
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.1000000000000005,
+      "tas_mps": 374.3215155518049,
+      "thrust_mil_n": 3184.456894956079,
+      "thrust_ab_n": 3184.456894956079,
+      "drag_n": 0.0,
+      "net_force_n": 3184.456894956079,
+      "accel_mps2": 0.8433413387065887
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.1500000000000004,
+      "tas_mps": 391.3361298950687,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.2000000000000004,
+      "tas_mps": 408.3507442383326,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.2500000000000004,
+      "tas_mps": 425.36535858159647,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.3000000000000005,
+      "tas_mps": 442.37997292486034,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.3500000000000005,
+      "tas_mps": 459.3945872681242,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.4000000000000006,
+      "tas_mps": 476.4092016113881,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.4500000000000006,
+      "tas_mps": 493.42381595465196,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.5000000000000004,
+      "tas_mps": 510.4384302979157,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.5500000000000005,
+      "tas_mps": 527.4530446411796,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.6000000000000005,
+      "tas_mps": 544.4676589844435,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.6500000000000006,
+      "tas_mps": 561.4822733277073,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.7000000000000006,
+      "tas_mps": 578.4968876709712,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.7500000000000007,
+      "tas_mps": 595.511502014235,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.8000000000000007,
+      "tas_mps": 612.526116357499,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.8500000000000008,
+      "tas_mps": 629.5407307007628,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.9000000000000008,
+      "tas_mps": 646.5553450440267,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 1.9500000000000006,
+      "tas_mps": 663.5699593872905,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.0000000000000004,
+      "tas_mps": 680.5845737305542,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.0500000000000007,
+      "tas_mps": 697.5991880738181,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.100000000000001,
+      "tas_mps": 714.6138024170822,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.150000000000001,
+      "tas_mps": 731.6284167603459,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.2000000000000006,
+      "tas_mps": 748.6430311036097,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.250000000000001,
+      "tas_mps": 765.6576454468736,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.3000000000000007,
+      "tas_mps": 782.6722597901374,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.350000000000001,
+      "tas_mps": 799.6868741334014,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.400000000000001,
+      "tas_mps": 816.7014884766652,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.450000000000001,
+      "tas_mps": 833.7161028199291,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 0,
+      "mach": 2.500000000000001,
+      "tas_mps": 850.7307171631929,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.1,
+      "tas_mps": 33.25274883374305,
+      "thrust_mil_n": 9336.49393159366,
+      "thrust_ab_n": 9336.49393159366,
+      "drag_n": 0.0,
+      "net_force_n": 9336.49393159366,
+      "accel_mps2": 2.472588435273745
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.15000000000000002,
+      "tas_mps": 49.87912325061458,
+      "thrust_mil_n": 9260.773959890494,
+      "thrust_ab_n": 9260.773959890494,
+      "drag_n": 0.0,
+      "net_force_n": 9260.773959890494,
+      "accel_mps2": 2.4525354766659144
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.20000000000000004,
+      "tas_mps": 66.50549766748611,
+      "thrust_mil_n": 9209.988146593661,
+      "thrust_ab_n": 9209.988146593661,
+      "drag_n": 0.0,
+      "net_force_n": 9209.988146593661,
+      "accel_mps2": 2.4390858439072196
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.25000000000000006,
+      "tas_mps": 83.13187208435764,
+      "thrust_mil_n": 9172.128160742077,
+      "thrust_ab_n": 9172.128160742077,
+      "drag_n": 0.0,
+      "net_force_n": 9172.128160742077,
+      "accel_mps2": 2.429059364603304
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.30000000000000004,
+      "tas_mps": 99.75824650122917,
+      "thrust_mil_n": 9134.26817489049,
+      "thrust_ab_n": 9134.26817489049,
+      "drag_n": 0.0,
+      "net_force_n": 9134.26817489049,
+      "accel_mps2": 2.4190328852993885
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.3500000000000001,
+      "tas_mps": 116.38462091810071,
+      "thrust_mil_n": 9096.408189038908,
+      "thrust_ab_n": 9096.408189038908,
+      "drag_n": 0.0,
+      "net_force_n": 9096.408189038908,
+      "accel_mps2": 2.4090064059954734
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.40000000000000013,
+      "tas_mps": 133.01099533497225,
+      "thrust_mil_n": 9058.548203187323,
+      "thrust_ab_n": 9058.548203187323,
+      "drag_n": 0.0,
+      "net_force_n": 9058.548203187323,
+      "accel_mps2": 2.398979926691558
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.45000000000000007,
+      "tas_mps": 149.63736975184375,
+      "thrust_mil_n": 9020.688217335739,
+      "thrust_ab_n": 9020.688217335739,
+      "drag_n": 0.0,
+      "net_force_n": 9020.688217335739,
+      "accel_mps2": 2.388953447387643
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.5000000000000001,
+      "tas_mps": 166.26374416871528,
+      "thrust_mil_n": 8982.828231484154,
+      "thrust_ab_n": 8982.828231484154,
+      "drag_n": 0.0,
+      "net_force_n": 8982.828231484154,
+      "accel_mps2": 2.3789269680837273
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.5500000000000002,
+      "tas_mps": 182.89011858558683,
+      "thrust_mil_n": 9037.324469051144,
+      "thrust_ab_n": 9037.324469051144,
+      "drag_n": 0.0,
+      "net_force_n": 9037.324469051144,
+      "accel_mps2": 2.3933592343885444
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.6000000000000002,
+      "tas_mps": 199.51649300245836,
+      "thrust_mil_n": 9094.11444782852,
+      "thrust_ab_n": 9094.11444782852,
+      "drag_n": 0.0,
+      "net_force_n": 9094.11444782852,
+      "accel_mps2": 2.4083989533444177
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.6500000000000001,
+      "tas_mps": 216.14286741932986,
+      "thrust_mil_n": 9150.904426605897,
+      "thrust_ab_n": 9150.904426605897,
+      "drag_n": 0.0,
+      "net_force_n": 9150.904426605897,
+      "accel_mps2": 2.4234386723002905
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.7000000000000002,
+      "tas_mps": 232.76924183620142,
+      "thrust_mil_n": 9195.686074422183,
+      "thrust_ab_n": 9195.686074422183,
+      "drag_n": 0.0,
+      "net_force_n": 9195.686074422183,
+      "accel_mps2": 2.435298218861807
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.7500000000000002,
+      "tas_mps": 249.39561625307294,
+      "thrust_mil_n": 9233.546060273768,
+      "thrust_ab_n": 9233.546060273768,
+      "drag_n": 0.0,
+      "net_force_n": 9233.546060273768,
+      "accel_mps2": 2.4453246981657224
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.8000000000000002,
+      "tas_mps": 266.02199066994444,
+      "thrust_mil_n": 9271.406046125352,
+      "thrust_ab_n": 9271.406046125352,
+      "drag_n": 0.0,
+      "net_force_n": 9271.406046125352,
+      "accel_mps2": 2.455351177469638
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.8500000000000002,
+      "tas_mps": 282.648365086816,
+      "thrust_mil_n": 9331.44770093081,
+      "thrust_ab_n": 9331.44770093081,
+      "drag_n": 0.0,
+      "net_force_n": 9331.44770093081,
+      "accel_mps2": 2.4712520394414224
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.9000000000000002,
+      "tas_mps": 299.27473950368756,
+      "thrust_mil_n": 9445.027658485562,
+      "thrust_ab_n": 9445.027658485562,
+      "drag_n": 0.0,
+      "net_force_n": 9445.027658485562,
+      "accel_mps2": 2.501331477353168
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 0.9500000000000003,
+      "tas_mps": 315.90111392055906,
+      "thrust_mil_n": 9558.607616040315,
+      "thrust_ab_n": 9558.607616040315,
+      "drag_n": 0.0,
+      "net_force_n": 9558.607616040315,
+      "accel_mps2": 2.5314109152649142
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.0000000000000004,
+      "tas_mps": 332.52748833743067,
+      "thrust_mil_n": 9672.187573595073,
+      "thrust_ab_n": 9672.187573595073,
+      "drag_n": 0.0,
+      "net_force_n": 9672.187573595073,
+      "accel_mps2": 2.5614903531766613
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.0500000000000003,
+      "tas_mps": 349.1538627543021,
+      "thrust_mil_n": 6921.780596929496,
+      "thrust_ab_n": 6921.780596929496,
+      "drag_n": 0.0,
+      "net_force_n": 6921.780596929496,
+      "accel_mps2": 1.8330986750342946
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.1000000000000005,
+      "tas_mps": 365.7802371711737,
+      "thrust_mil_n": 4025.491679283274,
+      "thrust_ab_n": 4025.491679283274,
+      "drag_n": 0.0,
+      "net_force_n": 4025.491679283274,
+      "accel_mps2": 1.0660730082847654
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.1500000000000004,
+      "tas_mps": 382.40661158804517,
+      "thrust_mil_n": 1129.2027616370744,
+      "thrust_ab_n": 1129.2027616370744,
+      "drag_n": 0.0,
+      "net_force_n": 1129.2027616370744,
+      "accel_mps2": 0.29904734153524215
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.2000000000000004,
+      "tas_mps": 399.0329860049167,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.2500000000000004,
+      "tas_mps": 415.6593604217883,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.3000000000000005,
+      "tas_mps": 432.28573483865983,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.3500000000000005,
+      "tas_mps": 448.91210925553133,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.4000000000000006,
+      "tas_mps": 465.5384836724029,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.4500000000000006,
+      "tas_mps": 482.16485808927445,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.5000000000000004,
+      "tas_mps": 498.7912325061459,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.5500000000000005,
+      "tas_mps": 515.4176069230174,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.6000000000000005,
+      "tas_mps": 532.043981339889,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.6500000000000006,
+      "tas_mps": 548.6703557567605,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.7000000000000006,
+      "tas_mps": 565.296730173632,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.7500000000000007,
+      "tas_mps": 581.9231045905036,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.8000000000000007,
+      "tas_mps": 598.5494790073751,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.8500000000000008,
+      "tas_mps": 615.1758534242467,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.9000000000000008,
+      "tas_mps": 631.8022278411182,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 1.9500000000000006,
+      "tas_mps": 648.4286022579897,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.0000000000000004,
+      "tas_mps": 665.0549766748611,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.0500000000000007,
+      "tas_mps": 681.6813510917327,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.100000000000001,
+      "tas_mps": 698.3077255086043,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.150000000000001,
+      "tas_mps": 714.9340999254758,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.2000000000000006,
+      "tas_mps": 731.5604743423473,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.250000000000001,
+      "tas_mps": 748.186848759219,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.3000000000000007,
+      "tas_mps": 764.8132231760903,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.350000000000001,
+      "tas_mps": 781.439597592962,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.400000000000001,
+      "tas_mps": 798.0659720098334,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.450000000000001,
+      "tas_mps": 814.6923464267051,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 2000,
+      "mach": 2.500000000000001,
+      "tas_mps": 831.3187208435766,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.1,
+      "tas_mps": 32.05277920867393,
+      "thrust_mil_n": 7317.866283171899,
+      "thrust_ab_n": 7317.866283171899,
+      "drag_n": 0.0,
+      "net_force_n": 7317.866283171899,
+      "accel_mps2": 1.9379942487213717
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.15000000000000002,
+      "tas_mps": 48.07916881301091,
+      "thrust_mil_n": 7244.87876725785,
+      "thrust_ab_n": 7244.87876725785,
+      "drag_n": 0.0,
+      "net_force_n": 7244.87876725785,
+      "accel_mps2": 1.9186649277695578
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.20000000000000004,
+      "tas_mps": 64.10555841734788,
+      "thrust_mil_n": 7171.891251343801,
+      "thrust_ab_n": 7171.891251343801,
+      "drag_n": 0.0,
+      "net_force_n": 7171.891251343801,
+      "accel_mps2": 1.8993356068177438
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.25000000000000006,
+      "tas_mps": 80.13194802168485,
+      "thrust_mil_n": 7098.903735429752,
+      "thrust_ab_n": 7098.903735429752,
+      "drag_n": 0.0,
+      "net_force_n": 7098.903735429752,
+      "accel_mps2": 1.8800062858659299
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.30000000000000004,
+      "tas_mps": 96.15833762602182,
+      "thrust_mil_n": 7025.916219515702,
+      "thrust_ab_n": 7025.916219515702,
+      "drag_n": 0.0,
+      "net_force_n": 7025.916219515702,
+      "accel_mps2": 1.8606769649141162
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.3500000000000001,
+      "tas_mps": 112.1847272303588,
+      "thrust_mil_n": 6957.818175,
+      "thrust_ab_n": 6957.818175,
+      "drag_n": 0.0,
+      "net_force_n": 6957.818175,
+      "accel_mps2": 1.8426425251588985
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.40000000000000013,
+      "tas_mps": 128.2111168346958,
+      "thrust_mil_n": 6957.818175,
+      "thrust_ab_n": 6957.818175,
+      "drag_n": 0.0,
+      "net_force_n": 6957.818175,
+      "accel_mps2": 1.8426425251588985
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.45000000000000007,
+      "tas_mps": 144.23750643903273,
+      "thrust_mil_n": 6957.818175,
+      "thrust_ab_n": 6957.818175,
+      "drag_n": 0.0,
+      "net_force_n": 6957.818175,
+      "accel_mps2": 1.8426425251588985
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.5000000000000001,
+      "tas_mps": 160.2638960433697,
+      "thrust_mil_n": 6957.818175,
+      "thrust_ab_n": 6957.818175,
+      "drag_n": 0.0,
+      "net_force_n": 6957.818175,
+      "accel_mps2": 1.8426425251588985
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.5500000000000002,
+      "tas_mps": 176.2902856477067,
+      "thrust_mil_n": 6979.732157527274,
+      "thrust_ab_n": 6979.732157527274,
+      "drag_n": 0.0,
+      "net_force_n": 6979.732157527274,
+      "accel_mps2": 1.848446016294299
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.6000000000000002,
+      "tas_mps": 192.31667525204367,
+      "thrust_mil_n": 7016.225915484299,
+      "thrust_ab_n": 7016.225915484299,
+      "drag_n": 0.0,
+      "net_force_n": 7016.225915484299,
+      "accel_mps2": 1.8581106767702062
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.6500000000000001,
+      "tas_mps": 208.3430648563806,
+      "thrust_mil_n": 7052.719673441322,
+      "thrust_ab_n": 7052.719673441322,
+      "drag_n": 0.0,
+      "net_force_n": 7052.719673441322,
+      "accel_mps2": 1.8677753372461128
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.7000000000000002,
+      "tas_mps": 224.3694544607176,
+      "thrust_mil_n": 7094.102902796694,
+      "thrust_ab_n": 7094.102902796694,
+      "drag_n": 0.0,
+      "net_force_n": 7094.102902796694,
+      "accel_mps2": 1.878734878918616
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.7500000000000002,
+      "tas_mps": 240.39584406505458,
+      "thrust_mil_n": 7167.090418710744,
+      "thrust_ab_n": 7167.090418710744,
+      "drag_n": 0.0,
+      "net_force_n": 7167.090418710744,
+      "accel_mps2": 1.8980641998704302
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.8000000000000002,
+      "tas_mps": 256.4222336693915,
+      "thrust_mil_n": 7240.077934624793,
+      "thrust_ab_n": 7240.077934624793,
+      "drag_n": 0.0,
+      "net_force_n": 7240.077934624793,
+      "accel_mps2": 1.917393520822244
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.8500000000000002,
+      "tas_mps": 272.4486232737285,
+      "thrust_mil_n": 7313.065450538843,
+      "thrust_ab_n": 7313.065450538843,
+      "drag_n": 0.0,
+      "net_force_n": 7313.065450538843,
+      "accel_mps2": 1.936722841774058
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.9000000000000002,
+      "tas_mps": 288.47501287806546,
+      "thrust_mil_n": 7361.694248226445,
+      "thrust_ab_n": 7361.694248226445,
+      "drag_n": 0.0,
+      "net_force_n": 7361.694248226445,
+      "accel_mps2": 1.9496012309921729
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 0.9500000000000003,
+      "tas_mps": 304.50140248240245,
+      "thrust_mil_n": 7398.18800618347,
+      "thrust_ab_n": 7398.18800618347,
+      "drag_n": 0.0,
+      "net_force_n": 7398.18800618347,
+      "accel_mps2": 1.95926589146808
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.0000000000000004,
+      "tas_mps": 320.5277920867395,
+      "thrust_mil_n": 7434.681764140496,
+      "thrust_ab_n": 7434.681764140496,
+      "drag_n": 0.0,
+      "net_force_n": 7434.681764140496,
+      "accel_mps2": 1.9689305519439873
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.0500000000000003,
+      "tas_mps": 336.5541816910764,
+      "thrust_mil_n": 7031.123096246293,
+      "thrust_ab_n": 7031.123096246293,
+      "drag_n": 0.0,
+      "net_force_n": 7031.123096246293,
+      "accel_mps2": 1.8620559047262428
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.1000000000000005,
+      "tas_mps": 352.58057129541345,
+      "thrust_mil_n": 4877.991376781817,
+      "thrust_ab_n": 4877.991376781817,
+      "drag_n": 0.0,
+      "net_force_n": 4877.991376781817,
+      "accel_mps2": 1.291840936647727
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.1500000000000004,
+      "tas_mps": 368.60696089975033,
+      "thrust_mil_n": 2724.8596573173686,
+      "thrust_ab_n": 2724.8596573173686,
+      "drag_n": 0.0,
+      "net_force_n": 2724.8596573173686,
+      "accel_mps2": 0.7216259685692183
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.2000000000000004,
+      "tas_mps": 384.63335050408733,
+      "thrust_mil_n": 571.7279378529017,
+      "thrust_ab_n": 571.7279378529017,
+      "drag_n": 0.0,
+      "net_force_n": 571.7279378529017,
+      "accel_mps2": 0.1514110004907049
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.2500000000000004,
+      "tas_mps": 400.65974010842433,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.3000000000000005,
+      "tas_mps": 416.68612971276127,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.3500000000000005,
+      "tas_mps": 432.71251931709827,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.4000000000000006,
+      "tas_mps": 448.73890892143527,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.4500000000000006,
+      "tas_mps": 464.76529852577227,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.5000000000000004,
+      "tas_mps": 480.79168813010915,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.5500000000000005,
+      "tas_mps": 496.81807773444615,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.6000000000000005,
+      "tas_mps": 512.8444673387831,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.6500000000000006,
+      "tas_mps": 528.8708569431201,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.7000000000000006,
+      "tas_mps": 544.897246547457,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.7500000000000007,
+      "tas_mps": 560.9236361517941,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.8000000000000007,
+      "tas_mps": 576.950025756131,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.8500000000000008,
+      "tas_mps": 592.976415360468,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.9000000000000008,
+      "tas_mps": 609.002804964805,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 1.9500000000000006,
+      "tas_mps": 625.029194569142,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.0000000000000004,
+      "tas_mps": 641.0555841734788,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.0500000000000007,
+      "tas_mps": 657.0819737778158,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.100000000000001,
+      "tas_mps": 673.1083633821529,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.150000000000001,
+      "tas_mps": 689.1347529864898,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.2000000000000006,
+      "tas_mps": 705.1611425908268,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.250000000000001,
+      "tas_mps": 721.1875321951638,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.3000000000000007,
+      "tas_mps": 737.2139217995007,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.350000000000001,
+      "tas_mps": 753.2403114038377,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.400000000000001,
+      "tas_mps": 769.2667010081747,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.450000000000001,
+      "tas_mps": 785.2930906125117,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 5000,
+      "mach": 2.500000000000001,
+      "tas_mps": 801.3194802168487,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.1,
+      "tas_mps": 30.80610337254616,
+      "thrust_mil_n": 5622.611619781168,
+      "thrust_ab_n": 5622.611619781168,
+      "drag_n": 0.0,
+      "net_force_n": 5622.611619781168,
+      "accel_mps2": 1.4890390942217075
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.15000000000000002,
+      "tas_mps": 46.20915505881924,
+      "thrust_mil_n": 5587.537267171752,
+      "thrust_ab_n": 5587.537267171752,
+      "drag_n": 0.0,
+      "net_force_n": 5587.537267171752,
+      "accel_mps2": 1.4797503355857395
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.20000000000000004,
+      "tas_mps": 61.61220674509233,
+      "thrust_mil_n": 5552.462914562336,
+      "thrust_ab_n": 5552.462914562336,
+      "drag_n": 0.0,
+      "net_force_n": 5552.462914562336,
+      "accel_mps2": 1.470461576949771
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.25000000000000006,
+      "tas_mps": 77.01525843136541,
+      "thrust_mil_n": 5517.388561952921,
+      "thrust_ab_n": 5517.388561952921,
+      "drag_n": 0.0,
+      "net_force_n": 5517.388561952921,
+      "accel_mps2": 1.4611728183138033
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.30000000000000004,
+      "tas_mps": 92.41831011763848,
+      "thrust_mil_n": 5482.314209343504,
+      "thrust_ab_n": 5482.314209343504,
+      "drag_n": 0.0,
+      "net_force_n": 5482.314209343504,
+      "accel_mps2": 1.4518840596778348
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.3500000000000001,
+      "tas_mps": 107.82136180391159,
+      "thrust_mil_n": 5447.239856734089,
+      "thrust_ab_n": 5447.239856734089,
+      "drag_n": 0.0,
+      "net_force_n": 5447.239856734089,
+      "accel_mps2": 1.4425953010418668
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.40000000000000013,
+      "tas_mps": 123.22441349018467,
+      "thrust_mil_n": 5439.748755,
+      "thrust_ab_n": 5439.748755,
+      "drag_n": 0.0,
+      "net_force_n": 5439.748755,
+      "accel_mps2": 1.4406114287605931
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.45000000000000007,
+      "tas_mps": 138.62746517645775,
+      "thrust_mil_n": 5439.7487550000005,
+      "thrust_ab_n": 5439.7487550000005,
+      "drag_n": 0.0,
+      "net_force_n": 5439.7487550000005,
+      "accel_mps2": 1.4406114287605933
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.5000000000000001,
+      "tas_mps": 154.03051686273082,
+      "thrust_mil_n": 5439.748755,
+      "thrust_ab_n": 5439.748755,
+      "drag_n": 0.0,
+      "net_force_n": 5439.748755,
+      "accel_mps2": 1.4406114287605931
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.5500000000000002,
+      "tas_mps": 169.43356854900392,
+      "thrust_mil_n": 5446.049278703575,
+      "thrust_ab_n": 5446.049278703575,
+      "drag_n": 0.0,
+      "net_force_n": 5446.049278703575,
+      "accel_mps2": 1.442279999656667
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.6000000000000002,
+      "tas_mps": 184.83662023527702,
+      "thrust_mil_n": 5481.123631312991,
+      "thrust_ab_n": 5481.123631312991,
+      "drag_n": 0.0,
+      "net_force_n": 5481.123631312991,
+      "accel_mps2": 1.4515687582926353
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.6500000000000001,
+      "tas_mps": 200.23967192155007,
+      "thrust_mil_n": 5516.197983922407,
+      "thrust_ab_n": 5516.197983922407,
+      "drag_n": 0.0,
+      "net_force_n": 5516.197983922407,
+      "accel_mps2": 1.4608575169286035
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.7000000000000002,
+      "tas_mps": 215.64272360782317,
+      "thrust_mil_n": 5551.2723365318225,
+      "thrust_ab_n": 5551.2723365318225,
+      "drag_n": 0.0,
+      "net_force_n": 5551.2723365318225,
+      "accel_mps2": 1.4701462755645716
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.7500000000000002,
+      "tas_mps": 231.04577529409625,
+      "thrust_mil_n": 5586.346689141239,
+      "thrust_ab_n": 5586.346689141239,
+      "drag_n": 0.0,
+      "net_force_n": 5586.346689141239,
+      "accel_mps2": 1.47943503420054
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.8000000000000002,
+      "tas_mps": 246.44882698036932,
+      "thrust_mil_n": 5621.421041750654,
+      "thrust_ab_n": 5621.421041750654,
+      "drag_n": 0.0,
+      "net_force_n": 5621.421041750654,
+      "accel_mps2": 1.4887237928365078
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.8500000000000002,
+      "tas_mps": 261.8518786666424,
+      "thrust_mil_n": 5656.49539436007,
+      "thrust_ab_n": 5656.49539436007,
+      "drag_n": 0.0,
+      "net_force_n": 5656.49539436007,
+      "accel_mps2": 1.4980125514724763
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.9000000000000002,
+      "tas_mps": 277.2549303529155,
+      "thrust_mil_n": 5691.569746969486,
+      "thrust_ab_n": 5691.569746969486,
+      "drag_n": 0.0,
+      "net_force_n": 5691.569746969486,
+      "accel_mps2": 1.5073013101084445
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 0.9500000000000003,
+      "tas_mps": 292.6579820391886,
+      "thrust_mil_n": 5726.644099578903,
+      "thrust_ab_n": 5726.644099578903,
+      "drag_n": 0.0,
+      "net_force_n": 5726.644099578903,
+      "accel_mps2": 1.5165900687444127
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.0000000000000004,
+      "tas_mps": 308.0610337254617,
+      "thrust_mil_n": 5761.718452188318,
+      "thrust_ab_n": 5761.718452188318,
+      "drag_n": 0.0,
+      "net_force_n": 5761.718452188318,
+      "accel_mps2": 1.525878827380381
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.0500000000000003,
+      "tas_mps": 323.46408541173474,
+      "thrust_mil_n": 5796.792804797734,
+      "thrust_ab_n": 5796.792804797734,
+      "drag_n": 0.0,
+      "net_force_n": 5796.792804797734,
+      "accel_mps2": 1.535167586016349
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.1000000000000005,
+      "tas_mps": 338.8671370980079,
+      "thrust_mil_n": 5239.617929271101,
+      "thrust_ab_n": 5239.617929271101,
+      "drag_n": 0.0,
+      "net_force_n": 5239.617929271101,
+      "accel_mps2": 1.3876106804213721
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.1500000000000004,
+      "tas_mps": 354.27018878428095,
+      "thrust_mil_n": 3626.197709237973,
+      "thrust_ab_n": 3626.197709237973,
+      "drag_n": 0.0,
+      "net_force_n": 3626.197709237973,
+      "accel_mps2": 0.9603277831668361
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.2000000000000004,
+      "tas_mps": 369.67324047055405,
+      "thrust_mil_n": 2012.7774892048383,
+      "thrust_ab_n": 2012.7774892048383,
+      "drag_n": 0.0,
+      "net_force_n": 2012.7774892048383,
+      "accel_mps2": 0.5330448859122983
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.2500000000000004,
+      "tas_mps": 385.0762921568271,
+      "thrust_mil_n": 399.35726917170996,
+      "thrust_ab_n": 399.35726917170996,
+      "drag_n": 0.0,
+      "net_force_n": 399.35726917170996,
+      "accel_mps2": 0.10576198865776217
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.3000000000000005,
+      "tas_mps": 400.4793438431002,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.3500000000000005,
+      "tas_mps": 415.8823955293733,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.4000000000000006,
+      "tas_mps": 431.2854472156464,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.4500000000000006,
+      "tas_mps": 446.6884989019195,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.5000000000000004,
+      "tas_mps": 462.0915505881925,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.5500000000000005,
+      "tas_mps": 477.4946022744656,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.6000000000000005,
+      "tas_mps": 492.8976539607387,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.6500000000000006,
+      "tas_mps": 508.3007056470118,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.7000000000000006,
+      "tas_mps": 523.7037573332849,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.7500000000000007,
+      "tas_mps": 539.106809019558,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.8000000000000007,
+      "tas_mps": 554.5098607058311,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.8500000000000008,
+      "tas_mps": 569.9129123921042,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.9000000000000008,
+      "tas_mps": 585.3159640783773,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 1.9500000000000006,
+      "tas_mps": 600.7190157646503,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.0000000000000004,
+      "tas_mps": 616.1220674509233,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.0500000000000007,
+      "tas_mps": 631.5251191371965,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.100000000000001,
+      "tas_mps": 646.9281708234696,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.150000000000001,
+      "tas_mps": 662.3312225097427,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.2000000000000006,
+      "tas_mps": 677.7342741960157,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.250000000000001,
+      "tas_mps": 693.1373258822888,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.3000000000000007,
+      "tas_mps": 708.5403775685619,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.350000000000001,
+      "tas_mps": 723.943429254835,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.400000000000001,
+      "tas_mps": 739.3464809411081,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.450000000000001,
+      "tas_mps": 754.7495326273812,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 8000,
+      "mach": 2.500000000000001,
+      "tas_mps": 770.1525843136542,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.1,
+      "tas_mps": 29.50680184296495,
+      "thrust_mil_n": 3854.4892746602927,
+      "thrust_ab_n": 3854.4892746602927,
+      "drag_n": 0.0,
+      "net_force_n": 3854.4892746602927,
+      "accel_mps2": 1.020786354518086
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.15000000000000002,
+      "tas_mps": 44.260202764447435,
+      "thrust_mil_n": 3820.894244490439,
+      "thrust_ab_n": 3820.894244490439,
+      "drag_n": 0.0,
+      "net_force_n": 3820.894244490439,
+      "accel_mps2": 1.0118893655959849
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.20000000000000004,
+      "tas_mps": 59.01360368592991,
+      "thrust_mil_n": 3791.2363821602926,
+      "thrust_ab_n": 3791.2363821602926,
+      "drag_n": 0.0,
+      "net_force_n": 3791.2363821602926,
+      "accel_mps2": 1.0040350588348232
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.25000000000000006,
+      "tas_mps": 73.76700460741239,
+      "thrust_mil_n": 3774.4388670753656,
+      "thrust_ab_n": 3774.4388670753656,
+      "drag_n": 0.0,
+      "net_force_n": 3774.4388670753656,
+      "accel_mps2": 0.9995865643737727
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.30000000000000004,
+      "tas_mps": 88.52040552889487,
+      "thrust_mil_n": 3757.641351990439,
+      "thrust_ab_n": 3757.641351990439,
+      "drag_n": 0.0,
+      "net_force_n": 3757.641351990439,
+      "accel_mps2": 0.9951380699127222
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.3500000000000001,
+      "tas_mps": 103.27380645037735,
+      "thrust_mil_n": 3740.843836905512,
+      "thrust_ab_n": 3740.843836905512,
+      "drag_n": 0.0,
+      "net_force_n": 3740.843836905512,
+      "accel_mps2": 0.9906895754516716
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.40000000000000013,
+      "tas_mps": 118.02720737185984,
+      "thrust_mil_n": 3724.046321820586,
+      "thrust_ab_n": 3724.046321820586,
+      "drag_n": 0.0,
+      "net_force_n": 3724.046321820586,
+      "accel_mps2": 0.9862410809906212
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.45000000000000007,
+      "tas_mps": 132.78060829334228,
+      "thrust_mil_n": 3707.2488067356585,
+      "thrust_ab_n": 3707.2488067356585,
+      "drag_n": 0.0,
+      "net_force_n": 3707.2488067356585,
+      "accel_mps2": 0.9817925865295706
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.5000000000000001,
+      "tas_mps": 147.53400921482478,
+      "thrust_mil_n": 3690.451291650732,
+      "thrust_ab_n": 3690.451291650732,
+      "drag_n": 0.0,
+      "net_force_n": 3690.451291650732,
+      "accel_mps2": 0.9773440920685201
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.5500000000000002,
+      "tas_mps": 162.28741013630727,
+      "thrust_mil_n": 3673.653776565805,
+      "thrust_ab_n": 3673.653776565805,
+      "drag_n": 0.0,
+      "net_force_n": 3673.653776565805,
+      "accel_mps2": 0.9728955976074696
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.6000000000000002,
+      "tas_mps": 177.04081105778977,
+      "thrust_mil_n": 3680.479268519121,
+      "thrust_ab_n": 3680.479268519121,
+      "drag_n": 0.0,
+      "net_force_n": 3680.479268519121,
+      "accel_mps2": 0.9747031961120554
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.6500000000000001,
+      "tas_mps": 191.7942119792722,
+      "thrust_mil_n": 3697.276783604048,
+      "thrust_ab_n": 3697.276783604048,
+      "drag_n": 0.0,
+      "net_force_n": 3697.276783604048,
+      "accel_mps2": 0.9791516905731059
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.7000000000000002,
+      "tas_mps": 206.5476129007547,
+      "thrust_mil_n": 3714.0742986889745,
+      "thrust_ab_n": 3714.0742986889745,
+      "drag_n": 0.0,
+      "net_force_n": 3714.0742986889745,
+      "accel_mps2": 0.9836001850341564
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.7500000000000002,
+      "tas_mps": 221.3010138222372,
+      "thrust_mil_n": 3730.8718137739015,
+      "thrust_ab_n": 3730.8718137739015,
+      "drag_n": 0.0,
+      "net_force_n": 3730.8718137739015,
+      "accel_mps2": 0.9880486794952069
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.8000000000000002,
+      "tas_mps": 236.05441474371963,
+      "thrust_mil_n": 3747.669328858828,
+      "thrust_ab_n": 3747.669328858828,
+      "drag_n": 0.0,
+      "net_force_n": 3747.669328858828,
+      "accel_mps2": 0.9924971739562575
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.8500000000000002,
+      "tas_mps": 250.80781566520213,
+      "thrust_mil_n": 3764.466843943755,
+      "thrust_ab_n": 3764.466843943755,
+      "drag_n": 0.0,
+      "net_force_n": 3764.466843943755,
+      "accel_mps2": 0.996945668417308
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.9000000000000002,
+      "tas_mps": 265.5612165866846,
+      "thrust_mil_n": 3781.264359028681,
+      "thrust_ab_n": 3781.264359028681,
+      "drag_n": 0.0,
+      "net_force_n": 3781.264359028681,
+      "accel_mps2": 1.0013941628783583
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 0.9500000000000003,
+      "tas_mps": 280.3146175081671,
+      "thrust_mil_n": 3743.1837159550414,
+      "thrust_ab_n": 3743.1837159550414,
+      "drag_n": 0.0,
+      "net_force_n": 3743.1837159550414,
+      "accel_mps2": 0.9913092468101274
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.0000000000000004,
+      "tas_mps": 295.0680184296496,
+      "thrust_mil_n": 3440.8284444263586,
+      "thrust_ab_n": 3440.8284444263586,
+      "drag_n": 0.0,
+      "net_force_n": 3440.8284444263586,
+      "accel_mps2": 0.9112363465112179
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.0500000000000003,
+      "tas_mps": 309.8214193511321,
+      "thrust_mil_n": 3138.4731728976762,
+      "thrust_ab_n": 3138.4731728976762,
+      "drag_n": 0.0,
+      "net_force_n": 3138.4731728976762,
+      "accel_mps2": 0.8311634462123083
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.1000000000000005,
+      "tas_mps": 324.5748202726146,
+      "thrust_mil_n": 2836.117901368994,
+      "thrust_ab_n": 2836.117901368994,
+      "drag_n": 0.0,
+      "net_force_n": 2836.117901368994,
+      "accel_mps2": 0.7510905459133989
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.1500000000000004,
+      "tas_mps": 339.328221194097,
+      "thrust_mil_n": 2369.950822960732,
+      "thrust_ab_n": 2369.950822960732,
+      "drag_n": 0.0,
+      "net_force_n": 2369.950822960732,
+      "accel_mps2": 0.627635281504431
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.2000000000000004,
+      "tas_mps": 354.08162211557953,
+      "thrust_mil_n": 1664.455189393805,
+      "thrust_ab_n": 1664.455189393805,
+      "drag_n": 0.0,
+      "net_force_n": 1664.455189393805,
+      "accel_mps2": 0.4407985141403086
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.2500000000000004,
+      "tas_mps": 368.835023037062,
+      "thrust_mil_n": 958.9595558268784,
+      "thrust_ab_n": 958.9595558268784,
+      "drag_n": 0.0,
+      "net_force_n": 958.9595558268784,
+      "accel_mps2": 0.253961746776186
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.3000000000000005,
+      "tas_mps": 383.58842395854447,
+      "thrust_mil_n": 253.4639222599552,
+      "thrust_ab_n": 253.4639222599552,
+      "drag_n": 0.0,
+      "net_force_n": 253.4639222599552,
+      "accel_mps2": 0.06712497941206441
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.3500000000000005,
+      "tas_mps": 398.341824880027,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.4000000000000006,
+      "tas_mps": 413.09522580150946,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.4500000000000006,
+      "tas_mps": 427.848626722992,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.5000000000000004,
+      "tas_mps": 442.6020276444744,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.5500000000000005,
+      "tas_mps": 457.35542856595686,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.6000000000000005,
+      "tas_mps": 472.1088294874394,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.6500000000000006,
+      "tas_mps": 486.86223040892185,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.7000000000000006,
+      "tas_mps": 501.6156313304043,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.7500000000000007,
+      "tas_mps": 516.3690322518868,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.8000000000000007,
+      "tas_mps": 531.1224331733694,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.8500000000000008,
+      "tas_mps": 545.8758340948518,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.9000000000000008,
+      "tas_mps": 560.6292350163343,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 1.9500000000000006,
+      "tas_mps": 575.3826359378168,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.0000000000000004,
+      "tas_mps": 590.1360368592991,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.0500000000000007,
+      "tas_mps": 604.8894377807817,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.100000000000001,
+      "tas_mps": 619.6428387022643,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.150000000000001,
+      "tas_mps": 634.3962396237466,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.2000000000000006,
+      "tas_mps": 649.1496405452291,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.250000000000001,
+      "tas_mps": 663.9030414667117,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.3000000000000007,
+      "tas_mps": 678.656442388194,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.350000000000001,
+      "tas_mps": 693.4098433096766,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.400000000000001,
+      "tas_mps": 708.1632442311591,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.450000000000001,
+      "tas_mps": 722.9166451526415,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 11000,
+      "mach": 2.500000000000001,
+      "tas_mps": 737.670046074124,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.1,
+      "tas_mps": 29.50680184296495,
+      "thrust_mil_n": 385.44892746602926,
+      "thrust_ab_n": 385.44892746602926,
+      "drag_n": 0.0,
+      "net_force_n": 385.44892746602926,
+      "accel_mps2": 0.10207863545180859
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.15000000000000002,
+      "tas_mps": 44.260202764447435,
+      "thrust_mil_n": 382.0894244490439,
+      "thrust_ab_n": 382.0894244490439,
+      "drag_n": 0.0,
+      "net_force_n": 382.0894244490439,
+      "accel_mps2": 0.1011889365595985
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.20000000000000004,
+      "tas_mps": 59.01360368592991,
+      "thrust_mil_n": 379.12363821602924,
+      "thrust_ab_n": 379.12363821602924,
+      "drag_n": 0.0,
+      "net_force_n": 379.12363821602924,
+      "accel_mps2": 0.10040350588348232
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.25000000000000006,
+      "tas_mps": 73.76700460741239,
+      "thrust_mil_n": 377.44388670753665,
+      "thrust_ab_n": 377.44388670753665,
+      "drag_n": 0.0,
+      "net_force_n": 377.44388670753665,
+      "accel_mps2": 0.0999586564373773
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.30000000000000004,
+      "tas_mps": 88.52040552889487,
+      "thrust_mil_n": 375.7641351990439,
+      "thrust_ab_n": 375.7641351990439,
+      "drag_n": 0.0,
+      "net_force_n": 375.7641351990439,
+      "accel_mps2": 0.09951380699127221
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.3500000000000001,
+      "tas_mps": 103.27380645037735,
+      "thrust_mil_n": 374.08438369055125,
+      "thrust_ab_n": 374.08438369055125,
+      "drag_n": 0.0,
+      "net_force_n": 374.08438369055125,
+      "accel_mps2": 0.09906895754516717
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.40000000000000013,
+      "tas_mps": 118.02720737185984,
+      "thrust_mil_n": 372.40463218205855,
+      "thrust_ab_n": 372.40463218205855,
+      "drag_n": 0.0,
+      "net_force_n": 372.40463218205855,
+      "accel_mps2": 0.09862410809906212
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.45000000000000007,
+      "tas_mps": 132.78060829334228,
+      "thrust_mil_n": 370.7248806735659,
+      "thrust_ab_n": 370.7248806735659,
+      "drag_n": 0.0,
+      "net_force_n": 370.7248806735659,
+      "accel_mps2": 0.09817925865295707
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.5000000000000001,
+      "tas_mps": 147.53400921482478,
+      "thrust_mil_n": 369.0451291650732,
+      "thrust_ab_n": 369.0451291650732,
+      "drag_n": 0.0,
+      "net_force_n": 369.0451291650732,
+      "accel_mps2": 0.09773440920685202
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.5500000000000002,
+      "tas_mps": 162.28741013630727,
+      "thrust_mil_n": 367.36537765658056,
+      "thrust_ab_n": 367.36537765658056,
+      "drag_n": 0.0,
+      "net_force_n": 367.36537765658056,
+      "accel_mps2": 0.09728955976074698
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.6000000000000002,
+      "tas_mps": 177.04081105778977,
+      "thrust_mil_n": 368.0479268519121,
+      "thrust_ab_n": 368.0479268519121,
+      "drag_n": 0.0,
+      "net_force_n": 368.0479268519121,
+      "accel_mps2": 0.09747031961120554
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.6500000000000001,
+      "tas_mps": 191.7942119792722,
+      "thrust_mil_n": 369.7276783604048,
+      "thrust_ab_n": 369.7276783604048,
+      "drag_n": 0.0,
+      "net_force_n": 369.7276783604048,
+      "accel_mps2": 0.0979151690573106
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.7000000000000002,
+      "tas_mps": 206.5476129007547,
+      "thrust_mil_n": 371.40742986889745,
+      "thrust_ab_n": 371.40742986889745,
+      "drag_n": 0.0,
+      "net_force_n": 371.40742986889745,
+      "accel_mps2": 0.09836001850341564
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.7500000000000002,
+      "tas_mps": 221.3010138222372,
+      "thrust_mil_n": 373.08718137739015,
+      "thrust_ab_n": 373.08718137739015,
+      "drag_n": 0.0,
+      "net_force_n": 373.08718137739015,
+      "accel_mps2": 0.0988048679495207
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.8000000000000002,
+      "tas_mps": 236.05441474371963,
+      "thrust_mil_n": 374.7669328858828,
+      "thrust_ab_n": 374.7669328858828,
+      "drag_n": 0.0,
+      "net_force_n": 374.7669328858828,
+      "accel_mps2": 0.09924971739562574
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.8500000000000002,
+      "tas_mps": 250.80781566520213,
+      "thrust_mil_n": 376.4466843943755,
+      "thrust_ab_n": 376.4466843943755,
+      "drag_n": 0.0,
+      "net_force_n": 376.4466843943755,
+      "accel_mps2": 0.0996945668417308
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.9000000000000002,
+      "tas_mps": 265.5612165866846,
+      "thrust_mil_n": 378.1264359028682,
+      "thrust_ab_n": 378.1264359028682,
+      "drag_n": 0.0,
+      "net_force_n": 378.1264359028682,
+      "accel_mps2": 0.10013941628783586
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 0.9500000000000003,
+      "tas_mps": 280.3146175081671,
+      "thrust_mil_n": 374.3183715955041,
+      "thrust_ab_n": 374.3183715955041,
+      "drag_n": 0.0,
+      "net_force_n": 374.3183715955041,
+      "accel_mps2": 0.09913092468101274
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.0000000000000004,
+      "tas_mps": 295.0680184296496,
+      "thrust_mil_n": 344.0828444426358,
+      "thrust_ab_n": 344.0828444426358,
+      "drag_n": 0.0,
+      "net_force_n": 344.0828444426358,
+      "accel_mps2": 0.09112363465112178
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.0500000000000003,
+      "tas_mps": 309.8214193511321,
+      "thrust_mil_n": 313.84731728976766,
+      "thrust_ab_n": 313.84731728976766,
+      "drag_n": 0.0,
+      "net_force_n": 313.84731728976766,
+      "accel_mps2": 0.08311634462123084
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.1000000000000005,
+      "tas_mps": 324.5748202726146,
+      "thrust_mil_n": 283.6117901368994,
+      "thrust_ab_n": 283.6117901368994,
+      "drag_n": 0.0,
+      "net_force_n": 283.6117901368994,
+      "accel_mps2": 0.07510905459133989
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.1500000000000004,
+      "tas_mps": 339.328221194097,
+      "thrust_mil_n": 236.99508229607318,
+      "thrust_ab_n": 236.99508229607318,
+      "drag_n": 0.0,
+      "net_force_n": 236.99508229607318,
+      "accel_mps2": 0.06276352815044312
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.2000000000000004,
+      "tas_mps": 354.08162211557953,
+      "thrust_mil_n": 166.44551893938052,
+      "thrust_ab_n": 166.44551893938052,
+      "drag_n": 0.0,
+      "net_force_n": 166.44551893938052,
+      "accel_mps2": 0.04407985141403086
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.2500000000000004,
+      "tas_mps": 368.835023037062,
+      "thrust_mil_n": 95.89595558268786,
+      "thrust_ab_n": 95.89595558268786,
+      "drag_n": 0.0,
+      "net_force_n": 95.89595558268786,
+      "accel_mps2": 0.025396174677618608
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.3000000000000005,
+      "tas_mps": 383.58842395854447,
+      "thrust_mil_n": 25.346392225995526,
+      "thrust_ab_n": 25.346392225995526,
+      "drag_n": 0.0,
+      "net_force_n": 25.346392225995526,
+      "accel_mps2": 0.006712497941206442
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.3500000000000005,
+      "tas_mps": 398.341824880027,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.4000000000000006,
+      "tas_mps": 413.09522580150946,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.4500000000000006,
+      "tas_mps": 427.848626722992,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.5000000000000004,
+      "tas_mps": 442.6020276444744,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.5500000000000005,
+      "tas_mps": 457.35542856595686,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.6000000000000005,
+      "tas_mps": 472.1088294874394,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.6500000000000006,
+      "tas_mps": 486.86223040892185,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.7000000000000006,
+      "tas_mps": 501.6156313304043,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.7500000000000007,
+      "tas_mps": 516.3690322518868,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.8000000000000007,
+      "tas_mps": 531.1224331733694,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.8500000000000008,
+      "tas_mps": 545.8758340948518,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.9000000000000008,
+      "tas_mps": 560.6292350163343,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 1.9500000000000006,
+      "tas_mps": 575.3826359378168,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.0000000000000004,
+      "tas_mps": 590.1360368592991,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.0500000000000007,
+      "tas_mps": 604.8894377807817,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.100000000000001,
+      "tas_mps": 619.6428387022643,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.150000000000001,
+      "tas_mps": 634.3962396237466,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.2000000000000006,
+      "tas_mps": 649.1496405452291,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.250000000000001,
+      "tas_mps": 663.9030414667117,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.3000000000000007,
+      "tas_mps": 678.656442388194,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.350000000000001,
+      "tas_mps": 693.4098433096766,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.400000000000001,
+      "tas_mps": 708.1632442311591,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.450000000000001,
+      "tas_mps": 722.9166451526415,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 15000,
+      "mach": 2.500000000000001,
+      "tas_mps": 737.670046074124,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.1,
+      "tas_mps": 29.50680184296495,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.15000000000000002,
+      "tas_mps": 44.260202764447435,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.20000000000000004,
+      "tas_mps": 59.01360368592991,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.25000000000000006,
+      "tas_mps": 73.76700460741239,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.30000000000000004,
+      "tas_mps": 88.52040552889487,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.3500000000000001,
+      "tas_mps": 103.27380645037735,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.40000000000000013,
+      "tas_mps": 118.02720737185984,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.45000000000000007,
+      "tas_mps": 132.78060829334228,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.5000000000000001,
+      "tas_mps": 147.53400921482478,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.5500000000000002,
+      "tas_mps": 162.28741013630727,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.6000000000000002,
+      "tas_mps": 177.04081105778977,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.6500000000000001,
+      "tas_mps": 191.7942119792722,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.7000000000000002,
+      "tas_mps": 206.5476129007547,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.7500000000000002,
+      "tas_mps": 221.3010138222372,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.8000000000000002,
+      "tas_mps": 236.05441474371963,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.8500000000000002,
+      "tas_mps": 250.80781566520213,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.9000000000000002,
+      "tas_mps": 265.5612165866846,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 0.9500000000000003,
+      "tas_mps": 280.3146175081671,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.0000000000000004,
+      "tas_mps": 295.0680184296496,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.0500000000000003,
+      "tas_mps": 309.8214193511321,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.1000000000000005,
+      "tas_mps": 324.5748202726146,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.1500000000000004,
+      "tas_mps": 339.328221194097,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.2000000000000004,
+      "tas_mps": 354.08162211557953,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.2500000000000004,
+      "tas_mps": 368.835023037062,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.3000000000000005,
+      "tas_mps": 383.58842395854447,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.3500000000000005,
+      "tas_mps": 398.341824880027,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.4000000000000006,
+      "tas_mps": 413.09522580150946,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.4500000000000006,
+      "tas_mps": 427.848626722992,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.5000000000000004,
+      "tas_mps": 442.6020276444744,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.5500000000000005,
+      "tas_mps": 457.35542856595686,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.6000000000000005,
+      "tas_mps": 472.1088294874394,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.6500000000000006,
+      "tas_mps": 486.86223040892185,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.7000000000000006,
+      "tas_mps": 501.6156313304043,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.7500000000000007,
+      "tas_mps": 516.3690322518868,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.8000000000000007,
+      "tas_mps": 531.1224331733694,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.8500000000000008,
+      "tas_mps": 545.8758340948518,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.9000000000000008,
+      "tas_mps": 560.6292350163343,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 1.9500000000000006,
+      "tas_mps": 575.3826359378168,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.0000000000000004,
+      "tas_mps": 590.1360368592991,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.0500000000000007,
+      "tas_mps": 604.8894377807817,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.100000000000001,
+      "tas_mps": 619.6428387022643,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.150000000000001,
+      "tas_mps": 634.3962396237466,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.2000000000000006,
+      "tas_mps": 649.1496405452291,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.250000000000001,
+      "tas_mps": 663.9030414667117,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.3000000000000007,
+      "tas_mps": 678.656442388194,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.350000000000001,
+      "tas_mps": 693.4098433096766,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.400000000000001,
+      "tas_mps": 708.1632442311591,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.450000000000001,
+      "tas_mps": 722.9166451526415,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    },
+    {
+      "altitude_m": 25000,
+      "mach": 2.500000000000001,
+      "tas_mps": 737.670046074124,
+      "thrust_mil_n": 0.0,
+      "thrust_ab_n": 0.0,
+      "drag_n": 0.0,
+      "net_force_n": 0.0,
+      "accel_mps2": 0.0
+    }
+  ],
+  "optimal": {
+    "max_speed_per_alt": [
+      {
+        "altitude_m": 0,
+        "mach_max": 1.1000000000000005,
+        "tas_max_kmh": 1347.5574559864976
+      },
+      {
+        "altitude_m": 2000,
+        "mach_max": 1.1500000000000004,
+        "tas_max_kmh": 1376.6638017169626
+      },
+      {
+        "altitude_m": 5000,
+        "mach_max": 1.2000000000000004,
+        "tas_max_kmh": 1384.6800618147145
+      },
+      {
+        "altitude_m": 8000,
+        "mach_max": 1.2500000000000004,
+        "tas_max_kmh": 1386.2746517645776
+      },
+      {
+        "altitude_m": 11000,
+        "mach_max": 1.3000000000000005,
+        "tas_max_kmh": 1380.9183262507602
+      },
+      {
+        "altitude_m": 15000,
+        "mach_max": 1.3000000000000005,
+        "tas_max_kmh": 1380.9183262507602
+      },
+      {
+        "altitude_m": 25000,
+        "mach_max": null,
+        "tas_max_kmh": null
+      }
+    ],
+    "best_alt_per_mach": [
+      {
+        "mach": 0.1,
+        "best_alt_m": 0,
+        "accel_mps2": 3.288695500119592
+      },
+      {
+        "mach": 0.15000000000000002,
+        "best_alt_m": 0,
+        "accel_mps2": 3.2579136818531165
+      },
+      {
+        "mach": 0.20000000000000004,
+        "best_alt_m": 0,
+        "accel_mps2": 3.2271318635866417
+      },
+      {
+        "mach": 0.25000000000000006,
+        "best_alt_m": 0,
+        "accel_mps2": 3.1963500453201665
+      },
+      {
+        "mach": 0.30000000000000004,
+        "best_alt_m": 0,
+        "accel_mps2": 3.165568227053691
+      },
+      {
+        "mach": 0.3500000000000001,
+        "best_alt_m": 0,
+        "accel_mps2": 3.1444245285646653
+      },
+      {
+        "mach": 0.40000000000000013,
+        "best_alt_m": 0,
+        "accel_mps2": 3.13416392247584
+      },
+      {
+        "mach": 0.45000000000000007,
+        "best_alt_m": 0,
+        "accel_mps2": 3.1239033163870147
+      },
+      {
+        "mach": 0.5000000000000001,
+        "best_alt_m": 0,
+        "accel_mps2": 3.11364271029819
+      },
+      {
+        "mach": 0.5500000000000002,
+        "best_alt_m": 0,
+        "accel_mps2": 3.103382104209366
+      },
+      {
+        "mach": 0.6000000000000002,
+        "best_alt_m": 0,
+        "accel_mps2": 3.0931214981205404
+      },
+      {
+        "mach": 0.6500000000000001,
+        "best_alt_m": 0,
+        "accel_mps2": 3.0828608920317153
+      },
+      {
+        "mach": 0.7000000000000002,
+        "best_alt_m": 0,
+        "accel_mps2": 3.091876525497788
+      },
+      {
+        "mach": 0.7500000000000002,
+        "best_alt_m": 0,
+        "accel_mps2": 3.102137131586613
+      },
+      {
+        "mach": 0.8000000000000002,
+        "best_alt_m": 0,
+        "accel_mps2": 3.112397737675438
+      },
+      {
+        "mach": 0.8500000000000002,
+        "best_alt_m": 0,
+        "accel_mps2": 3.1364930371190605
+      },
+      {
+        "mach": 0.9000000000000002,
+        "best_alt_m": 0,
+        "accel_mps2": 3.1672748553855357
+      },
+      {
+        "mach": 0.9500000000000003,
+        "best_alt_m": 0,
+        "accel_mps2": 3.19805667365201
+      },
+      {
+        "mach": 1.0000000000000004,
+        "best_alt_m": 0,
+        "accel_mps2": 2.813377707760993
+      },
+      {
+        "mach": 1.0500000000000003,
+        "best_alt_m": 5000,
+        "accel_mps2": 1.8620559047262428
+      },
+      {
+        "mach": 1.1000000000000005,
+        "best_alt_m": 8000,
+        "accel_mps2": 1.3876106804213721
+      },
+      {
+        "mach": 1.1500000000000004,
+        "best_alt_m": 8000,
+        "accel_mps2": 0.9603277831668361
+      },
+      {
+        "mach": 1.2000000000000004,
+        "best_alt_m": 8000,
+        "accel_mps2": 0.5330448859122983
+      },
+      {
+        "mach": 1.2500000000000004,
+        "best_alt_m": 11000,
+        "accel_mps2": 0.253961746776186
+      },
+      {
+        "mach": 1.3000000000000005,
+        "best_alt_m": 11000,
+        "accel_mps2": 0.06712497941206441
+      }
+    ]
+  }
+}
