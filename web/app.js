@@ -787,11 +787,11 @@ function clearPlot() {
     if (window.Plotly) { try { Plotly.purge(plotEl); } catch (e) { /* 忽略 */ } }
     plotEl.innerHTML = '<div class="plot-placeholder">请在上方搜索并选择一架飞机<br><span class="plot-placeholder-sub">（切换国家后需重新选择飞机）</span></div>';
   }
-  // 清空爬升路线图表
+  // 清空爬升路线图表（不留占位文字，渲染时根据数据决定显示内容）
   const climbEl = document.getElementById('plot-climb');
   if (climbEl) {
     if (window.Plotly) { try { Plotly.purge(climbEl); } catch (e) { /* 忽略 */ } }
-    climbEl.innerHTML = '<div class="plot-placeholder">请在上方搜索并选择一架飞机<br><span class="plot-placeholder-sub">（选择飞机后将显示最佳爬升速度程序）</span></div>';
+    climbEl.innerHTML = '';
   }
   // 清空元数据面板
   const metaPanel = document.getElementById('metadata-panel');
