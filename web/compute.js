@@ -23,6 +23,13 @@ const N_ALT = ALT_NODES.length;   // 7
 const N_VEL = VEL_NODES.length;   // 12
 
 // ============================================================
+// 0. UI 让步工具（让浏览器在计算间隙更新 DOM）
+// ============================================================
+function yieldToUI() {
+  return new Promise(r => setTimeout(r, 0));
+}
+
+// ============================================================
 // 1. ISA 大气模型
 // ============================================================
 function isaAtmosphere(altitudeM) {
@@ -262,8 +269,9 @@ function calculateDrag(fm, mach, tasMps, rho, massKg) {
 // ============================================================
 // 5. 加速度网格
 // ============================================================
-function computeAccelGrid(fm, massKg, afterburner,
-                          machMin = 0.1, machMax = 2.5, machStep = 0.05) {
+async function computeAccelGrid(fm, massKg, afterburner,
+                          machMin = 0.1, machMax = 2.5, machStep = 0.05,
+                          onProgress = null) {
   const altitudes = ALT_NODES.slice();
   const machs = [];
   for (let m = machMin; m <= machMax + 0.001; m += machStep) {
@@ -271,7 +279,9 @@ function computeAccelGrid(fm, massKg, afterburner,
   }
 
   const samples = [];
-  for (const alt of altitudes) {
+  const totalAlts = altitudes.length;
+  for (let ai = 0; ai < totalAlts; ai++) {
+    const alt = altitudes[ai];
     const [T, _P, rho] = isaAtmosphere(alt);
     const aSound = Math.sqrt(GAMMA * R_AIR * T);
     for (const mach of machs) {
@@ -294,6 +304,11 @@ function computeAccelGrid(fm, massKg, afterburner,
         accel_mps2: accelMps2,
       });
     }
+    // 每完成一个高度层：报告进度并让步给浏览器更新 UI
+    if (onProgress) {
+      onProgress(ai + 1, totalAlts);
+    }
+    await yieldToUI();
   }
 
   const grid = { altitudes_m: altitudes, machs: machs };
@@ -391,7 +406,7 @@ function computeClimbRoute(samples, grid) {
 // ============================================================
 // 8. analyzeAircraft：完整分析入口（对应 build_record + compute_accel_grid + compute_optimal）
 // ============================================================
-function analyzeAircraft(aircraft, fm, params) {
+async function analyzeAircraft(aircraft, fm, params, onProgress = null) {
   const afterburner = !!params.afterburner;
   const fuelPct = float(params.fuel_pct != null ? params.fuel_pct : 0.0);
   const wtFmVersion = typeof params.wt_fm_version === 'string' ? params.wt_fm_version : String(params.wt_fm_version || '');
@@ -428,8 +443,9 @@ function analyzeAircraft(aircraft, fm, params) {
   const fuelMassKg = fuelPct * maxFuelMass;
   const flightMassKg = emptyMass + fuelMassKg;
 
-  // 计算加速度网格与最优剖面
-  const [samples, grid] = computeAccelGrid(fm, flightMassKg, afterburner);
+  // 计算加速度网格与最优剖面（传入进度回调）
+  const [samples, grid] = await computeAccelGrid(fm, flightMassKg, afterburner,
+                                                 0.1, 2.5, 0.05, onProgress);
   const optimal = computeOptimal(samples, grid);
   const climbRoute = computeClimbRoute(samples, grid);
 

@@ -8,11 +8,11 @@
   <!-- Google Fonts: Poppins 用于标题，Lora 用于正文 -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- 加速度计算引擎（浏览器端实现，移植自 lib/compute.py） -->
-  <script src="compute.js?v=18"></script>
+  <script src="compute.js?v=19"></script>
   <!-- 应用逻辑 -->
-  <script src="app.js?v=18"></script>
+  <script src="app.js?v=19"></script>
   <!-- 应用样式 -->
-  <link rel="stylesheet" href="style.css?v=18">
+  <link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
   <!-- 顶部标题栏与控制区 -->
@@ -40,6 +40,12 @@
       <span id="status-bar" class="status"></span>
     </div>
   </header>
+
+  <!-- 计算进度条 -->
+  <div id="compute-progress" class="compute-progress" style="display:none">
+    <label class="progress-label" id="progress-label">计算中...</label>
+    <progress id="progress-bar" max="1" value="0"></progress>
+  </div>
 
   <!-- 广告位 1：顶部横向横幅 -->
   <aside class="ad-container ad-top">

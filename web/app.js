@@ -48,6 +48,31 @@ function setStatus(msg, isError = false) {
   }
 }
 
+// ===== 1.5 进度条控制 =====
+function showProgress(label) {
+  const container = document.getElementById('compute-progress');
+  const bar = document.getElementById('progress-bar');
+  const lbl = document.getElementById('progress-label');
+  if (!container || !bar) return;
+  container.style.display = 'flex';
+  bar.value = 0;
+  if (lbl && label) lbl.textContent = label;
+}
+
+function updateProgress(done, total) {
+  const bar = document.getElementById('progress-bar');
+  const lbl = document.getElementById('progress-label');
+  if (!bar) return;
+  bar.value = total > 0 ? done / total : 0;
+  if (lbl) lbl.textContent = `计算加速度网格... (${done}/${total})`;
+}
+
+function hideProgress() {
+  const container = document.getElementById('compute-progress');
+  if (!container) return;
+  container.style.display = 'none';
+}
+
 // ===== 2a. 填充国家筛选器 =====
 function populateNationSelect(nations) {
   const sel = document.getElementById('nation-select');
@@ -808,23 +833,29 @@ async function recomputeAndRender(statusMsg) {
   if (statusMsg) setStatus(statusMsg);
   // 让 UI 有机会更新状态栏
   await new Promise(r => setTimeout(r, 0));
-  const data = analyzeAircraft(currentAircraftName, currentFm, {
+
+  showProgress('计算加速度网格...');
+  const data = await analyzeAircraft(currentAircraftName, currentFm, {
     fuel_pct: currentFuelPct,
     afterburner: true,
-  });
+  }, updateProgress);
+
   // 挂载质量叠加到飞行质量，并重算加速度网格（质量变大→加速度降低）
   // 需同步重算 optimal 与 climb_route，使其与新质量下的 samples 一致
   if (currentPayloadKg > 0) {
+    showProgress('重算挂载质量加速度...');
     const baseMass = data.metadata.flight_mass_kg;
     const newMass = baseMass + currentPayloadKg;
     // 用新质量重算加速度网格
-    const [samples, grid] = computeAccelGrid(currentFm, newMass, true);
+    const [samples, grid] = await computeAccelGrid(currentFm, newMass, true, 0.1, 2.5, 0.05, updateProgress);
     data.samples = samples;
     data.grid = grid;
     data.metadata.flight_mass_kg = newMass;
     data.optimal = computeOptimal(samples, grid);
     data.climb_route = computeClimbRoute(samples, grid);
   }
+  hideProgress();
+
   data.metadata.computed_at = new Date(Date.now() + 8 * 3600 * 1000)
     .toISOString().replace('Z', '+08:00');
   currentData = data;
