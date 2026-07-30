@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# 构建脚本：将源文件整理为 Cloudflare Pages 可部署的 dist/ 目录
+# 构建脚本：生成 Cloudflare Worker 可托管的 dist/ 静态资源目录
+# 用法: bash build.sh
 # 结构:
-#   dist/index.html        根跳转页 → /web/
-#   dist/web/*             应用静态文件 (index.html 入口，引用 ../data/raw/*.blkx)
-#   dist/data/raw/*.blkx   飞行模型原始数据
+#   dist/index.html        根跳转页 → 302 到 /web/
+#   dist/web/*            应用静态文件（入口 web/index.html）
+#   dist/data/raw/*.blkx  飞行模型原始数据（前端通过 ../data/raw/ 加载）
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,10 +16,15 @@ mkdir -p "$DIST_DIR/web" "$DIST_DIR/data/raw"
 # 复制应用静态文件
 cp "$ROOT_DIR/web/"* "$DIST_DIR/web/"
 
-# 复制飞行模型原始数据 (.blkx)
-cp "$ROOT_DIR/data/raw/"*.blkx "$DIST_DIR/data/raw/" 2>/dev/null || true
+# 复制飞行模型原始数据（.blkx）
+shopt -s nullglob
+blkx_files=("$ROOT_DIR/data/raw/"*.blkx)
+if [ ${#blkx_files[@]} -gt 0 ]; then
+  cp "${blkx_files[@]}" "$DIST_DIR/data/raw/"
+fi
 
-# 根路径跳转页（访问 / 时自动跳转到 /web/）
+# 根路径占位页（Worker 的 _worker.js 会对 / 做 302 重定向，
+# 这里仍放一份 index.html 作为无 Worker 环境下的降级）
 cat > "$DIST_DIR/index.html" <<'EOF'
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -33,4 +39,6 @@ cat > "$DIST_DIR/index.html" <<'EOF'
 </html>
 EOF
 
-echo "构建完成: $DIST_DIR"
+echo "==> 构建完成: $DIST_DIR"
+echo "==> 文件清单:"
+( cd "$DIST_DIR" && find . -type f | sort )
