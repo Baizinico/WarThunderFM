@@ -1,0 +1,5 @@
+data/raw/*.blkx
+data/computed/*.json
+__pycache__/
+*.pyc
+.trae/
