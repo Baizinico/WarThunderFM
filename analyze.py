@@ -18,7 +18,7 @@ import sys
 import webbrowser
 from pathlib import Path
 
-from lib.compute import compute_accel_grid, compute_optimal
+from lib.compute import compute_accel_grid, compute_climb_route, compute_optimal
 from lib.downloader import DEFAULT_RAW_DIR, download_fm
 from lib.schema import build_record, load_json, save_json
 
@@ -175,6 +175,8 @@ def _compute_one(aircraft: str, no_afterburner: bool = False,
         samples, grid = compute_accel_grid(fm, mass_kg, afterburner=afterburner)
         # 5. 计算最优剖面
         optimal = compute_optimal(samples, grid)
+        # 5.5 计算最佳爬升速度程序（基于剩余功率 SEP）
+        climb_route = compute_climb_route(samples, grid)
         # 6. 组装参数
         params = {
             "afterburner": afterburner,
@@ -182,7 +184,7 @@ def _compute_one(aircraft: str, no_afterburner: bool = False,
             "wt_fm_version": "datamine-master",
         }
         # 7. 构建 record
-        record = build_record(aircraft, fm, samples, grid, optimal, params)
+        record = build_record(aircraft, fm, samples, grid, optimal, params, climb_route)
         # 8. 保存
         COMPUTED_DIR.mkdir(parents=True, exist_ok=True)
         out_path = COMPUTED_DIR / f"{aircraft}.json"

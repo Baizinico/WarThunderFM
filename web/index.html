@@ -8,11 +8,11 @@
   <!-- Google Fonts: Poppins 用于标题，Lora 用于正文 -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- 加速度计算引擎（浏览器端实现，移植自 lib/compute.py） -->
-  <script src="compute.js?v=16"></script>
+  <script src="compute.js?v=17"></script>
   <!-- 应用逻辑 -->
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=17"></script>
   <!-- 应用样式 -->
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
   <!-- 顶部标题栏与控制区 -->
@@ -46,11 +46,15 @@
     <!-- 元数据卡片，由 app.js 动态填充 -->
   </section>
 
-  <!-- 图表区域：仅保留 3D 加速度曲面主图 -->
+  <!-- 图表区域：3D 加速度曲面主图 + 最佳爬升路线副图 -->
   <main class="plots">
     <div class="plot-card plot-main">
       <h2>3D 加速度曲面</h2>
       <div id="plot-3d" class="plot-area"></div>
+    </div>
+    <div class="plot-card plot-climb">
+      <h2>最佳爬升路线（SEP 速度程序）</h2>
+      <div id="plot-climb" class="plot-area plot-area-climb"></div>
     </div>
   </main>
 

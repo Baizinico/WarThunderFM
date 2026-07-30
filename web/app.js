@@ -437,7 +437,7 @@ function loadPlotlyOnce() {
   return plotlyPromise;
 }
 
-async function render3DSurface(samples, grid) {
+async function render3DSurface(samples, grid, climbRoute) {
   const { z, x, y, samplesGrid } = samplesToMatrix(samples, grid);
   // 平滑 Z 矩阵：负值→null，并用邻域插值填充正加速度区域之间的"洞"，
   // 使曲面在正加速度区域之间平滑过渡连接，不显示 0，纯负值区域保持 null
@@ -478,6 +478,46 @@ async function render3DSurface(samples, grid) {
       '<b>高度 %{y} m · 马赫 %{x}</b><br>' +
       '加速度: <b>%{z:.2f} m/s²</b><extra></extra>'
   };
+  // 最佳爬升路线叠加层：scatter3d 线+点，悬浮于曲面之上
+  // z 轴为加速度，叠加 +0.5 m/s² 偏移使曲线脱离曲面可见
+  const traces = [trace];
+  if (climbRoute && climbRoute.length > 0) {
+    const cX = climbRoute.map(p => p.mach);
+    const cY = climbRoute.map(p => p.altitude_m);
+    const cZ = climbRoute.map(p => (p.accel_mps2 != null ? p.accel_mps2 : 0) + 0.5);
+    const cCustom = climbRoute.map(p => [
+      p.tas_kmh != null ? p.tas_kmh : null,
+      p.sep_mps != null ? p.sep_mps : null,
+      p.altitude_m,
+      p.mach
+    ]);
+    traces.push({
+      type: 'scatter3d',
+      mode: 'lines+markers',
+      x: cX,
+      y: cY,
+      z: cZ,
+      customdata: cCustom,
+      line: {
+        color: COLOR_GREEN,
+        width: 6,
+        dash: 'solid'
+      },
+      marker: {
+        size: 6,
+        color: COLOR_GREEN,
+        symbol: 'circle',
+        line: { color: '#faf9f5', width: 1 }
+      },
+      name: '最佳爬升路线',
+      hovertemplate:
+        '<b>爬升路线</b><br>' +
+        '高度 %{y} m · 马赫 %{x}<br>' +
+        '加速度: %{customdata[3]:.2f} m/s²<br>' +
+        'TAS: %{customdata[0]:.0f} km/h<br>' +
+        'SEP(爬升率): <b>%{customdata[1]:.1f} m/s</b><extra></extra>'
+    });
+  }
   const layout = {
     autosize: true,
     margin: { l: 0, r: 0, b: 0, t: 20 },
@@ -552,7 +592,7 @@ async function render3DSurface(samples, grid) {
   const myToken = renderToken;
   renderQueue = renderQueue.then(() => {
     if (myToken !== renderToken) return;  // 已被更新的请求取代，跳过
-    return performRender(trace, layout, config);
+    return performRender(traces, layout, config);
   });
 }
 
@@ -561,7 +601,7 @@ async function render3DSurface(samples, grid) {
  * 每次都彻底重建 DOM 元素以获取全新的 WebGL 上下文，从根本上避免
  * uniformMatrix4fv 错误（Plotly 在同一 div 上反复渲染会复用损坏的 WebGL 程序对象）。
  */
-function performRender(trace, layout, config) {
+function performRender(traces, layout, config) {
   return new Promise((resolve) => {
     const oldEl = document.getElementById('plot-3d');
     if (!oldEl) { resolve(); return; }
@@ -575,7 +615,7 @@ function performRender(trace, layout, config) {
     // 在新的宏任务中渲染，确保 DOM 替换已应用
     requestAnimationFrame(() => {
       try {
-        Plotly.newPlot('plot-3d', [trace], layout, config).then(resolve).catch((err) => {
+        Plotly.newPlot('plot-3d', traces, layout, config).then(resolve).catch((err) => {
           console.error('3D 曲面渲染失败:', err);
           resolve();
         });
@@ -584,6 +624,122 @@ function performRender(trace, layout, config) {
         resolve();
       }
     });
+  });
+}
+
+// ===== 5.5 渲染最佳爬升路线 2D 图表 =====
+/**
+ * 单独的 2D 图表：横轴高度(m)，左纵轴马赫数，右纵轴 SEP 爬升率(m/s)。
+ * 双 y 轴同时展示「高度 → 最佳爬升马赫数」速度程序与对应的稳态爬升率，
+ * 让飞行员直观读出每个高度应飞的速度与能获得的爬升率。
+ */
+async function renderClimbRouteChart(climbRoute) {
+  const el = document.getElementById('plot-climb');
+  if (!el) return;
+  // 无数据时显示占位提示
+  if (!climbRoute || climbRoute.length === 0) {
+    if (window.Plotly) { try { Plotly.purge(el); } catch (e) { /* 忽略 */ } }
+    el.innerHTML = '<div class="plot-placeholder">该飞机在当前参数下无可用爬升路线<br><span class="plot-placeholder-sub">（推力不足以克服阻力，无 SEP>0 状态）</span></div>';
+    return;
+  }
+  // 懒加载 Plotly.js（与 3D 曲面共用同一 Promise）
+  try {
+    await loadPlotlyOnce();
+  } catch (err) {
+    el.innerHTML = '<div class="plot-placeholder">渲染库加载失败<br><span class="plot-placeholder-sub">请检查网络后重新选择飞机</span></div>';
+    return;
+  }
+  const alts = climbRoute.map(p => p.altitude_m);
+  const machs = climbRoute.map(p => p.mach);
+  const seps = climbRoute.map(p => p.sep_mps);
+  const tass = climbRoute.map(p => p.tas_kmh);
+  const accels = climbRoute.map(p => p.accel_mps2);
+
+  // 主轨迹：马赫数 vs 高度（左 y 轴，绿色实线 + 圆点）
+  const traceMach = {
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: alts,
+    y: machs,
+    name: '最佳爬升马赫数',
+    line: { color: COLOR_GREEN, width: 3, dash: 'solid' },
+    marker: { size: 8, color: COLOR_GREEN, line: { color: '#faf9f5', width: 1 } },
+    hovertemplate:
+      '<b>高度 %{x} m</b><br>' +
+      '马赫数: <b>%{y:.3f}</b><br>' +
+      'TAS: %{customdata[0]:.0f} km/h<br>' +
+      '加速度: %{customdata[1]:.2f} m/s²<br>' +
+      'SEP(爬升率): <b>%{customdata[2]:.1f} m/s</b><extra></extra>',
+    customdata: tass.map((t, i) => [t, accels[i], seps[i]])
+  };
+  // 副轨迹：SEP 爬升率 vs 高度（右 y 轴，橙色虚线 + 方块）
+  const traceSep = {
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: alts,
+    y: seps,
+    name: 'SEP 爬升率',
+    yaxis: 'y2',
+    line: { color: COLOR_ACCENT, width: 2, dash: 'dash' },
+    marker: { size: 7, color: COLOR_ACCENT, symbol: 'square', line: { color: '#faf9f5', width: 1 } },
+    hovertemplate:
+      '<b>高度 %{x} m</b><br>' +
+      'SEP(爬升率): <b>%{y:.1f} m/s</b><extra></extra>'
+  };
+
+  const layout = {
+    autosize: true,
+    margin: { l: 60, r: 60, t: 20, b: 50 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: {
+      family: "'Lora', 'Georgia', serif",
+      color: '#faf9f5',
+      size: 12
+    },
+    showlegend: true,
+    legend: {
+      x: 0.02, y: 0.98,
+      bgcolor: 'rgba(31,31,29,0.7)',
+      bordercolor: '#3a3a36',
+      borderwidth: 1,
+      font: { size: 11 }
+    },
+    xaxis: {
+      title: { text: '高度 (m)', font: { size: 13, color: '#faf9f5' } },
+      gridcolor: '#3a3a36',
+      zerolinecolor: '#b0aea5',
+      tickfont: { color: '#b0aea5', size: 11 },
+      showgrid: true
+    },
+    yaxis: {
+      title: { text: '马赫数', font: { size: 13, color: COLOR_GREEN } },
+      gridcolor: '#3a3a36',
+      zerolinecolor: '#b0aea5',
+      tickfont: { color: COLOR_GREEN, size: 11 },
+      showgrid: true
+    },
+    yaxis2: {
+      title: { text: 'SEP 爬升率 (m/s)', font: { size: 13, color: COLOR_ACCENT } },
+      overlaying: 'y',
+      side: 'right',
+      gridcolor: 'rgba(0,0,0,0)',
+      tickfont: { color: COLOR_ACCENT, size: 11 },
+      showgrid: false
+    }
+  };
+  const config = {
+    responsive: true,
+    displaylogo: false,
+    toImageButtonOptions: { format: 'png', filename: 'wt-climb-route', width: 1600, height: 800 }
+  };
+  // 与 3D 渲染共用渲染队列，避免并发 WebGL/Canvas 操作冲突
+  renderQueue = renderQueue.then(() => {
+    try {
+      Plotly.newPlot(el, [traceMach, traceSep], layout, config);
+    } catch (err) {
+      console.error('爬升路线图表渲染失败:', err);
+    }
   });
 }
 
@@ -605,6 +761,12 @@ function clearPlot() {
     // Plotly 可能尚未加载（懒加载），仅在已加载时清理
     if (window.Plotly) { try { Plotly.purge(plotEl); } catch (e) { /* 忽略 */ } }
     plotEl.innerHTML = '<div class="plot-placeholder">请在上方搜索并选择一架飞机<br><span class="plot-placeholder-sub">（切换国家后需重新选择飞机）</span></div>';
+  }
+  // 清空爬升路线图表
+  const climbEl = document.getElementById('plot-climb');
+  if (climbEl) {
+    if (window.Plotly) { try { Plotly.purge(climbEl); } catch (e) { /* 忽略 */ } }
+    climbEl.innerHTML = '<div class="plot-placeholder">请在上方搜索并选择一架飞机<br><span class="plot-placeholder-sub">（选择飞机后将显示最佳爬升速度程序）</span></div>';
   }
   // 清空元数据面板
   const metaPanel = document.getElementById('metadata-panel');
@@ -651,6 +813,7 @@ async function recomputeAndRender(statusMsg) {
     afterburner: true,
   });
   // 挂载质量叠加到飞行质量，并重算加速度网格（质量变大→加速度降低）
+  // 需同步重算 optimal 与 climb_route，使其与新质量下的 samples 一致
   if (currentPayloadKg > 0) {
     const baseMass = data.metadata.flight_mass_kg;
     const newMass = baseMass + currentPayloadKg;
@@ -660,15 +823,17 @@ async function recomputeAndRender(statusMsg) {
     data.grid = grid;
     data.metadata.flight_mass_kg = newMass;
     data.optimal = computeOptimal(samples, grid);
+    data.climb_route = computeClimbRoute(samples, grid);
   }
   data.metadata.computed_at = new Date(Date.now() + 8 * 3600 * 1000)
     .toISOString().replace('Z', '+08:00');
   currentData = data;
   renderMetadata(data.metadata, currentAircraftNation);
   try {
-    await render3DSurface(data.samples, data.grid);
+    await render3DSurface(data.samples, data.grid, data.climb_route);
+    await renderClimbRouteChart(data.climb_route);
   } catch (renderErr) {
-    console.error('3D 渲染出错（不影响数据）:', renderErr);
+    console.error('渲染出错（不影响数据）:', renderErr);
   }
   setStatus('就绪');
 }

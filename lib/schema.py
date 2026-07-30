@@ -67,6 +67,18 @@ OPTIMAL_BEST_ALT_FIELDS: list[str] = [
     "accel_mps2",
 ]
 
+# climb_route 元素必填字段（最佳爬升速度程序：每个高度的最佳爬升马赫数）
+CLIMB_ROUTE_FIELDS: list[str] = [
+    "altitude_m",
+    "mach",
+    "tas_kmh",
+    "sep_mps",
+    "accel_mps2",
+]
+
+# SEP 爬升率范围（m/s）：上限放宽至 1000 m/s 以容纳超高 TWR 装备
+SEP_MPS_RANGE: tuple[float, float] = (-100.0, 1000.0)
+
 # 数值范围常量（闭区间）
 # ACCEL_RANGE 拓宽至 -20000：超轻型无人机（如 uav_inf_recon_drone, EmptyMass=1kg）在
 # 超声速+低高度时减速度可达 -8687 m/s²（数学正确值——无人机无法在高马赫数飞行）。
@@ -322,6 +334,35 @@ def validate(data: dict) -> tuple[bool, list[str]]:
                     _check_number(errors, f"optimal.best_alt_per_mach[{i}].accel_mps2",
                                   item["accel_mps2"], ACCEL_RANGE)
 
+    # --- climb_route（可选字段：最佳爬升速度程序）---
+    climb_route = data.get("climb_route")
+    if climb_route is not None:
+        if not isinstance(climb_route, list):
+            errors.append("climb_route 必须是 list")
+        else:
+            for i, item in enumerate(climb_route):
+                if not isinstance(item, dict):
+                    errors.append(f"climb_route[{i}] 必须是 dict 类型")
+                    continue
+                for field in CLIMB_ROUTE_FIELDS:
+                    if field not in item:
+                        errors.append(f"climb_route[{i}] 缺少必填字段：{field}")
+                if "altitude_m" in item:
+                    _check_number(errors, f"climb_route[{i}].altitude_m",
+                                  item["altitude_m"], ALTITUDE_RANGE)
+                if "mach" in item:
+                    _check_number(errors, f"climb_route[{i}].mach",
+                                  item["mach"], MACH_RANGE)
+                if "tas_kmh" in item:
+                    _check_number(errors, f"climb_route[{i}].tas_kmh",
+                                  item["tas_kmh"], TAS_KMH_RANGE)
+                if "sep_mps" in item:
+                    _check_number(errors, f"climb_route[{i}].sep_mps",
+                                  item["sep_mps"], SEP_MPS_RANGE)
+                if "accel_mps2" in item:
+                    _check_number(errors, f"climb_route[{i}].accel_mps2",
+                                  item["accel_mps2"], ACCEL_RANGE)
+
     return (len(errors) == 0), errors
 
 
@@ -329,7 +370,7 @@ def validate(data: dict) -> tuple[bool, list[str]]:
 # 3. build_record
 # ============================================================
 def build_record(aircraft: str, fm: dict, samples: list[dict], grid: dict,
-                 optimal: dict, params: dict) -> dict:
+                 optimal: dict, params: dict, climb_route: list[dict] | None = None) -> dict:
     """组装符合 schema 的加速度记录 dict。
 
     参数:
@@ -338,6 +379,7 @@ def build_record(aircraft: str, fm: dict, samples: list[dict], grid: dict,
         samples: compute_accel_grid 返回的样本列表。
         grid: compute_accel_grid 返回的网格描述。
         optimal: compute_optimal 返回的最优剖面（须含 best_alt_m 字段）。
+        climb_route: compute_climb_route 返回的最佳爬升速度程序（可选）。
         params: 参数字典，含
             - afterburner: bool 是否启用加力
             - fuel_pct: float 燃油比例（0-1）
@@ -412,6 +454,7 @@ def build_record(aircraft: str, fm: dict, samples: list[dict], grid: dict,
         "grid": grid,
         "samples": samples,
         "optimal": optimal,
+        "climb_route": climb_route if climb_route is not None else [],
     }
 
 

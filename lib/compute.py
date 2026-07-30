@@ -517,3 +517,51 @@ def compute_optimal(samples: list[dict], grid: dict) -> dict:
         "max_speed_per_alt": max_speed_per_alt,
         "best_alt_per_mach": best_alt_per_mach,
     }
+
+
+# ============================================================
+# 7. 最佳爬升路线（基于剩余功率 SEP 的爬升速度程序）
+# ============================================================
+def compute_climb_route(samples: list[dict], grid: dict) -> list[dict]:
+    """基于剩余功率（SEP）计算最佳爬升速度程序。
+
+    SEP（Specific Excess Power）= (T-D)·V / (m·g) = a·V / g，
+    单位 m/s，即该状态下可达到的最大稳态爬升率。
+
+    对每个高度，在 accel>0 的点中选取 SEP 最大的马赫数，
+    连接为一条「高度 → 最佳爬升马赫数」的速度程序曲线，
+    给出从海平面爬升到包线顶点应遵循的马赫数随高度变化规律。
+
+    参数:
+        samples: compute_accel_grid 返回的样本列表。
+        grid: compute_accel_grid 返回的网格描述。
+
+    返回:
+        [{"altitude_m", "mach", "tas_kmh", "sep_mps", "accel_mps2"}, ...]
+        按高度升序排列；无 accel>0 点的高度被跳过。
+    """
+    altitudes = grid.get("altitudes_m", [])
+
+    # 按高度分组
+    by_alt: dict[float, list[dict]] = {}
+    for s in samples:
+        by_alt.setdefault(s["altitude_m"], []).append(s)
+
+    route: list[dict] = []
+    for alt in altitudes:
+        best: dict | None = None
+        for s in by_alt.get(alt, []):
+            if s["accel_mps2"] <= 0:
+                continue  # 仅在可加速区域选取
+            sep = s["tas_mps"] * s["accel_mps2"] / G  # m/s 爬升率
+            if best is None or sep > best["sep_mps"]:
+                best = {
+                    "altitude_m": alt,
+                    "mach": s["mach"],
+                    "tas_kmh": s["tas_mps"] * 3.6,
+                    "sep_mps": sep,
+                    "accel_mps2": s["accel_mps2"],
+                }
+        if best is not None:
+            route.append(best)
+    return route

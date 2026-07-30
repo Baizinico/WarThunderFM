@@ -350,7 +350,46 @@ function computeOptimal(samples, grid) {
 }
 
 // ============================================================
-// 7. analyzeAircraft：完整分析入口（对应 build_record + compute_accel_grid + compute_optimal）
+// 7. 最佳爬升路线（基于剩余功率 SEP 的爬升速度程序）
+// ============================================================
+// 剩余功率（Specific Excess Power, SEP）= (T-D)·V / (m·g) = a·V / g
+//   单位 m/s，即该状态下可达到的最大稳态爬升率。
+// 最佳爬升路线：对每个高度，在 accel>0 的点中选取 SEP 最大的马赫数，
+//   连接为一条「高度 → 最佳爬升马赫数」的速度程序曲线。
+//   该曲线给出从海平面爬升到包线顶点应遵循的马赫数随高度变化规律。
+function computeClimbRoute(samples, grid) {
+  const altitudes = grid.altitudes_m || [];
+
+  // 按高度分组
+  const byAlt = new Map();
+  for (const s of samples) {
+    if (!byAlt.has(s.altitude_m)) byAlt.set(s.altitude_m, []);
+    byAlt.get(s.altitude_m).push(s);
+  }
+
+  const route = [];
+  for (const alt of altitudes) {
+    let best = null;
+    for (const s of (byAlt.get(alt) || [])) {
+      if (s.accel_mps2 <= 0) continue;  // 仅在可加速区域选取
+      const sep = s.tas_mps * s.accel_mps2 / G;  // m/s 爬升率
+      if (best === null || sep > best.sep_mps) {
+        best = {
+          altitude_m: alt,
+          mach: s.mach,
+          tas_kmh: s.tas_mps * 3.6,
+          sep_mps: sep,
+          accel_mps2: s.accel_mps2,
+        };
+      }
+    }
+    if (best !== null) route.push(best);
+  }
+  return route;
+}
+
+// ============================================================
+// 8. analyzeAircraft：完整分析入口（对应 build_record + compute_accel_grid + compute_optimal）
 // ============================================================
 function analyzeAircraft(aircraft, fm, params) {
   const afterburner = !!params.afterburner;
@@ -392,6 +431,7 @@ function analyzeAircraft(aircraft, fm, params) {
   // 计算加速度网格与最优剖面
   const [samples, grid] = computeAccelGrid(fm, flightMassKg, afterburner);
   const optimal = computeOptimal(samples, grid);
+  const climbRoute = computeClimbRoute(samples, grid);
 
   // 北京时间（UTC+8）ISO 8601 字符串
   const computedAt = new Date(Date.now() + 8 * 3600 * 1000)
@@ -411,6 +451,7 @@ function analyzeAircraft(aircraft, fm, params) {
     grid: grid,
     samples: samples,
     optimal: optimal,
+    climb_route: climbRoute,
   };
 }
 
