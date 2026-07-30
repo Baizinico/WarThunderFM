@@ -28,11 +28,14 @@ TROPOPAUSE_M = 11000.0   # 对流层顶高度 m
 T_TROPO = T0 - LAPSE_RATE * TROPOPAUSE_M            # 对流层顶温度 ≈ 216.65 K
 P_TROPO = P0 * (T_TROPO / T0) ** TROPO_EXP          # 对流层顶气压 Pa
 
-# 推力系数网格节点（17 高度 × 12 速度）
-ALT_NODES = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 25000]  # m
+# 推力系数插值网格节点（匹配 .blkx 数据格式：7 高度 × 12 速度）
+ALT_NODES = [0, 2000, 5000, 8000, 11000, 15000, 25000]                            # m
 VEL_NODES = [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2400]     # km/h TAS
-N_ALT = len(ALT_NODES)   # 17
+N_ALT = len(ALT_NODES)   # 7
 N_VEL = len(VEL_NODES)   # 12
+
+# 输出加速度网格的高度节点（可自定义粒度，独立于 .blkx 数据格式）
+OUTPUT_ALT_NODES = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 25000]  # m
 
 
 # ============================================================
@@ -413,7 +416,7 @@ def compute_accel_grid(fm: dict, mass_kg: float, afterburner: bool,
           drag_n / net_force_n / accel_mps2。
         - grid: {"altitudes_m": [...], "machs": [...]}。
     """
-    altitudes = list(ALT_NODES)
+    altitudes = list(OUTPUT_ALT_NODES)
     machs = np.arange(mach_min, mach_max + 0.001, mach_step)
 
     samples: list[dict] = []
