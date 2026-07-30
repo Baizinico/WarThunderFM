@@ -1,0 +1,632 @@
+/* ============================================================
+   War Thunder 飞行模型 3D 加速度分析 - 应用样式表
+   应用 Anthropic 品牌色与字体规范
+   ============================================================ */
+
+/* ---------- 品牌色彩与字体变量 ---------- */
+:root {
+  --bg-dark: #141413;          /* 主背景 */
+  --bg-card: #1f1f1d;          /* 卡片背景 */
+  --bg-card-hover: #232220;    /* 卡片悬浮背景 */
+  --text-light: #faf9f5;       /* 主文字 */
+  --text-muted: #b0aea5;       /* 次要文字 */
+  --text-dim: #8a887f;         /* 更弱文字 */
+  --border: #3a3a36;           /* 边框 */
+  --accent-orange: #d97757;    /* 主强调色（橙） */
+  --accent-orange-bright: #e88a6a;  /* 橙色亮调（hover） */
+  --accent-blue: #6a9bcc;      /* 次强调色（蓝） */
+  --accent-green: #788c5d;     /* 三号强调色（绿） */
+  --bg-light: #e8e6dc;         /* 浅灰背景 */
+  --font-heading: 'Poppins', 'Arial', sans-serif;
+  --font-body: 'Lora', 'Georgia', serif;
+}
+
+/* ---------- 全局重置 ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ---------- 基础主体 ---------- */
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ---------- 滚动条样式（webkit 内核） ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ============================================================
+   Header 顶部标题栏
+   ============================================================ */
+.app-header {
+  background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-card) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+}
+
+/* 主标题：Poppins 粗体，下方带橙色装饰条 */
+.app-header h1 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--text-light);
+  letter-spacing: 0.01em;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.app-header h1::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background-color: var(--accent-orange);
+  margin-top: 0.5rem;
+  border-radius: 2px;
+}
+
+/* 控制区：flex 布局 */
+.controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.controls label {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+}
+
+/* ===== 燃油滑动条 ===== */
+.fuel-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#fuel-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 120px;
+  height: 4px;
+  background-color: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#fuel-slider:hover {
+  background-color: var(--text-muted);
+}
+
+#fuel-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background-color: var(--accent-orange);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 0 1px var(--accent-orange);
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#fuel-slider::-webkit-slider-thumb:hover {
+  background-color: var(--accent-orange-bright);
+  transform: scale(1.15);
+}
+
+#fuel-slider::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+#fuel-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background-color: var(--accent-orange);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--bg-card);
+  box-shadow: 0 0 0 1px var(--accent-orange);
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#fuel-slider::-moz-range-thumb:hover {
+  background-color: var(--accent-orange-bright);
+  transform: scale(1.15);
+}
+
+#fuel-slider:focus {
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
+}
+
+/* 燃油百分比数字输入框 */
+#fuel-input {
+  width: 52px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--accent-orange-bright);
+  padding: 0.3rem 0.4rem;
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+#fuel-input:hover {
+  border-color: var(--accent-orange);
+  background-color: var(--bg-card-hover);
+}
+
+#fuel-input:focus {
+  border-color: var(--accent-orange);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
+}
+
+/* 单位标签（% / kg） */
+.fuel-unit {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+/* ===== 挂载质量输入框 ===== */
+.payload-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#payload-input {
+  width: 80px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+#payload-input:hover {
+  border-color: var(--accent-orange);
+  background-color: var(--bg-card-hover);
+}
+
+#payload-input:focus {
+  border-color: var(--accent-orange);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
+}
+
+/* 国家选择下拉框 */
+#nation-select {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  padding: 0.45rem 0.9rem;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  min-width: 130px;
+  max-width: 180px;
+}
+
+#nation-select:hover {
+  border-color: var(--accent-orange);
+  background-color: var(--bg-card-hover);
+}
+
+#nation-select:focus {
+  border-color: var(--accent-orange);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
+}
+
+#nation-select option {
+  background-color: var(--bg-card);
+  color: var(--text-light);
+}
+
+/* ===== 飞机搜索框（combobox） ===== */
+.ac-combobox {
+  position: relative;
+  min-width: 240px;
+  max-width: 320px;
+}
+
+#aircraft-search {
+  width: 100%;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  padding: 0.45rem 0.9rem;
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+#aircraft-search::placeholder {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+#aircraft-search:hover {
+  border-color: var(--accent-orange);
+  background-color: var(--bg-card-hover);
+}
+
+#aircraft-search:focus {
+  border-color: var(--accent-orange);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
+}
+
+/* 下拉列表：绝对定位，最大高度滚动 */
+.ac-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 4px 0;
+}
+
+.ac-dropdown.show {
+  display: block;
+}
+
+/* 自定义滚动条样式 */
+.ac-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+.ac-dropdown::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+.ac-dropdown::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+.ac-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-orange);
+}
+
+/* 国家分组标题 */
+.ac-group-header {
+  padding: 0.4rem 0.9rem 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-orange-bright);
+  background-color: var(--bg-dark);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* 飞机选项 */
+.ac-option {
+  padding: 0.35rem 0.9rem 0.35rem 1.2rem;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 0.92rem;
+  transition: background-color 0.1s ease;
+}
+
+.ac-option:hover,
+.ac-option.highlighted {
+  background-color: var(--bg-card-hover);
+  color: var(--text-bright);
+}
+
+.ac-option.highlighted {
+  background-color: rgba(217, 119, 87, 0.18);
+}
+
+/* 搜索匹配高亮 */
+.ac-match {
+  color: var(--accent-orange-bright);
+  font-weight: 600;
+  background-color: rgba(217, 119, 87, 0.15);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* 无匹配结果提示 */
+.ac-empty {
+  padding: 0.8rem 0.9rem;
+  color: var(--text-dim);
+  font-style: italic;
+  text-align: center;
+}
+
+/* 结果被截断提示（超出最大显示项数） */
+.ac-truncated {
+  padding: 0.6rem 0.9rem;
+  color: var(--accent-orange-bright);
+  font-size: 0.82rem;
+  text-align: center;
+  background-color: rgba(217, 119, 87, 0.08);
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+}
+
+/* 状态栏：默认次要文字，error 状态橙色 */
+#status-bar,
+.status {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  margin-left: auto;
+}
+
+#status-bar.error,
+.status.error {
+  color: var(--accent-orange-bright);
+  font-weight: 500;
+}
+
+/* ============================================================
+   Metadata Panel 元数据面板
+   ============================================================ */
+.metadata-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+}
+
+/* 元数据卡片 */
+.meta-item {
+  background-color: var(--bg-card);
+  border-left: 3px solid var(--text-dim);
+  padding: 0.7rem 1rem;
+  border-radius: 4px;
+  min-width: 150px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+/* 强调卡片：左侧橙色边框（用于飞机代号） */
+.meta-item-accent {
+  border-left-color: var(--accent-orange);
+  background-color: var(--bg-card-hover);
+}
+
+.meta-item:hover {
+  background-color: var(--bg-card-hover);
+}
+
+/* 元数据标签：小号大写字母 */
+.meta-item .meta-label {
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+/* 元数据值：Poppins 半粗体，使用奶白色提升可读性 */
+.meta-item .meta-value {
+  color: var(--text-light);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.98rem;
+  display: block;
+  letter-spacing: 0.01em;
+}
+
+/* 强调卡片的值使用橙色 */
+.meta-item-accent .meta-value {
+  color: var(--accent-orange-bright);
+}
+
+/* ============================================================
+   Main Plots 图表区域
+   ============================================================ */
+.plots {
+  padding: 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ============================================================
+   Plot Card 图表卡片
+   ============================================================ */
+.plot-card {
+  background-color: var(--bg-card);
+  border-radius: 10px;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  transition: border-color 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.plot-card:hover {
+  border-color: var(--text-muted);
+}
+
+/* 卡片标题 */
+.plot-card h2 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--text-light);
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.01em;
+}
+
+/* 图表渲染区域：3D 主图较高，2D 副图较矮 */
+.plot-area {
+  width: 100%;
+  height: 62vh;
+  min-height: 460px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* 爬升路线 2D 图表：较矮，足以展示折线即可 */
+.plot-area-climb {
+  height: 36vh;
+  min-height: 280px;
+}
+
+/* 无正加速度区域时的占位提示 */
+.plot-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.plot-placeholder-sub {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ============================================================
+   Footer 页脚
+   ============================================================ */
+.app-footer {
+  padding: 1.5rem 2rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+}
+
+.app-footer p {
+  font-family: var(--font-body);
+}
+
+/* ============================================================
+   响应式：窄屏适配
+   ============================================================ */
+@media (max-width: 767px) {
+  .app-header {
+    padding: 1rem 0.75rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .metadata-panel {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .meta-item {
+    min-width: 130px;
+    padding: 0.55rem 0.8rem;
+  }
+
+  .plots {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .plot-card {
+    padding: 0.9rem;
+  }
+
+  .plot-area {
+    height: 50vh;
+    min-height: 360px;
+  }
+
+  .plot-area-climb {
+    height: 30vh;
+    min-height: 220px;
+  }
+
+  .app-footer {
+    padding: 1rem 0.75rem;
+  }
+}
+
+/* ============================================================
+   Plotly 元素微调
+   注：Plotly 通过内联 style 注入样式，需使用更高特异性选择器覆盖
+   ============================================================ */
+.plotly {
+  font-family: var(--font-body);
+}
+
+/* modebar 背景透明 */
+.js-plotly-plot .plotly .modebar,
+.plotly .modebar {
+  background: transparent;
+}
+
+/* Plotly 文本元素跟随正文字体并应用品牌色 */
+.plotly .gtitle,
+.plotly .title {
+  font-family: var(--font-heading);
+  fill: var(--text-light);
+}
+
+.plotly text {
+  font-family: var(--font-body);
+}
+
+/* Plotly 模式栏按钮在深色背景下保持可读 */
+.modebar-btn,
+.modebar-btn svg {
+  color: var(--text-muted);
+  fill: var(--text-muted);
+}
+
+.modebar-btn:hover svg {
+  fill: var(--accent-orange);
+}

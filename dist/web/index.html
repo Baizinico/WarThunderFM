@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!-- War Thunder 飞行模型 3D 加速分析 - 应用主页面 -->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>War Thunder 飞行模型 3D 加速度分析</title>
+  <!-- Google Fonts: Poppins 用于标题，Lora 用于正文 -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- 加速度计算引擎（浏览器端实现，移植自 lib/compute.py） -->
+  <script src="compute.js?v=17"></script>
+  <!-- 应用逻辑 -->
+  <script src="app.js?v=17"></script>
+  <!-- 应用样式 -->
+  <link rel="stylesheet" href="style.css?v=17">
+</head>
+<body>
+  <!-- 顶部标题栏与控制区 -->
+  <header class="app-header">
+    <h1>War Thunder 飞行模型 3D 加速度分析</h1>
+    <div class="controls">
+      <label for="nation-select">国家：</label>
+      <select id="nation-select"></select>
+      <label for="aircraft-search">飞机：</label>
+      <div class="ac-combobox" id="aircraft-combobox">
+        <input type="text" id="aircraft-search" placeholder="输入代号搜索..." autocomplete="off" spellcheck="false">
+        <div id="aircraft-dropdown" class="ac-dropdown" role="listbox"></div>
+      </div>
+      <label for="fuel-slider">燃油：</label>
+      <div class="fuel-control">
+        <input type="range" id="fuel-slider" min="30" max="100" value="50" step="1">
+        <input type="number" id="fuel-input" min="30" max="100" value="50" step="1">
+        <span class="fuel-unit">%</span>
+      </div>
+      <label for="payload-input">挂载质量：</label>
+      <div class="payload-control">
+        <input type="number" id="payload-input" min="0" max="20000" value="0" step="100">
+        <span class="fuel-unit">kg</span>
+      </div>
+      <span id="status-bar" class="status"></span>
+    </div>
+  </header>
+
+  <!-- 元数据面板：由 app.js 动态填充飞机元数据卡片 -->
+  <section id="metadata-panel" class="metadata-panel">
+    <!-- 元数据卡片，由 app.js 动态填充 -->
+  </section>
+
+  <!-- 图表区域：3D 加速度曲面主图 + 最佳爬升路线副图 -->
+  <main class="plots">
+    <div class="plot-card plot-main">
+      <h2>3D 加速度曲面</h2>
+      <div id="plot-3d" class="plot-area"></div>
+    </div>
+    <div class="plot-card plot-climb">
+      <h2>最佳爬升路线（SEP 速度程序）</h2>
+      <div id="plot-climb" class="plot-area plot-area-climb"></div>
+    </div>
+  </main>
+
+  <!-- 页脚信息 -->
+  <footer class="app-footer">
+    <p>数据来源：gszabi99/War-Thunder-Datamine · 计算基于 wt-fm-analysis 算法</p>
+  </footer>
+</body>
+</html>

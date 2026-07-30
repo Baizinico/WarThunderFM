@@ -1,0 +1,16 @@
+{
+  "datasets": [
+    {
+      "name": "j_10c",
+      "path": "data/raw/j_10c.blkx",
+      "nation": "china"
+    }
+  ],
+  "nations": [
+    {
+      "code": "china",
+      "label": "中国",
+      "count": 1
+    }
+  ]
+}
