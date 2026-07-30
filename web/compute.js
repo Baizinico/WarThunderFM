@@ -16,10 +16,10 @@ const TROPOPAUSE_M = 11000.0;   // 对流层顶高度 m
 const T_TROPO = T0 - LAPSE_RATE * TROPOPAUSE_M;            // 对流层顶温度 ≈ 216.65 K
 const P_TROPO = P0 * Math.pow(T_TROPO / T0, TROPO_EXP);    // 对流层顶气压 Pa
 
-// 推力系数网格节点（7 高度 × 12 速度）
-const ALT_NODES = [0, 2000, 5000, 8000, 11000, 15000, 25000];                            // m
+// 推力系数网格节点（17 高度 × 12 速度）
+const ALT_NODES = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 25000];  // m
 const VEL_NODES = [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 2400];     // km/h TAS
-const N_ALT = ALT_NODES.length;   // 7
+const N_ALT = ALT_NODES.length;   // 17
 const N_VEL = VEL_NODES.length;   // 12
 
 // ============================================================
