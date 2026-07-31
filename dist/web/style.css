@@ -411,7 +411,9 @@ body {
 /* ============================================================
    Ad Placeholder 广告位
    ============================================================ */
+/* 广告位：当前已隐藏（保留 HTML 结构以便未来接入广告时启用） */
 .ad-container {
+  display: none;
   margin: 0 2rem;
   padding: 0.75rem 1rem;
   background-color: var(--bg-card);
@@ -419,7 +421,6 @@ body {
   border-radius: 6px;
   text-align: center;
   min-height: 90px;
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -671,6 +672,13 @@ progress::-moz-progress-bar {
 
 .app-footer p {
   font-family: var(--font-body);
+}
+
+.footer-disclaimer {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  font-style: italic;
 }
 
 .app-version {
