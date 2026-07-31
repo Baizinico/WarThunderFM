@@ -54,6 +54,175 @@ function isaAtmosphere(altitudeM) {
 // ============================================================
 // 2. 推力双线性插值
 // ============================================================
+
+// --- 螺旋桨飞机推力常量 ---
+const HP_TO_WATT = 745.7;          // 英美马力 → 瓦特
+const ETA_PROP = 0.82;             // 巡航螺旋桨效率
+const ETA_STATIC = 0.75;           // 静推力致动盘修正系数
+
+function isPropAircraft(fm) {
+  if (!isObject(fm)) return false;
+  // 条件 1：有螺旋桨
+  let hasPropeller = false;
+  if (isObject(fm.PropellerType0) && Object.keys(fm.PropellerType0).length > 0) {
+    hasPropeller = true;
+  } else if (isObject(fm.Propeller0) && Object.keys(fm.Propeller0).length > 0) {
+    hasPropeller = true;
+  } else {
+    for (let i = 0; i < 16; i++) {
+      const eng = fm[`Engine${i}`];
+      if (isObject(eng) && isObject(eng.Propellor) && Object.keys(eng.Propellor).length > 0) {
+        hasPropeller = true;
+        break;
+      }
+    }
+  }
+  if (!hasPropeller) return false;
+  // 条件 2：缺少 ThrustMaxCoeff 网格（抽查 6 个节点）
+  const thrustData = getThrustData(fm);
+  const sampleNodes = [[0, 0], [0, 6], [3, 0], [3, 6], [6, 0], [6, 11]];
+  for (const [a, v] of sampleNodes) {
+    if (thrustData[`ThrustMaxCoeff_${a}_${v}`] != null) return false;
+  }
+  return true;
+}
+
+function getEnginePower(fm, altM) {
+  // 定位引擎定义字典
+  let eng = null;
+  for (const key of ['EngineType0', 'EngineType', 'EngineType1']) {
+    const e = fm[key];
+    if (isObject(e) && Object.keys(e).length > 0) { eng = e; break; }
+  }
+  if (eng === null) {
+    for (let i = 0; i < 16; i++) {
+      const e = fm[`Engine${i}`];
+      if (isObject(e) && Object.keys(e).length > 0) { eng = e; break; }
+    }
+  }
+  if (eng === null) return 0.0;
+
+  const main = eng.Main || {};
+  const basePower = float(main.Power != null ? main.Power : 0.0);
+
+  const comp = eng.Compressor;
+  if (!isObject(comp) || Object.keys(comp).length === 0) return basePower;
+
+  let bestPower = 0.0;
+  let hasAnyStage = false;
+
+  for (let stage = 0; stage < 4; stage++) {
+    const pkey = `Power${stage}`;
+    if (comp[pkey] == null) continue;
+    hasAnyStage = true;
+    const powerStage = float(comp[pkey]);
+    const altCrit = float(comp[`Altitude${stage}`] != null ? comp[`Altitude${stage}`] : 0.0);
+    const ceilingRaw = comp[`Ceiling${stage}`];
+
+    let stagePower;
+    if (ceilingRaw == null || float(ceilingRaw) <= 0) {
+      // 无天花板数据：临界高度以上每 1000 m 衰减约 12%
+      if (altM <= altCrit || altCrit <= 0) {
+        stagePower = powerStage;
+      } else {
+        const falloff = powerStage * 0.12 * Math.max(0.0, (altM - altCrit) / 1000.0);
+        stagePower = Math.max(0.0, powerStage - falloff);
+      }
+    } else {
+      const ceiling = float(ceilingRaw);
+      const powerAtCeiling = float(comp[`PowerAtCeiling${stage}`] != null
+        ? comp[`PowerAtCeiling${stage}`] : powerStage * 0.5);
+      const slope = (ceiling > altCrit && altCrit > 0)
+        ? (powerStage - powerAtCeiling) / (ceiling - altCrit) : 0.0;
+
+      if (altM <= altCrit) {
+        stagePower = powerStage;
+      } else if (altM <= ceiling) {
+        const frac = (altM - altCrit) / (ceiling - altCrit);
+        stagePower = powerStage + frac * (powerAtCeiling - powerStage);
+      } else {
+        stagePower = Math.max(0.0, powerAtCeiling - slope * (altM - ceiling));
+      }
+    }
+
+    if (stagePower > bestPower) bestPower = stagePower;
+  }
+
+  if (!hasAnyStage) bestPower = basePower;
+  return bestPower;
+}
+
+function getPropRadius(fm) {
+  // 路径 1：PropellerType0
+  const pt0 = fm.PropellerType0;
+  if (isObject(pt0)) {
+    const geo = pt0.Geometry;
+    if (isObject(geo) && geo.Radius != null) return float(geo.Radius);
+  }
+
+  // 路径 2：Propeller0
+  const p0 = fm.Propeller0;
+  if (isObject(p0)) {
+    const geo = p0.Geometry;
+    if (isObject(geo) && geo.Radius != null) return float(geo.Radius);
+  }
+
+  // 路径 3：Engine.Propellor.Diameter
+  for (let i = 0; i < 16; i++) {
+    const eng = fm[`Engine${i}`];
+    if (isObject(eng)) {
+      const prop = eng.Propellor;
+      if (isObject(prop) && prop.Diameter != null) return float(prop.Diameter) / 2.0;
+    }
+  }
+
+  // 路径 4：Propeller.Mass.Diameter
+  for (let i = 0; i < 16; i++) {
+    const p = fm[`Propeller${i}`];
+    if (isObject(p)) {
+      const mass = p.Mass;
+      if (isObject(mass) && mass.Diameter != null) return float(mass.Diameter) / 2.0;
+    }
+  }
+
+  // 路径 5：按功率估算 R ≈ 0.06 × P^0.25
+  let power = 1000.0;
+  let eng = null;
+  for (const key of ['EngineType0', 'EngineType', 'EngineType1']) {
+    const e = fm[key];
+    if (isObject(e) && Object.keys(e).length > 0) { eng = e; break; }
+  }
+  if (eng === null) {
+    for (let i = 0; i < 16; i++) {
+      const e = fm[`Engine${i}`];
+      if (isObject(e) && Object.keys(e).length > 0) { eng = e; break; }
+    }
+  }
+  if (isObject(eng)) {
+    const main = eng.Main;
+    if (isObject(main) && main.Power != null) power = Math.max(power, float(main.Power));
+  }
+  return 0.06 * Math.pow(power, 0.25);
+}
+
+function propellerThrust(fm, altM, tasMps, rho, powerHp) {
+  if (powerHp <= 0) return 0.0;
+
+  const radius = getPropRadius(fm);
+  const area = Math.PI * radius * radius;
+  const pWatts = powerHp * HP_TO_WATT;
+
+  // 静推力（致动盘理论）：T = (2·ρ·A·P²)^(1/3) × η_static
+  const tStatic = Math.pow(2.0 * rho * area * pWatts * pWatts, 1.0 / 3.0) * ETA_STATIC;
+
+  // 极低速 → 静推力
+  if (tasMps < 5.0) return tStatic;
+
+  // 飞行推力：T = P × η / V，钳制不超过静推力
+  const tDynamic = pWatts * ETA_PROP / tasMps;
+  return Math.min(tDynamic, tStatic);
+}
+
 function getThrustData(fm) {
   if (!isObject(fm)) return {};
   for (const key of ['EngineType0', 'EngineType', 'EngineType1']) {
@@ -114,6 +283,19 @@ function bilinearInterp(grid, xNodes, yNodes, x, y) {
 }
 
 function interpolateThrust(fm, altM, velKmh, afterburner) {
+  // --- 螺旋桨飞机分支：基于轴功率计算推力 ---
+  if (isPropAircraft(fm)) {
+    const nEngines = countEngines(fm);
+    const singlePowerHp = getEnginePower(fm, altM);
+    const totalPowerHp = singlePowerHp * nEngines;
+    const [_T, _P, rho] = isaAtmosphere(altM);
+    const tasMps = velKmh / 3.6;
+    const thrustN = propellerThrust(fm, altM, tasMps, rho, totalPowerHp);
+    // 螺旋桨无加力，军用和加力推力相同
+    return [thrustN, thrustN];
+  }
+
+  // --- 喷气飞机分支：原有 ThrustMaxCoeff 双线性插值 ---
   const thrustData = getThrustData(fm);
   const nEngines = countEngines(fm);
   const t0Kgf = float(thrustData.ThrustMax0 != null ? thrustData.ThrustMax0 : 0.0);
@@ -192,9 +374,9 @@ function extractDragComponents(fm) {
   if (!isObject(aero)) return [];
   const comps = [];
 
-  // 机翼
+  // --- 机翼 ---
   const wingPlane = aero.WingPlane;
-  if (isObject(wingPlane)) {
+  if (isObject(wingPlane) && Object.keys(wingPlane).length > 0) {
     const wingPolar = wingPlane.FlapsPolar0;
     if (isObject(wingPolar) && Object.keys(wingPolar).length > 0) {
       let area = sumAreas(wingPlane.Areas);
@@ -202,8 +384,21 @@ function extractDragComponents(fm) {
       comps.push([wingPolar, area]);
     }
   }
+  // 平坦格式机翼（NoFlaps 或 Wing）
+  if (comps.length === 0) {
+    for (const wingKey of ['NoFlaps', 'Wing']) {
+      const wingPolar = aero[wingKey];
+      if (isObject(wingPolar) && Object.keys(wingPolar).length > 0) {
+        let area = sumAreas(aero.Areas);
+        if (area <= 0) area = float(wingPolar.Area != null ? wingPolar.Area : 0.0);
+        comps.push([wingPolar, area]);
+        break;
+      }
+    }
+  }
 
-  // 机身 / 平尾 / 垂尾
+  // --- 机身 / 平尾 / 垂尾（嵌套格式优先）---
+  let flatUsed = false;
   for (const planeKey of ['FuselagePlane', 'HorStabPlane', 'VerStabPlane']) {
     const plane = aero[planeKey];
     if (!isObject(plane)) continue;
@@ -212,22 +407,65 @@ function extractDragComponents(fm) {
       let area = sumAreas(plane.Areas);
       if (area <= 0) area = float(polar.Area != null ? polar.Area : 0.0);
       comps.push([polar, area]);
+      flatUsed = true;
     }
   }
+
+  // --- 平坦格式：Fuselage / Stab / Fin ---
+  if (!flatUsed) {
+    const areaPower = estimateAreaFromPower(fm);
+    for (const subKey of ['Fuselage', 'Stab', 'Fin']) {
+      const sub = aero[subKey];
+      if (isObject(sub) && Object.keys(sub).length > 0) {
+        let area = sumAreas(sub.Areas);
+        if (area <= 0) area = float(sub.Area != null ? sub.Area : 0.0);
+        if (area <= 0) area = areaPower * (subKey === 'Fuselage' ? 0.35 : 0.15);
+        comps.push([sub, area]);
+      }
+    }
+  }
+
   return comps;
+}
+
+function estimateAreaFromPower(fm) {
+  const powerHp = getEnginePower(fm, 0.0);
+  if (powerHp <= 0) return 15.0;
+  return Math.max(10.0, 15.0 + (powerHp - 800.0) / 100.0);
 }
 
 function getWingData(fm) {
   const aero = fm.Aerodynamics;
   if (!isObject(aero)) return [{}, 0.0, 0.0];
+
+  // 嵌套格式
   const wingPlane = aero.WingPlane;
-  if (!isObject(wingPlane)) return [{}, 0.0, 0.0];
-  let wingPolar = wingPlane.FlapsPolar0;
-  if (!isObject(wingPolar)) wingPolar = {};
-  let area = sumAreas(wingPlane.Areas);
-  if (area <= 0) area = float(wingPolar.Area != null ? wingPolar.Area : 0.0);
-  const span = float(wingPlane.Span != null ? wingPlane.Span : 0.0);
-  return [wingPolar, area, span];
+  if (isObject(wingPlane) && Object.keys(wingPlane).length > 0) {
+    let wingPolar = wingPlane.FlapsPolar0;
+    if (!isObject(wingPolar)) wingPolar = {};
+    let area = sumAreas(wingPlane.Areas);
+    if (area <= 0) area = float(wingPolar.Area != null ? wingPolar.Area : 0.0);
+    const span = float(wingPlane.Span != null ? wingPlane.Span : 0.0);
+    if (area > 0 || span > 0) return [wingPolar, area, span];
+  }
+
+  // 平坦格式
+  for (const wingKey of ['NoFlaps', 'Wing']) {
+    const wingPolar = aero[wingKey];
+    if (isObject(wingPolar) && Object.keys(wingPolar).length > 0) {
+      let area = sumAreas(aero.Areas);
+      if (area <= 0) area = float(wingPolar.Area != null ? wingPolar.Area : 0.0);
+      let span = float(aero.Span != null ? aero.Span : 0.0);
+      if (area <= 0) area = estimateAreaFromPower(fm);
+      if (span <= 0 && area > 0) span = Math.sqrt(area * 6.0);
+      return [wingPolar, area, span];
+    }
+  }
+
+  // 完全兜底
+  const area = estimateAreaFromPower(fm);
+  const span = Math.sqrt(area * 6.0);
+  return [{}, area, span];
 }
 
 function calculateDrag(fm, mach, tasMps, rho, massKg) {
@@ -243,7 +481,8 @@ function calculateDrag(fm, mach, tasMps, rho, massKg) {
 
   // 诱导阻力：使用机翼极曲线
   const [wingPolar, wingArea, wingSpan] = getWingData(fm);
-  const e = isObject(wingPolar) ? float(wingPolar.OswaldsEfficiencyNumber != null ? wingPolar.OswaldsEfficiencyNumber : 0.75) : 0.75;
+  let e = isObject(wingPolar) ? float(wingPolar.OswaldsEfficiencyNumber != null ? wingPolar.OswaldsEfficiencyNumber : 0.75) : 0.75;
+  if (e <= 0) e = 0.75;
 
   // 展弦比 AR = Span² / S
   let ar;

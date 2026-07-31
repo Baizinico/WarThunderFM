@@ -48,6 +48,31 @@ function setStatus(msg, isError = false) {
   }
 }
 
+// ===== 1.5 进度条控制 =====
+function showProgress(label) {
+  const container = document.getElementById('compute-progress');
+  const bar = document.getElementById('progress-bar');
+  const lbl = document.getElementById('progress-label');
+  if (!container || !bar) return;
+  container.style.display = 'flex';
+  bar.value = 0;
+  if (lbl && label) lbl.textContent = label;
+}
+
+function updateProgress(done, total) {
+  const bar = document.getElementById('progress-bar');
+  const lbl = document.getElementById('progress-label');
+  if (!bar) return;
+  bar.value = total > 0 ? done / total : 0;
+  if (lbl) lbl.textContent = `计算加速度网格... (${done}/${total})`;
+}
+
+function hideProgress() {
+  const container = document.getElementById('compute-progress');
+  if (!container) return;
+  container.style.display = 'none';
+}
+
 // ===== 2a. 填充国家筛选器 =====
 function populateNationSelect(nations) {
   const sel = document.getElementById('nation-select');
@@ -487,7 +512,7 @@ async function render3DSurface(samples, grid, climbRoute) {
     const cZ = climbRoute.map(p => (p.accel_mps2 != null ? p.accel_mps2 : 0) + 0.5);
     const cCustom = climbRoute.map(p => [
       p.tas_kmh != null ? p.tas_kmh : null,
-      p.sep_mps != null ? p.sep_mps : null,
+      p.climb_angle_deg != null ? p.climb_angle_deg : null,
       p.altitude_m,
       p.mach
     ]);
@@ -515,7 +540,7 @@ async function render3DSurface(samples, grid, climbRoute) {
         '高度 %{y} m · 马赫 %{x}<br>' +
         '加速度: %{customdata[3]:.2f} m/s²<br>' +
         'TAS: %{customdata[0]:.0f} km/h<br>' +
-        'SEP(爬升率): <b>%{customdata[1]:.1f} m/s</b><extra></extra>'
+        '机头向上: <b>%{customdata[1]:.1f}°</b><extra></extra>'
     });
   }
   const layout = {
@@ -651,7 +676,7 @@ async function renderClimbRouteChart(climbRoute) {
   }
   const alts = climbRoute.map(p => p.altitude_m);
   const machs = climbRoute.map(p => p.mach);
-  const seps = climbRoute.map(p => p.sep_mps);
+  const angles = climbRoute.map(p => p.climb_angle_deg);
   const tass = climbRoute.map(p => p.tas_kmh);
   const accels = climbRoute.map(p => p.accel_mps2);
 
@@ -669,22 +694,22 @@ async function renderClimbRouteChart(climbRoute) {
       '马赫数: <b>%{y:.3f}</b><br>' +
       'TAS: %{customdata[0]:.0f} km/h<br>' +
       '加速度: %{customdata[1]:.2f} m/s²<br>' +
-      'SEP(爬升率): <b>%{customdata[2]:.1f} m/s</b><extra></extra>',
-    customdata: tass.map((t, i) => [t, accels[i], seps[i]])
+      '机头向上: <b>%{customdata[2]:.1f}°</b><extra></extra>',
+    customdata: tass.map((t, i) => [t, accels[i], angles[i]])
   };
-  // 副轨迹：SEP 爬升率 vs 高度（右 y 轴，橙色虚线 + 方块）
-  const traceSep = {
+  // 副轨迹：机头向上角度 vs 高度（右 y 轴，橙色虚线 + 方块）
+  const traceAngle = {
     type: 'scatter',
     mode: 'lines+markers',
     x: alts,
-    y: seps,
-    name: 'SEP 爬升率',
+    y: angles,
+    name: '机头向上角度',
     yaxis: 'y2',
     line: { color: COLOR_ACCENT, width: 2, dash: 'dash' },
     marker: { size: 7, color: COLOR_ACCENT, symbol: 'square', line: { color: '#faf9f5', width: 1 } },
     hovertemplate:
       '<b>高度 %{x} m</b><br>' +
-      'SEP(爬升率): <b>%{y:.1f} m/s</b><extra></extra>'
+      '机头向上: <b>%{y:.1f}°</b><extra></extra>'
   };
 
   const layout = {
@@ -720,7 +745,7 @@ async function renderClimbRouteChart(climbRoute) {
       showgrid: true
     },
     yaxis2: {
-      title: { text: 'SEP 爬升率 (m/s)', font: { size: 13, color: COLOR_ACCENT } },
+      title: { text: '机头向上角度 (°)', font: { size: 13, color: COLOR_ACCENT } },
       overlaying: 'y',
       side: 'right',
       gridcolor: 'rgba(0,0,0,0)',
@@ -736,7 +761,7 @@ async function renderClimbRouteChart(climbRoute) {
   // 与 3D 渲染共用渲染队列，避免并发 WebGL/Canvas 操作冲突
   renderQueue = renderQueue.then(() => {
     try {
-      Plotly.newPlot(el, [traceMach, traceSep], layout, config);
+      Plotly.newPlot(el, [traceMach, traceAngle], layout, config);
     } catch (err) {
       console.error('爬升路线图表渲染失败:', err);
     }
@@ -762,11 +787,11 @@ function clearPlot() {
     if (window.Plotly) { try { Plotly.purge(plotEl); } catch (e) { /* 忽略 */ } }
     plotEl.innerHTML = '<div class="plot-placeholder">请在上方搜索并选择一架飞机<br><span class="plot-placeholder-sub">（切换国家后需重新选择飞机）</span></div>';
   }
-  // 清空爬升路线图表
+  // 清空爬升路线图表（不留占位文字，渲染时根据数据决定显示内容）
   const climbEl = document.getElementById('plot-climb');
   if (climbEl) {
     if (window.Plotly) { try { Plotly.purge(climbEl); } catch (e) { /* 忽略 */ } }
-    climbEl.innerHTML = '<div class="plot-placeholder">请在上方搜索并选择一架飞机<br><span class="plot-placeholder-sub">（选择飞机后将显示最佳爬升速度程序）</span></div>';
+    climbEl.innerHTML = '';
   }
   // 清空元数据面板
   const metaPanel = document.getElementById('metadata-panel');
@@ -808,23 +833,29 @@ async function recomputeAndRender(statusMsg) {
   if (statusMsg) setStatus(statusMsg);
   // 让 UI 有机会更新状态栏
   await new Promise(r => setTimeout(r, 0));
-  const data = analyzeAircraft(currentAircraftName, currentFm, {
+
+  showProgress('计算加速度网格...');
+  const data = await analyzeAircraft(currentAircraftName, currentFm, {
     fuel_pct: currentFuelPct,
     afterburner: true,
-  });
+  }, updateProgress);
+
   // 挂载质量叠加到飞行质量，并重算加速度网格（质量变大→加速度降低）
   // 需同步重算 optimal 与 climb_route，使其与新质量下的 samples 一致
   if (currentPayloadKg > 0) {
+    showProgress('重算挂载质量加速度...');
     const baseMass = data.metadata.flight_mass_kg;
     const newMass = baseMass + currentPayloadKg;
     // 用新质量重算加速度网格
-    const [samples, grid] = computeAccelGrid(currentFm, newMass, true);
+    const [samples, grid] = await computeAccelGrid(currentFm, newMass, true, 0.1, 2.5, 0.05, updateProgress);
     data.samples = samples;
     data.grid = grid;
     data.metadata.flight_mass_kg = newMass;
     data.optimal = computeOptimal(samples, grid);
     data.climb_route = computeClimbRoute(samples, grid);
   }
+  hideProgress();
+
   data.metadata.computed_at = new Date(Date.now() + 8 * 3600 * 1000)
     .toISOString().replace('Z', '+08:00');
   currentData = data;
@@ -901,7 +932,7 @@ function initFuelSlider() {
 async function init() {
   setStatus('初始化...');
   try {
-    const resp = await fetch('manifest.json');
+    const resp = await fetch('manifest.json?v=2');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const manifest = await resp.json();
     const datasets = manifest.datasets || [];

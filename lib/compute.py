@@ -104,6 +104,205 @@ def _count_engines(fm: dict) -> int:
     return max(1, count)  # 至少 1 发
 
 
+# ============================================================
+# 2a. 螺旋桨飞机推力（基于轴功率）
+# ============================================================
+HP_TO_WATT = 745.7          # 英美马力 → 瓦特
+ETA_PROP = 0.82             # 巡航螺旋桨效率
+ETA_STATIC = 0.75           # 静推力致动盘修正系数
+
+
+def _is_prop_aircraft(fm: dict) -> bool:
+    """判断是否为螺旋桨飞机且缺少 ThrustMaxCoeff 系数网格。
+
+    只有同时满足以下两个条件才返回 True：
+    1. 飞机有螺旋桨数据（PropellerType0 / Propeller0 / Engine.Propellor）
+    2. ThrustMax 中缺少 ThrustMaxCoeff 网格
+    """
+    if not isinstance(fm, dict):
+        return False
+    # 条件 1：有螺旋桨
+    has_propeller = False
+    if isinstance(fm.get("PropellerType0"), dict) and fm["PropellerType0"]:
+        has_propeller = True
+    elif isinstance(fm.get("Propeller0"), dict) and fm["Propeller0"]:
+        has_propeller = True
+    else:
+        for i in range(16):
+            eng = fm.get(f"Engine{i}")
+            if isinstance(eng, dict) and isinstance(eng.get("Propellor"), dict):
+                if eng["Propellor"]:
+                    has_propeller = True
+                    break
+    if not has_propeller:
+        return False
+    # 条件 2：缺少 ThrustMaxCoeff 网格（抽查 6 个节点）
+    thrust_data = _get_thrust_data(fm)
+    sample_nodes = [(0, 0), (0, 6), (3, 0), (3, 6), (6, 0), (6, 11)]
+    for a, v in sample_nodes:
+        if thrust_data.get(f"ThrustMaxCoeff_{a}_{v}") is not None:
+            return False
+    return True
+
+
+def _get_engine_power(fm: dict, alt_m: float) -> float:
+    """获取给定高度下单台发动机的可用轴功率（HP）。
+
+    优先从 EngineType0 读取；若为空则从 Engine0/Engine1/... 读取。
+    支持多级增压器：对每个增压器挡位做分段线性插值，取 max。
+    """
+    # 定位引擎定义字典
+    eng = None
+    for key in ("EngineType0", "EngineType", "EngineType1"):
+        e = fm.get(key)
+        if isinstance(e, dict) and e:
+            eng = e
+            break
+    if eng is None:
+        for i in range(16):
+            e = fm.get(f"Engine{i}")
+            if isinstance(e, dict) and e:
+                eng = e
+                break
+    if eng is None:
+        return 0.0
+
+    main = eng.get("Main", {})
+    base_power = float(main.get("Power", 0.0)) if isinstance(main, dict) else 0.0
+
+    comp = eng.get("Compressor", {})
+    if not isinstance(comp, dict) or not comp:
+        return base_power
+
+    best_power = 0.0
+    has_any_stage = False
+    # 检查最多 4 个增压器挡位 (Stage 0–3)
+    for stage in range(4):
+        pkey = f"Power{stage}"
+        if pkey not in comp:
+            continue
+        power_stage = float(comp.get(pkey, 0.0))
+        alt_crit = float(comp.get(f"Altitude{stage}", 0.0))
+        ceiling_raw = comp.get(f"Ceiling{stage}")
+
+        if ceiling_raw is None or float(ceiling_raw) <= 0:
+            # 无天花板数据：临界高度以上每 1000 m 衰减约 12%
+            if alt_m <= alt_crit or alt_crit <= 0:
+                stage_power = power_stage
+            else:
+                falloff = power_stage * 0.12 * max(0.0, (alt_m - alt_crit) / 1000.0)
+                stage_power = max(0.0, power_stage - falloff)
+        else:
+            ceiling = float(ceiling_raw)
+            power_at_ceiling = float(comp.get(
+                f"PowerAtCeiling{stage}", power_stage * 0.5))
+            slope = (power_stage - power_at_ceiling) / (ceiling - alt_crit) if ceiling > alt_crit > 0 else 0.0
+
+            if alt_m <= alt_crit:
+                stage_power = power_stage
+            elif alt_m <= ceiling:
+                frac = (alt_m - alt_crit) / (ceiling - alt_crit)
+                stage_power = power_stage + frac * (power_at_ceiling - power_stage)
+            else:
+                # 天花板以上：继续以相同速率衰减
+                stage_power = max(0.0, power_at_ceiling - slope * (alt_m - ceiling))
+
+        has_any_stage = True
+        if stage_power > best_power:
+            best_power = stage_power
+
+    if not has_any_stage:
+        best_power = base_power
+    return best_power
+
+
+def _get_prop_radius(fm: dict) -> float:
+    """获取螺旋桨半径（m）。
+
+    查找优先级：
+    1. PropellerType0.Geometry.Radius
+    2. Propeller0.Geometry.Radius
+    3. Engine0..N.Propellor.Diameter / 2
+    4. Propeller0..N.Mass.Diameter / 2
+    5. 按功率估算（兜底）
+    """
+    # 路径 1：PropellerType0
+    pt0 = fm.get("PropellerType0", {})
+    if isinstance(pt0, dict):
+        geo = pt0.get("Geometry", {})
+        if isinstance(geo, dict) and geo.get("Radius"):
+            return float(geo["Radius"])
+
+    # 路径 2：Propeller0
+    p0 = fm.get("Propeller0", {})
+    if isinstance(p0, dict):
+        geo = p0.get("Geometry", {})
+        if isinstance(geo, dict) and geo.get("Radius"):
+            return float(geo["Radius"])
+
+    # 路径 3：Engine.Propellor.Diameter
+    for i in range(16):
+        eng = fm.get(f"Engine{i}")
+        if isinstance(eng, dict):
+            prop = eng.get("Propellor", {})
+            if isinstance(prop, dict) and prop.get("Diameter"):
+                return float(prop["Diameter"]) / 2.0
+
+    # 路径 4：Propeller.Mass.Diameter
+    for i in range(16):
+        p = fm.get(f"Propeller{i}")
+        if isinstance(p, dict):
+            mass = p.get("Mass", {})
+            if isinstance(mass, dict) and mass.get("Diameter"):
+                return float(mass["Diameter"]) / 2.0
+
+    # 路径 5：按功率估算 R ≈ 0.06 × P^0.25
+    power = 1000.0
+    eng = None
+    for key in ("EngineType0", "EngineType", "EngineType1"):
+        e = fm.get(key)
+        if isinstance(e, dict) and e:
+            eng = e
+            break
+    if eng is None:
+        for i in range(16):
+            e = fm.get(f"Engine{i}")
+            if isinstance(e, dict) and e:
+                eng = e
+                break
+    if isinstance(eng, dict):
+        main = eng.get("Main", {})
+        if isinstance(main, dict) and main.get("Power"):
+            power = max(power, float(main["Power"]))
+    return 0.06 * (power ** 0.25)
+
+
+def _propeller_thrust(
+    fm: dict, alt_m: float, tas_mps: float, rho: float, power_hp: float
+) -> float:
+    """由轴功率计算单台螺旋桨推力（N）。
+
+    静推力使用致动盘动量理论，飞行推力使用 P×η/V 公式。
+    """
+    if power_hp <= 0:
+        return 0.0
+
+    radius = _get_prop_radius(fm)
+    area = math.pi * radius * radius
+    p_watts = power_hp * HP_TO_WATT
+
+    # 静推力（致动盘理论）：T = (2·ρ·A·P²)^(1/3) × η_static
+    t_static = (2.0 * rho * area * p_watts * p_watts) ** (1.0 / 3.0) * ETA_STATIC
+
+    # 极低速 → 静推力
+    if tas_mps < 5.0:
+        return t_static
+
+    # 飞行推力：T = P × η / V，钳制不超过静推力
+    t_dynamic = p_watts * ETA_PROP / tas_mps
+    return min(t_dynamic, t_static)
+
+
 def _build_coeff_grid(thrust_data: dict, field_prefix: str, default: float) -> np.ndarray:
     """构建 7×12 系数网格。
 
@@ -175,13 +374,26 @@ def interpolate_thrust(fm: dict, alt_m: float, vel_kmh: float,
 
     返回:
         (military_thrust_n, afterburner_thrust_n)，单位牛顿(N)。
-        - 军用推力 = ThrustMax0(kgf) × 9.80665 × ThrustMaxCoeff[alt][vel] × 引擎数
+        - 喷气飞机：推力 = ThrustMax0(kgf) × 9.80665 × ThrustMaxCoeff[alt][vel] × 引擎数
+        - 螺旋桨飞机：推力由轴功率 + 螺旋桨效率推导
         - 加力推力 = 军用推力 × ThrAftMaxCoeff[alt][vel]（缺省系数视为 1.0）
 
     说明:
         多发战机（如 Su-27 有 Engine0 + Engine1 两个实例）的总推力 = 单发推力 ×
         引擎实例数。_count_engines 统计 Engine0/Engine1/... 键的数量。
     """
+    # --- 螺旋桨飞机分支：基于轴功率计算推力 ---
+    if _is_prop_aircraft(fm):
+        n_engines = _count_engines(fm)
+        single_power_hp = _get_engine_power(fm, alt_m)
+        total_power_hp = single_power_hp * n_engines
+        _, __, rho = isa_atmosphere(alt_m)
+        tas_mps = vel_kmh / 3.6
+        thrust_n = _propeller_thrust(fm, alt_m, tas_mps, rho, total_power_hp)
+        # 螺旋桨无加力，军用和加力推力相同
+        return thrust_n, thrust_n
+
+    # --- 喷气飞机分支：原有 ThrustMaxCoeff 双线性插值 ---
     thrust_data = _get_thrust_data(fm)
     n_engines = _count_engines(fm)
     t0_kgf = float(thrust_data.get("ThrustMax0", 0.0))
@@ -277,20 +489,37 @@ def _sum_areas(areas) -> float:
     return 0.0
 
 
+def _estimate_area_from_power(fm: dict) -> float:
+    """根据引擎功率粗略估算机翼面积（用于平坦空气动力学格式的兜底）。
+
+    基于典型二战单座战斗机机翼载荷 ≈ 200 kg/m² 和发动机功率估算。
+    返回估计面积（m²），最小值 10.0。
+    """
+    power_hp = _get_engine_power(fm, 0.0)
+    if power_hp <= 0:
+        return 15.0
+    # 经验公式：P-51 (1500 HP → 21.8 m²), Yak-9K (1260 HP → 17.5 m²)
+    # 拟合：Area ≈ 15 + (Power-800) / 100
+    return max(10.0, 15.0 + (power_hp - 800.0) / 100.0)
+
+
 def _extract_drag_components(fm: dict) -> list[tuple[dict, float]]:
     """提取四个阻力部件的 (polar, area) 列表。
 
-    部件：机翼(WingPlane.FlapsPolar0)、机身(FuselagePlane.Polar)、
-          平尾(HorStabPlane.Polar)、垂尾(VerStabPlane.Polar)。
+    支持两种 Aerodynamics 结构：
+    - 嵌套格式 (Yak-9K, SU-27)：WingPlane.FlapsPolar0, FuselagePlane.Polar 等
+    - 平坦格式 (Bf-109F-4, A7M1, 直升机)：Aerodynamics.Fuselage/Polar, Fin/Polar, Stab/Polar，
+      机翼数据在 NoFlaps 或 Wing 中
 
-    面积取值优先级：plane 的 Areas 字典求和 → polar 的 Area → 缺省 0.0。
+    部件：机翼、机身、平尾、垂尾。
+    面积取值优先级：plane 的 Areas 字典求和 → polar 的 Area → 根据引擎功率估算。
     """
     aero = fm.get("Aerodynamics", {})
     if not isinstance(aero, dict):
         return []
     comps: list[tuple[dict, float]] = []
 
-    # 机翼
+    # --- 机翼 ---
     wing_plane = aero.get("WingPlane", {})
     if isinstance(wing_plane, dict):
         wing_polar = wing_plane.get("FlapsPolar0", {})
@@ -299,8 +528,19 @@ def _extract_drag_components(fm: dict) -> list[tuple[dict, float]]:
             if area <= 0:
                 area = float(wing_polar.get("Area", 0.0))
             comps.append((wing_polar, area))
+    # 平坦格式机翼（NoFlaps 或 Wing）
+    if not comps:
+        for wing_key in ("NoFlaps", "Wing"):
+            wing_polar = aero.get(wing_key, {})
+            if isinstance(wing_polar, dict) and wing_polar:
+                area = _sum_areas(aero.get("Areas"))
+                if area <= 0:
+                    area = float(wing_polar.get("Area", 0.0))
+                comps.append((wing_polar, area))
+                break
 
-    # 机身 / 平尾 / 垂尾
+    # --- 机身 / 平尾 / 垂尾（嵌套格式优先）---
+    flat_used = False
     for plane_key in ("FuselagePlane", "HorStabPlane", "VerStabPlane"):
         plane = aero.get(plane_key, {})
         if not isinstance(plane, dict):
@@ -311,11 +551,29 @@ def _extract_drag_components(fm: dict) -> list[tuple[dict, float]]:
             if area <= 0:
                 area = float(polar.get("Area", 0.0))
             comps.append((polar, area))
+            flat_used = True
+
+    # --- 平坦格式：Fuselage / Stab / Fin ---
+    if not flat_used:
+        area_power = _estimate_area_from_power(fm)
+        for sub_key in ("Fuselage", "Stab", "Fin"):
+            sub = aero.get(sub_key, {})
+            if isinstance(sub, dict) and sub:
+                # 这些子对象本身就是 polar-like（有 CdMin、MachCrit 等）
+                area = _sum_areas(sub.get("Areas"))
+                if area <= 0:
+                    area = float(sub.get("Area", 0.0))
+                if area <= 0:
+                    area = area_power * (0.35 if sub_key == "Fuselage" else 0.15)
+                comps.append((sub, area))
+
     return comps
 
 
 def _get_wing_data(fm: dict) -> tuple[dict, float, float]:
     """取机翼极曲线、面积、展长，用于诱导阻力计算。
+
+    支持嵌套格式 (WingPlane.FlapsPolar0) 和平坦格式 (NoFlaps / Wing)。
 
     返回:
         (wing_polar, wing_area, wing_span)
@@ -324,16 +582,37 @@ def _get_wing_data(fm: dict) -> tuple[dict, float, float]:
     if not isinstance(aero, dict):
         return {}, 0.0, 0.0
     wing_plane = aero.get("WingPlane", {})
-    if not isinstance(wing_plane, dict):
-        return {}, 0.0, 0.0
-    wing_polar = wing_plane.get("FlapsPolar0", {})
-    if not isinstance(wing_polar, dict):
-        wing_polar = {}
-    area = _sum_areas(wing_plane.get("Areas"))
-    if area <= 0:
-        area = float(wing_polar.get("Area", 0.0))
-    span = float(wing_plane.get("Span", 0.0))
-    return wing_polar, area, span
+    if isinstance(wing_plane, dict) and wing_plane:
+        # 嵌套格式
+        wing_polar = wing_plane.get("FlapsPolar0", {})
+        if not isinstance(wing_polar, dict):
+            wing_polar = {}
+        area = _sum_areas(wing_plane.get("Areas"))
+        if area <= 0:
+            area = float(wing_polar.get("Area", 0.0))
+        span = float(wing_plane.get("Span", 0.0))
+        if area > 0 or span > 0:
+            return wing_polar, area, span
+
+    # 平坦格式：尝试 NoFlaps / Wing
+    for wing_key in ("NoFlaps", "Wing"):
+        wing_polar = aero.get(wing_key, {})
+        if isinstance(wing_polar, dict) and wing_polar:
+            area = _sum_areas(aero.get("Areas"))
+            if area <= 0:
+                area = float(wing_polar.get("Area", 0.0))
+            span = float(aero.get("Span", 0.0))
+            if area <= 0:
+                area = _estimate_area_from_power(fm)
+            if span <= 0 and area > 0:
+                # 估算展长：典型二战单翼机 AR ≈ 6
+                span = (area * 6.0) ** 0.5
+            return wing_polar, area, span
+
+    # 完全兜底
+    area = _estimate_area_from_power(fm)
+    span = (area * 6.0) ** 0.5
+    return {}, area, span
 
 
 def calculate_drag(fm: dict, mach: float, tas_mps: float, rho: float,
@@ -360,7 +639,8 @@ def calculate_drag(fm: dict, mach: float, tas_mps: float, rho: float,
 
     # 寄生阻力：累加各部件
     parasite = 0.0
-    for polar, area in _extract_drag_components(fm):
+    drag_comps = _extract_drag_components(fm)
+    for polar, area in drag_comps:
         cd_min = float(polar.get("CdMin", 0.0))
         cd = cd_min * mach_drag_multiplier(polar, mach)
         parasite += q * cd * area
@@ -368,6 +648,8 @@ def calculate_drag(fm: dict, mach: float, tas_mps: float, rho: float,
     # 诱导阻力：使用机翼极曲线
     wing_polar, wing_area, wing_span = _get_wing_data(fm)
     e = float(wing_polar.get("OswaldsEfficiencyNumber", 0.75)) if wing_polar else 0.75
+    if e <= 0:
+        e = 0.75
 
     # 展弦比 AR = Span² / S
     if wing_area > 0 and wing_span > 0:

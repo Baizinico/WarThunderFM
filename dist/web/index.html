@@ -8,11 +8,11 @@
   <!-- Google Fonts: Poppins 用于标题，Lora 用于正文 -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- 加速度计算引擎（浏览器端实现，移植自 lib/compute.py） -->
-  <script src="compute.js?v=17"></script>
+  <script src="compute.js?v=25"></script>
   <!-- 应用逻辑 -->
-  <script src="app.js?v=17"></script>
+  <script src="app.js?v=23"></script>
   <!-- 应用样式 -->
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
   <!-- 顶部标题栏与控制区 -->
@@ -41,6 +41,19 @@
     </div>
   </header>
 
+  <!-- 计算进度条 -->
+  <div id="compute-progress" class="compute-progress" style="display:none">
+    <label class="progress-label" id="progress-label">计算中...</label>
+    <progress id="progress-bar" max="1" value="0"></progress>
+  </div>
+
+  <!-- 广告位 1：顶部横向横幅 -->
+  <aside class="ad-container ad-top">
+    <span class="ad-label">Advertisement</span>
+    <!-- 替换为你的广告代码，例如 Google AdSense -->
+    <div class="ad-slot" id="ad-slot-top"></div>
+  </aside>
+
   <!-- 元数据面板：由 app.js 动态填充飞机元数据卡片 -->
   <section id="metadata-panel" class="metadata-panel">
     <!-- 元数据卡片，由 app.js 动态填充 -->
@@ -52,8 +65,15 @@
       <h2>3D 加速度曲面</h2>
       <div id="plot-3d" class="plot-area"></div>
     </div>
+
+    <!-- 广告位 2：图表间横向横幅 -->
+    <aside class="ad-container ad-mid">
+      <span class="ad-label">Advertisement</span>
+      <div class="ad-slot" id="ad-slot-mid"></div>
+    </aside>
+
     <div class="plot-card plot-climb">
-      <h2>最佳爬升路线（SEP 速度程序）</h2>
+      <h2>最佳爬升路线（速度程序 &amp; 机头向上角度）</h2>
       <div id="plot-climb" class="plot-area plot-area-climb"></div>
     </div>
   </main>
@@ -61,6 +81,7 @@
   <!-- 页脚信息 -->
   <footer class="app-footer">
     <p>数据来源：gszabi99/War-Thunder-Datamine · 计算基于 wt-fm-analysis 算法</p>
+    <p class="app-version">v0.3.0</p>
   </footer>
 </body>
 </html>
