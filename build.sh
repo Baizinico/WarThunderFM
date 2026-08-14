@@ -17,6 +17,23 @@ mkdir -p "$DIST_DIR/web" "$DIST_DIR/data/raw" "$DIST_DIR/data/computed"
 # 复制应用静态文件
 cp "$ROOT_DIR/web/"* "$DIST_DIR/web/"
 
+# 自动 cache-busting：把 index.html 中静态资源的 ?v=手动版本号替换为内容 hash
+# （源码中的 ?v=N 仅作占位；构建时注入 md5，保证资源更新后浏览器必定重新拉取）
+for asset in compute.js app.js style.css; do
+  if [ -f "$ROOT_DIR/web/$asset" ]; then
+    hash=$(md5sum "$ROOT_DIR/web/$asset" | cut -d' ' -f1 | cut -c1-10)
+    sed -i "s/$asset?v=[0-9]*/$asset?v=$hash/g" "$DIST_DIR/web/index.html"
+    echo "==> cache-busting: $asset?v=$hash"
+  fi
+done
+
+# manifest.json 由 update_manifest 生成，构建时同样注入内容 hash（app.js 中引用）
+if [ -f "$DIST_DIR/web/manifest.json" ]; then
+  mhash=$(md5sum "$DIST_DIR/web/manifest.json" | cut -d' ' -f1 | cut -c1-10)
+  sed -i "s/manifest.json?v=[0-9a-zA-Z]*/manifest.json?v=$mhash/" "$DIST_DIR/web/app.js"
+  echo "==> cache-busting: manifest.json?v=$mhash"
+fi
+
 # 复制飞行模型原始数据（.blkx）
 shopt -s nullglob
 blkx_files=("$ROOT_DIR/data/raw/"*.blkx)

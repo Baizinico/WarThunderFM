@@ -88,6 +88,35 @@ def _get_thrust_data(fm: dict) -> dict:
     return {}
 
 
+def _get_thrust_axes(thrust_data: dict) -> tuple[list[float], list[float]] | None:
+    """从 ThrustMax 读取高度/速度轴数组。
+
+    datamine 中的 ThrustMax 可能自带显式轴（``Altitude_0..N`` / ``Velocity_0..N``），
+    网格维度随机型而异（如 9×13、7×10）。``Velocity_0`` 可能是类型标记（如 "TAS"），
+    会被跳过；轴数据不足时返回 None，由调用方回退到硬编码节点。
+
+    返回:
+        (alt_nodes, vel_nodes) 升序轴数组；无轴数据返回 None。
+    """
+    alts: list[float] = []
+    i = 0
+    while f"Altitude_{i}" in thrust_data:
+        v = thrust_data[f"Altitude_{i}"]
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            alts.append(float(v))
+        i += 1
+    vels: list[float] = []
+    i = 0
+    while f"Velocity_{i}" in thrust_data:
+        v = thrust_data[f"Velocity_{i}"]
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            vels.append(float(v))
+        i += 1
+    if len(alts) >= 2 and len(vels) >= 2:
+        return alts, vels
+    return None
+
+
 def _count_engines(fm: dict) -> int:
     """统计飞机的引擎实例数量。
 
@@ -303,24 +332,49 @@ def _propeller_thrust(
     return min(t_dynamic, t_static)
 
 
-def _build_coeff_grid(thrust_data: dict, field_prefix: str, default: float) -> np.ndarray:
-    """构建 7×12 系数网格。
+def _build_coeff_grid(thrust_data: dict, field_prefix: str, default: float,
+                      n_alt: int = N_ALT, n_vel: int = N_VEL) -> np.ndarray:
+    """构建 n_alt×n_vel 系数网格。
 
     参数:
         thrust_data: ThrustMax 字典。
         field_prefix: 字段前缀，如 "ThrustMaxCoeff" 或 "ThrAftMaxCoeff"。
         default: 字段缺失时的默认值。
+        n_alt / n_vel: 网格维度（默认匹配旧版硬编码 7×12 节点）。
 
     返回:
-        shape=(N_ALT, N_VEL) 的 numpy 数组，axis0=高度索引，axis1=速度索引。
+        shape=(n_alt, n_vel) 的 numpy 数组，axis0=高度索引，axis1=速度索引。
     """
-    grid = np.full((N_ALT, N_VEL), default, dtype=float)
-    for a in range(N_ALT):
-        for v in range(N_VEL):
+    grid = np.full((n_alt, n_vel), default, dtype=float)
+    for a in range(n_alt):
+        for v in range(n_vel):
             val = thrust_data.get(f"{field_prefix}_{a}_{v}")
             if val is not None:
                 grid[a, v] = float(val)
     return grid
+
+
+def _build_thrust_table(fm: dict) -> tuple[list[float], list[float], np.ndarray, np.ndarray] | None:
+    """构建喷气飞机的推力插值表（轴 + 双网格），供整网格计算复用。
+
+    优先使用 ThrustMax 自带的 Altitude_*/Velocity_* 轴（datamine 新格式，
+    网格维度随机型而异）；缺失时回退到硬编码的 7×12 节点（旧格式）。
+
+    返回:
+        (alt_nodes, vel_nodes, mil_coeff, ab_coeff) 或 None（无推力数据）。
+    """
+    thrust_data = _get_thrust_data(fm)
+    if not thrust_data:
+        return None
+    axes = _get_thrust_axes(thrust_data)
+    if axes is not None:
+        alt_nodes, vel_nodes = axes
+    else:
+        alt_nodes, vel_nodes = ALT_NODES, VEL_NODES
+    n_alt, n_vel = len(alt_nodes), len(vel_nodes)
+    mil = _build_coeff_grid(thrust_data, "ThrustMaxCoeff", 0.0, n_alt, n_vel)
+    aft = _build_coeff_grid(thrust_data, "ThrAftMaxCoeff", 1.0, n_alt, n_vel)
+    return alt_nodes, vel_nodes, mil, aft
 
 
 def _bilinear_interp(grid: np.ndarray, x_nodes: list[float], y_nodes: list[float],
@@ -362,7 +416,9 @@ def _bilinear_interp(grid: np.ndarray, x_nodes: list[float], y_nodes: list[float
 
 
 def interpolate_thrust(fm: dict, alt_m: float, vel_kmh: float,
-                       afterburner: bool) -> tuple[float, float]:
+                       afterburner: bool,
+                       table: tuple[list[float], list[float], np.ndarray, np.ndarray] | None = None
+                       ) -> tuple[float, float]:
     """推力双线性插值。
 
     参数:
@@ -371,6 +427,8 @@ def interpolate_thrust(fm: dict, alt_m: float, vel_kmh: float,
         vel_kmh: 真空速（km/h TAS）。
         afterburner: 是否启用加力（保留参数；函数始终同时返回军用与加力推力，
                      由调用方按该标志选用）。
+        table: _build_thrust_table 的预计算结果（轴 + 双网格），避免重复构建；
+               为 None 时在函数内构建。
 
     返回:
         (military_thrust_n, afterburner_thrust_n)，单位牛顿(N)。
@@ -393,16 +451,18 @@ def interpolate_thrust(fm: dict, alt_m: float, vel_kmh: float,
         # 螺旋桨无加力，军用和加力推力相同
         return thrust_n, thrust_n
 
-    # --- 喷气飞机分支：原有 ThrustMaxCoeff 双线性插值 ---
+    # --- 喷气飞机分支：ThrustMaxCoeff 双线性插值 ---
     thrust_data = _get_thrust_data(fm)
     n_engines = _count_engines(fm)
     t0_kgf = float(thrust_data.get("ThrustMax0", 0.0))
     t0_n = t0_kgf * G * n_engines  # 总基础推力 = 单发 × 引擎数
-    # 军用推力系数缺省 0.0；加力倍增系数缺省 1.0
-    coeff = _build_coeff_grid(thrust_data, "ThrustMaxCoeff", default=0.0)
-    aft = _build_coeff_grid(thrust_data, "ThrAftMaxCoeff", default=1.0)
-    c = _bilinear_interp(coeff, ALT_NODES, VEL_NODES, alt_m, vel_kmh)
-    a = _bilinear_interp(aft, ALT_NODES, VEL_NODES, alt_m, vel_kmh)
+    if table is None:
+        table = _build_thrust_table(fm)
+    if table is None:
+        return 0.0, 0.0
+    alt_nodes, vel_nodes, coeff, aft = table
+    c = _bilinear_interp(coeff, alt_nodes, vel_nodes, alt_m, vel_kmh)
+    a = _bilinear_interp(aft, alt_nodes, vel_nodes, alt_m, vel_kmh)
     mil_n = t0_n * c
     ab_n = mil_n * a
     return mil_n, ab_n
@@ -430,25 +490,40 @@ def mach_drag_multiplier(polar: dict, mach: float) -> float:
                                               ·(1 - exp(MultLineCoeff·(Mach-MachMax)))
     """
     m = float(mach)
-    mach_factor = float(polar.get("MachFactor", 3))
+    raw_factor = polar.get("MachFactor", 3)
+    try:
+        mach_factor = float(raw_factor) if not isinstance(raw_factor, (list, dict, tuple, bool)) else 3.0
+    except (TypeError, ValueError):
+        mach_factor = 3.0
     total_mult = 1.0
 
     # WT FM 的马赫通道索引为 1-7
     for i in range(1, 8):
-        mult_max = polar.get(f"MultMachMax{i}", 1.0)
-        mult_max = float(mult_max)
+        # 部分 WT 稳定性/控制面通道使用双值数组，不能当作整机阻力通道计算。
+        # 忽略这些通道，避免原始数据导致整架飞机计算失败。
+        raw_values = [
+            polar.get(f"MultMachMax{i}", 1.0),
+            polar.get(f"MachCrit{i}", 0),
+            polar.get(f"MachMax{i}", 0),
+            polar.get(f"MultLimit{i}", 1.0),
+            polar.get(f"MultLineCoeff{i}", 0.0),
+        ]
+        if any(isinstance(value, (list, dict, tuple)) or isinstance(value, bool)
+               for value in raw_values):
+            continue
+        try:
+            mult_max, mach_crit, mach_max, mult_limit, line_coeff = (
+                float(value) for value in raw_values
+            )
+        except (TypeError, ValueError):
+            continue
 
         # 跳过削减通道（MultMachMax < 1.0）
         if mult_max < 1.0:
             continue
 
-        mach_crit = polar.get(f"MachCrit{i}", 0)
-        mach_max = polar.get(f"MachMax{i}", 0)
         if mach_crit <= 0 or mach_max <= 0:
             continue
-
-        mult_limit = float(polar.get(f"MultLimit{i}", 1.0))
-        line_coeff = float(polar.get(f"MultLineCoeff{i}", 0.0))
 
         # 跳过 LineCoeff > 0 的通道：原始公式产生负倍率
         if line_coeff > 0:
@@ -464,9 +539,14 @@ def mach_drag_multiplier(polar: dict, mach: float) -> float:
             mult = mult_max + (mult_limit - mult_max) * (
                 1.0 - math.exp(line_coeff * (m - mach_max)))
 
+        # 钳制单通道倍率 >= 0：MultLimit 可为负（如 Stab 的硬切断通道
+        # MultLimit=-10），原始公式在 m > MachMax 后会产生负倍率，
+        # 导致该部件阻力为负从而整体阻力被错误压低。
+        mult = max(0.0, mult)
+
         total_mult *= mult
 
-    return total_mult
+    return max(0.0, total_mult)
 
 
 # ============================================================
@@ -487,6 +567,23 @@ def _sum_areas(areas) -> float:
     if isinstance(areas, list):
         return sum(float(v) for v in areas if isinstance(v, (int, float)))
     return 0.0
+
+
+def _flat_wing_area(fm: dict) -> float:
+    """平坦格式下从顶层 Areas 节点汇总机翼面积。
+
+    老格式 datamine（如 Bf-109F-4、MiG-21Bis）在 Aerodynamics 的
+    Fuselage/Stab/Fin 子节点各带自身面积，但机翼极曲线（NoFlaps）不带，
+    机翼面积位于 fm 顶层 ``Areas``（键为 WingLeftIn/WingLeftMid/...）。
+    """
+    areas = fm.get("Areas")
+    if not isinstance(areas, dict):
+        return 0.0
+    total = 0.0
+    for key, val in areas.items():
+        if key.startswith("Wing") and isinstance(val, (int, float)):
+            total += float(val)
+    return total
 
 
 def _estimate_area_from_power(fm: dict) -> float:
@@ -536,6 +633,8 @@ def _extract_drag_components(fm: dict) -> list[tuple[dict, float]]:
                 area = _sum_areas(aero.get("Areas"))
                 if area <= 0:
                     area = float(wing_polar.get("Area", 0.0))
+                if area <= 0:
+                    area = _flat_wing_area(fm)
                 comps.append((wing_polar, area))
                 break
 
@@ -601,7 +700,11 @@ def _get_wing_data(fm: dict) -> tuple[dict, float, float]:
             area = _sum_areas(aero.get("Areas"))
             if area <= 0:
                 area = float(wing_polar.get("Area", 0.0))
+            if area <= 0:
+                area = _flat_wing_area(fm)
             span = float(aero.get("Span", 0.0))
+            if span <= 0:
+                span = float(fm.get("Wingspan", 0.0))
             if area <= 0:
                 area = _estimate_area_from_power(fm)
             if span <= 0 and area > 0:
@@ -613,6 +716,39 @@ def _get_wing_data(fm: dict) -> tuple[dict, float, float]:
     area = _estimate_area_from_power(fm)
     span = (area * 6.0) ** 0.5
     return {}, area, span
+
+
+def _flat_aircraft_mach_channels(fm: dict) -> dict:
+    """老格式顶层 Aerodynamics 的整机马赫通道。
+
+    老 datamine（Bf-109F-4、MiG-21Bis 等）在 Aerodynamics 顶层直接携带
+    整机波阻通道（MachFactor/MachCrit1..7/MultMachMax1..7 等），而机翼
+    极曲线（NoFlaps）本身没有任何通道。新格式（WingPlane）无此结构。
+    """
+    aero = fm.get("Aerodynamics", {})
+    if not isinstance(aero, dict) or not aero.get("WingPlane"):
+        channels = {k: v for k, v in aero.items() if k.startswith(("Mach", "Mult"))}
+        if any(k.startswith("MachCrit") for k in channels):
+            return channels
+    return {}
+
+
+def _flat_fixed_drag_areas(fm: dict) -> float:
+    """老格式的固定阻力面积（Cd·S，m²）。
+
+    老格式在 Aerodynamics 顶层记录散热器、座舱盖等固定阻力（CockpitDoorCd、
+    RadiatorCd 等），直接作为附加寄生阻力面积。起落架（GearCd）与减速板
+    （AirbrakeCd）仅在相应构型下存在，不计入巡航。
+    """
+    aero = fm.get("Aerodynamics", {})
+    if not isinstance(aero, dict) or not aero.get("WingPlane"):
+        total = 0.0
+        for key in ("RadiatorCd", "OilRadiatorCd", "CockpitDoorCd", "FuseCd"):
+            val = aero.get(key)
+            if isinstance(val, (int, float)):
+                total += float(val)
+        return total
+    return 0.0
 
 
 def calculate_drag(fm: dict, mach: float, tas_mps: float, rho: float,
@@ -631,6 +767,8 @@ def calculate_drag(fm: dict, mach: float, tas_mps: float, rho: float,
 
     寄生阻力 = Σ 0.5·ρ·v²·Cd_i·area_i，
               其中 Cd_i = CdMin_i · mach_drag_multiplier(polar_i, mach)。
+    老格式额外将顶层整机马赫通道作为整体倍率，并累加固定阻力面积：
+    寄生阻力_total = (Σ Cd·S + S_fixed) × aero_mult。
     诱导阻力 = 0.5·ρ·v²·S_wing·CL²/(π·AR·e)，
               CL = m·g / (q·S_wing)（平飞假设：升力=重力），上限 CL_max=1.5，
               AR = Span²/S_wing（从 FM 数据计算），e 取机翼 polar 的 OswaldsEfficiencyNumber。
@@ -645,11 +783,26 @@ def calculate_drag(fm: dict, mach: float, tas_mps: float, rho: float,
         cd = cd_min * mach_drag_multiplier(polar, mach)
         parasite += q * cd * area
 
+    # 老格式：整机马赫通道 × 全部寄生阻力，并计入固定阻力面积
+    aero = fm.get("Aerodynamics", {})
+    if isinstance(aero, dict) and not aero.get("WingPlane"):
+        fixed_area = _flat_fixed_drag_areas(fm)
+        if fixed_area > 0:
+            parasite += q * fixed_area
+        aero_mult = mach_drag_multiplier(_flat_aircraft_mach_channels(fm), mach)
+        parasite *= aero_mult
+
     # 诱导阻力：使用机翼极曲线
     wing_polar, wing_area, wing_span = _get_wing_data(fm)
     e = float(wing_polar.get("OswaldsEfficiencyNumber", 0.75)) if wing_polar else 0.75
     if e <= 0:
         e = 0.75
+    # 老格式：机翼 polar 无 e，取顶层 Aerodynamics 的整机 e
+    if not wing_polar.get("OswaldsEfficiencyNumber"):
+        if isinstance(aero, dict):
+            e_top = aero.get("OswaldsEfficiencyNumber")
+            if isinstance(e_top, (int, float)) and e_top > 0:
+                e = float(e_top)
 
     # 展弦比 AR = Span² / S
     if wing_area > 0 and wing_span > 0:
@@ -701,6 +854,7 @@ def compute_accel_grid(fm: dict, mass_kg: float, afterburner: bool,
     altitudes = list(OUTPUT_ALT_NODES)
     machs = np.arange(mach_min, mach_max + 0.001, mach_step)
 
+    thrust_table = _build_thrust_table(fm)
     samples: list[dict] = []
     for alt in altitudes:
         T, _P, rho = isa_atmosphere(alt)
@@ -709,7 +863,8 @@ def compute_accel_grid(fm: dict, mass_kg: float, afterburner: bool,
             mach_f = float(mach)
             tas_mps = mach_f * a_sound
             tas_kmh = tas_mps * 3.6
-            mil_n, ab_n = interpolate_thrust(fm, alt, tas_kmh, afterburner)
+            mil_n, ab_n = interpolate_thrust(fm, alt, tas_kmh, afterburner,
+                                             table=thrust_table)
             drag_n = calculate_drag(fm, mach_f, tas_mps, rho, mass_kg)
             thrust_n = ab_n if afterburner else mil_n
             net_force_n = thrust_n - drag_n
@@ -822,8 +977,13 @@ def compute_climb_route(samples: list[dict], grid: dict) -> list[dict]:
         grid: compute_accel_grid 返回的网格描述。
 
     返回:
-        [{"altitude_m", "mach", "tas_kmh", "sep_mps", "accel_mps2"}, ...]
+        [{"altitude_m", "mach", "tas_kmh", "sep_mps", "climb_angle_deg",
+          "accel_mps2"}, ...]
         按高度升序排列；无 accel>0 点的高度被跳过。
+
+    说明:
+        机头向上角度 θ = arcsin(SEP / V) = arcsin(a / g)，单位 °，
+        即稳定爬升时飞机纵轴与水平面的夹角（与 web/compute.js 保持一致）。
     """
     altitudes = grid.get("altitudes_m", [])
 
@@ -840,11 +1000,14 @@ def compute_climb_route(samples: list[dict], grid: dict) -> list[dict]:
                 continue  # 仅在可加速区域选取
             sep = s["tas_mps"] * s["accel_mps2"] / G  # m/s 爬升率
             if best is None or sep > best["sep_mps"]:
+                # 机头向上角度：sin(θ) = SEP / V = a / g
+                angle_rad = math.asin(min(s["accel_mps2"] / G, 1.0))
                 best = {
                     "altitude_m": alt,
                     "mach": s["mach"],
                     "tas_kmh": s["tas_mps"] * 3.6,
                     "sep_mps": sep,
+                    "climb_angle_deg": angle_rad * 180.0 / math.pi,
                     "accel_mps2": s["accel_mps2"],
                 }
         if best is not None:

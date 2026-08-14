@@ -75,9 +75,11 @@ CLIMB_ROUTE_FIELDS: list[str] = [
     "sep_mps",
     "accel_mps2",
 ]
-
 # SEP 爬升率范围（m/s）：上限放宽至 1000 m/s 以容纳超高 TWR 装备
 SEP_MPS_RANGE: tuple[float, float] = (-100.0, 1000.0)
+
+# 机头向上角度范围（°）
+CLIMB_ANGLE_RANGE: tuple[float, float] = (-90.0, 90.0)
 
 # 数值范围常量（闭区间）
 # ACCEL_RANGE 拓宽至 -20000：超轻型无人机（如 uav_inf_recon_drone, EmptyMass=1kg）在
@@ -359,6 +361,10 @@ def validate(data: dict) -> tuple[bool, list[str]]:
                 if "sep_mps" in item:
                     _check_number(errors, f"climb_route[{i}].sep_mps",
                                   item["sep_mps"], SEP_MPS_RANGE)
+                # climb_angle_deg 可选（机头向上角度，°）
+                if "climb_angle_deg" in item:
+                    _check_number(errors, f"climb_route[{i}].climb_angle_deg",
+                                  item["climb_angle_deg"], CLIMB_ANGLE_RANGE)
                 if "accel_mps2" in item:
                     _check_number(errors, f"climb_route[{i}].accel_mps2",
                                   item["accel_mps2"], ACCEL_RANGE)

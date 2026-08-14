@@ -228,28 +228,44 @@ def cmd_compute(args: argparse.Namespace) -> int:
     )
 
 
+def _run_one(aircraft: str, no_afterburner: bool, fuel_pct: float,
+             mass: float | None) -> int:
+    """单架飞机的下载 + 计算（供 cmd_run 并发池调用）。"""
+    try:
+        download_fm(aircraft, DEFAULT_RAW_DIR)
+    except Exception as e:  # noqa: BLE001 - 单架失败不中断
+        print(f"✗ {aircraft} 下载失败: {e}", file=sys.stderr)
+        return 1
+    return _compute_one(aircraft, no_afterburner=no_afterburner,
+                        fuel_pct=fuel_pct, mass=mass)
+
+
 def cmd_run(args: argparse.Namespace) -> int:
-    """run 子命令：串行执行 download + compute（默认参数），最后刷新 manifest。"""
+    """run 子命令：并发执行 download + compute，最后刷新 manifest。"""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     exit_code = 0
     success_count = 0
     fail_count = 0
+    workers = max(1, args.workers)
 
-    for aircraft in args.aircraft:
-        # 下载阶段
-        try:
-            download_fm(aircraft, DEFAULT_RAW_DIR)
-        except Exception as e:  # noqa: BLE001 - 单架失败不中断
-            print(f"✗ {aircraft} 下载失败: {e}", file=sys.stderr)
-            fail_count += 1
-            exit_code = 1
-            continue
-        # 计算阶段
-        rc = _compute_one(aircraft)
-        if rc == 0:
-            success_count += 1
-        else:
-            fail_count += 1
-            exit_code = 1
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        future_map = {
+            pool.submit(_run_one, a, args.no_afterburner, args.fuel_pct, args.mass): a
+            for a in args.aircraft
+        }
+        for future in as_completed(future_map):
+            aircraft = future_map[future]
+            try:
+                rc = future.result()
+            except Exception as e:  # noqa: BLE001 - 任务内异常不中断整体
+                print(f"✗ {aircraft} 处理异常: {e}", file=sys.stderr)
+                rc = 1
+            if rc == 0:
+                success_count += 1
+            else:
+                fail_count += 1
+                exit_code = 1
 
     # 刷新 manifest
     manifest = update_manifest()
@@ -277,7 +293,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
             self.send_header("Expires", "0")
             super().end_headers()
 
-    server = http.server.HTTPServer(("", port), NoCacheHandler)
+    server = http.server.ThreadingHTTPServer(("", port), NoCacheHandler)
     url = f"http://localhost:{port}/web/index.html"
     print(f"服务已启动: {url}")
     print(f"项目根: {PROJECT_ROOT}")
@@ -307,11 +323,31 @@ def cmd_list(args: argparse.Namespace) -> int:
     for ds in datasets:
         name = ds.get("name", "?")
         path = ds.get("path", "?")
-        meta = ds.get("metadata", {})
-        flight_mass = meta.get("flight_mass_kg", "?")
-        afterburner = meta.get("afterburner", "?")
-        print(f"  - {name}  (path={path}, mass={flight_mass} kg, afterburner={afterburner})")
+        nation = ds.get("nation", "other")
+        label = SUPPORTED_NATIONS.get(nation, "其他")
+        # manifest 本身不含 metadata；若有预计算结果文件则补充显示质量/加力信息
+        mass_str = "—"
+        ab_str = "—"
+        meta = _load_computed_metadata(name)
+        if meta is not None:
+            mass_str = f"{meta.get('flight_mass_kg', '?')} kg"
+            ab_str = "是" if meta.get("afterburner") else "否"
+        print(f"  - {name}  ({label}, path={path}, mass={mass_str}, afterburner={ab_str})")
     return 0
+
+
+def _load_computed_metadata(aircraft: str) -> dict | None:
+    """读取 data/computed/<aircraft>.json 的 metadata；不存在或损坏时返回 None。"""
+    path = COMPUTED_DIR / f"{aircraft}.json"
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as fp:
+            record = json.load(fp)
+    except Exception:  # noqa: BLE001
+        return None
+    meta = record.get("metadata")
+    return meta if isinstance(meta, dict) else None
 
 
 # ============================================================
@@ -346,10 +382,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="自定义飞行质量 kg（覆盖 fuel-pct 计算）")
     p_compute.set_defaults(func=cmd_compute)
 
-    # run：串行 download + compute
+    # run：并发 download + compute
     p_run = subparsers.add_parser(
-        "run", help="串行执行 download + compute，并刷新 manifest")
+        "run", help="并发执行 download + compute，并刷新 manifest")
     p_run.add_argument("aircraft", nargs="+", help="飞机代号（可多个）")
+    p_run.add_argument(
+        "--workers", type=int, default=4,
+        help="并发工作线程数（默认 4）")
+    p_run.add_argument(
+        "--no-afterburner", action="store_true",
+        help="仅计算军用推力（禁用加力）")
+    p_run.add_argument(
+        "--fuel-pct", type=float, default=0.5,
+        help="燃油比例（默认 0.5）")
+    p_run.add_argument(
+        "--mass", type=float, default=None,
+        help="自定义飞行质量 kg（覆盖 fuel-pct 计算）")
     p_run.set_defaults(func=cmd_run)
 
     # serve：启动本地 HTTP 服务器
@@ -380,6 +428,15 @@ def main(argv: list[str]) -> int:
     返回:
         进程退出码，0 表示成功，非 0 表示失败。
     """
+    # 统一 stdout/stderr 编码为 UTF-8（GBK 控制台无法编码 ✓/✗ 等字符，
+    # 不处理会在打印时抛 UnicodeEncodeError 中断任务）
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except Exception:  # noqa: BLE001 - 重配置失败不影响功能
+                pass
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)

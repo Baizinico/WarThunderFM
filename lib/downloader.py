@@ -1,10 +1,9 @@
 """War Thunder 飞行模型数据下载模块。
 
 从 jsdelivr CDN 下载 gszabi99/War-Thunder-Datamine 仓库中的 .blkx JSON 文件，
-提供缓存判断与 SSL 回退机制。
+提供缓存判断与临时网络故障重试机制。
 """
 
-import ssl
 import sys
 import urllib.error
 import urllib.request
@@ -32,8 +31,8 @@ def download_fm(aircraft: str, dest_dir: Path) -> Path:
 
     说明:
         - 若目标文件已存在，则跳过下载并打印 "已缓存" 信息。
-        - 首次下载失败（``urllib.error.URLError`` 或 ``ssl.SSLError``）时，
-          会禁用 SSL 校验后重试一次；若仍失败则抛出异常。
+        - 首次下载因临时网络故障（``urllib.error.URLError``）失败时会重试一次；
+          若仍失败则抛出异常。证书校验始终开启（不会降级为 CERT_NONE）。
         - 下载成功时会打印文件大小（KB 或 MB）。
     """
     # 确保目标目录存在
@@ -48,18 +47,15 @@ def download_fm(aircraft: str, dest_dir: Path) -> Path:
 
     url = f"{CDN_BASE}/{aircraft}.blkx"
 
-    # 第一次尝试：使用默认 SSL 校验
+    # 第一次尝试（证书校验开启）
     try:
         data = _fetch(url)
-    except (urllib.error.URLError, ssl.SSLError) as first_err:
-        print(f"首次下载失败（{type(first_err).__name__}: {first_err}），禁用 SSL 校验后重试...")
-        # 第二次尝试：禁用 SSL 校验
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+    except urllib.error.URLError as first_err:
+        print(f"首次下载失败（{type(first_err).__name__}: {first_err}），重试...")
+        # 第二次尝试：仅重试，不降低任何安全校验
         try:
-            data = _fetch(url, ssl_context=ctx)
-        except (urllib.error.URLError, ssl.SSLError) as second_err:
+            data = _fetch(url)
+        except urllib.error.URLError as second_err:
             raise RuntimeError(
                 f"下载 {aircraft} 失败：{type(second_err).__name__}: {second_err}。"
                 f"请检查网络连接或确认飞机代号是否正确（URL: {url}）。"
@@ -79,18 +75,17 @@ def download_fm(aircraft: str, dest_dir: Path) -> Path:
     return dest_path
 
 
-def _fetch(url: str, ssl_context: ssl.SSLContext | None = None) -> bytes:
+def _fetch(url: str) -> bytes:
     """通过 urllib.request 获取 URL 内容并返回字节数据。
 
     参数:
         url: 要下载的 URL。
-        ssl_context: 可选的 SSL 上下文，传入时会附加到请求。
 
     返回:
         URL 响应体的原始字节数据。
     """
     req = urllib.request.Request(url, headers={"User-Agent": "WarThunderFM-Downloader/1.0"})
-    with urllib.request.urlopen(req, context=ssl_context) as resp:
+    with urllib.request.urlopen(req) as resp:
         return resp.read()
 
 
