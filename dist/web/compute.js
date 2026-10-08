@@ -87,69 +87,85 @@ function isPropAircraft(fm) {
   return true;
 }
 
-function getEnginePower(fm, altM) {
-  // 定位引擎定义字典
-  let eng = null;
+function findEngineDict(fm) {
+  // 定位引擎定义字典（EngineType0 / EngineType / EngineType1 / Engine0...）
   for (const key of ['EngineType0', 'EngineType', 'EngineType1']) {
     const e = fm[key];
-    if (isObject(e) && Object.keys(e).length > 0) { eng = e; break; }
+    if (isObject(e) && Object.keys(e).length > 0) return e;
   }
-  if (eng === null) {
-    for (let i = 0; i < 16; i++) {
-      const e = fm[`Engine${i}`];
-      if (isObject(e) && Object.keys(e).length > 0) { eng = e; break; }
-    }
+  for (let i = 0; i < 16; i++) {
+    const e = fm[`Engine${i}`];
+    if (isObject(e) && Object.keys(e).length > 0) return e;
   }
-  if (eng === null) return 0.0;
+  return null;
+}
+
+function compileEnginePower(fm) {
+  // 把多级增压器曲线预编译为纯数值数组，供逐高度快速求值。
+  // stages 每项：[powerStage, altCrit, ceilingOrNull, powerAtCeiling, slope]
+  const eng = findEngineDict(fm);
+  if (eng === null) return { stages: [], basePower: 0.0 };
 
   const main = eng.Main || {};
   const basePower = float(main.Power != null ? main.Power : 0.0);
 
   const comp = eng.Compressor;
-  if (!isObject(comp) || Object.keys(comp).length === 0) return basePower;
+  if (!isObject(comp) || Object.keys(comp).length === 0) {
+    return { stages: [], basePower };
+  }
 
-  let bestPower = 0.0;
-  let hasAnyStage = false;
-
+  const stages = [];
   for (let stage = 0; stage < 4; stage++) {
     const pkey = `Power${stage}`;
     if (comp[pkey] == null) continue;
-    hasAnyStage = true;
     const powerStage = float(comp[pkey]);
     const altCrit = float(comp[`Altitude${stage}`] != null ? comp[`Altitude${stage}`] : 0.0);
     const ceilingRaw = comp[`Ceiling${stage}`];
-
-    let stagePower;
     if (ceilingRaw == null || float(ceilingRaw) <= 0) {
-      // 无天花板数据：临界高度以上每 1000 m 衰减约 12%
+      stages.push([powerStage, altCrit, null, 0.0, 0.0]);
+      continue;
+    }
+    const ceiling = float(ceilingRaw);
+    const powerAtCeiling = float(comp[`PowerAtCeiling${stage}`] != null
+      ? comp[`PowerAtCeiling${stage}`] : powerStage * 0.5);
+    const slope = (ceiling > altCrit && altCrit > 0)
+      ? (powerStage - powerAtCeiling) / (ceiling - altCrit) : 0.0;
+    stages.push([powerStage, altCrit, ceiling, powerAtCeiling, slope]);
+  }
+  return { stages, basePower };
+}
+
+function enginePowerFromCompiled(stages, basePower, altM) {
+  if (stages.length === 0) return basePower;
+  let bestPower = 0.0;
+  for (const s of stages) {
+    const powerStage = s[0], altCrit = s[1], ceiling = s[2];
+    const powerAtCeiling = s[3], slope = s[4];
+    let stagePower;
+    if (ceiling === null) {
       if (altM <= altCrit || altCrit <= 0) {
         stagePower = powerStage;
       } else {
         const falloff = powerStage * 0.12 * Math.max(0.0, (altM - altCrit) / 1000.0);
         stagePower = Math.max(0.0, powerStage - falloff);
       }
+    } else if (altM <= altCrit) {
+      stagePower = powerStage;
+    } else if (altM <= ceiling) {
+      const frac = (altM - altCrit) / (ceiling - altCrit);
+      stagePower = powerStage + frac * (powerAtCeiling - powerStage);
     } else {
-      const ceiling = float(ceilingRaw);
-      const powerAtCeiling = float(comp[`PowerAtCeiling${stage}`] != null
-        ? comp[`PowerAtCeiling${stage}`] : powerStage * 0.5);
-      const slope = (ceiling > altCrit && altCrit > 0)
-        ? (powerStage - powerAtCeiling) / (ceiling - altCrit) : 0.0;
-
-      if (altM <= altCrit) {
-        stagePower = powerStage;
-      } else if (altM <= ceiling) {
-        const frac = (altM - altCrit) / (ceiling - altCrit);
-        stagePower = powerStage + frac * (powerAtCeiling - powerStage);
-      } else {
-        stagePower = Math.max(0.0, powerAtCeiling - slope * (altM - ceiling));
-      }
+      stagePower = Math.max(0.0, powerAtCeiling - slope * (altM - ceiling));
     }
-
     if (stagePower > bestPower) bestPower = stagePower;
   }
-
-  if (!hasAnyStage) bestPower = basePower;
   return bestPower;
+}
+
+function getEnginePower(fm, altM) {
+  // 逐点参考接口；网格计算使用 compileEnginePower 预编译后复用。
+  const c = compileEnginePower(fm);
+  return enginePowerFromCompiled(c.stages, c.basePower, altM);
 }
 
 function getPropRadius(fm) {
@@ -205,22 +221,27 @@ function getPropRadius(fm) {
   return 0.06 * Math.pow(power, 0.25);
 }
 
-function propellerThrust(fm, altM, tasMps, rho, powerHp) {
+function propellerThrustArea(area, tasMps, rho, powerHp) {
+  // 由螺旋桨盘面积与轴功率计算推力（N）。
   if (powerHp <= 0) return 0.0;
 
-  const radius = getPropRadius(fm);
-  const area = Math.PI * radius * radius;
   const pWatts = powerHp * HP_TO_WATT;
 
-  // 静推力（致动盘理论）：T = (2·ρ·A·P²)^(1/3) × η_static
+  // 静推力（致动盘理论）：T = (2·rho·A·P^2)^(1/3) x eta_static
   const tStatic = Math.pow(2.0 * rho * area * pWatts * pWatts, 1.0 / 3.0) * ETA_STATIC;
 
-  // 极低速 → 静推力
+  // 极低速 -> 静推力
   if (tasMps < 5.0) return tStatic;
 
-  // 飞行推力：T = P × η / V，钳制不超过静推力
+  // 飞行推力：T = P x eta / V，钳制不超过静推力
   const tDynamic = pWatts * ETA_PROP / tasMps;
   return Math.min(tDynamic, tStatic);
+}
+
+function propellerThrust(fm, altM, tasMps, rho, powerHp) {
+  // 逐点参考实现：由轴功率计算单台螺旋桨推力（N）。
+  const radius = getPropRadius(fm);
+  return propellerThrustArea(Math.PI * radius * radius, tasMps, rho, powerHp);
 }
 
 function getThrustData(fm) {
@@ -246,17 +267,53 @@ function countEngines(fm) {
   return Math.max(1, count);
 }
 
-function buildCoeffGrid(thrustData, fieldPrefix, defaultValue) {
+function getThrustAxes(thrustData) {
+  const alts = [];
+  let i = 0;
+  while (`Altitude_${i}` in thrustData) {
+    const v = thrustData[`Altitude_${i}`];
+    if (typeof v === 'number' && !Number.isNaN(v)) alts.push(float(v));
+    i++;
+  }
+  const vels = [];
+  i = 0;
+  while (`Velocity_${i}` in thrustData) {
+    const v = thrustData[`Velocity_${i}`];
+    if (typeof v === 'number' && !Number.isNaN(v)) vels.push(float(v));
+    i++;
+  }
+  if (alts.length >= 2 && vels.length >= 2) return [alts, vels];
+  return null;
+}
+
+function buildCoeffGrid(thrustData, fieldPrefix, defaultValue, nAlt = N_ALT, nVel = N_VEL) {
   const grid = [];
-  for (let a = 0; a < N_ALT; a++) {
-    const row = new Array(N_VEL).fill(defaultValue);
-    for (let v = 0; v < N_VEL; v++) {
+  for (let a = 0; a < nAlt; a++) {
+    const row = new Array(nVel).fill(defaultValue);
+    for (let v = 0; v < nVel; v++) {
       const val = thrustData[`${fieldPrefix}_${a}_${v}`];
       if (val != null) row[v] = float(val);
     }
     grid.push(row);
   }
   return grid;
+}
+
+function buildThrustTable(fm) {
+  const thrustData = getThrustData(fm);
+  if (Object.keys(thrustData).length === 0) return null;
+  const axes = getThrustAxes(thrustData);
+  let altNodes, velNodes;
+  if (axes) {
+    [altNodes, velNodes] = axes;
+  } else {
+    altNodes = ALT_NODES;
+    velNodes = VEL_NODES;
+  }
+  const nAlt = altNodes.length, nVel = velNodes.length;
+  const coeff = buildCoeffGrid(thrustData, 'ThrustMaxCoeff', 0.0, nAlt, nVel);
+  const aft = buildCoeffGrid(thrustData, 'ThrAftMaxCoeff', 1.0, nAlt, nVel);
+  return { altNodes, velNodes, coeff, aft };
 }
 
 function bilinearInterp(grid, xNodes, yNodes, x, y) {
@@ -282,59 +339,87 @@ function bilinearInterp(grid, xNodes, yNodes, x, y) {
        + q11 * fx * fy;
 }
 
-function interpolateThrust(fm, altM, velKmh, afterburner) {
-  // --- 螺旋桨飞机分支：基于轴功率计算推力 ---
+function buildThrustModel(fm) {
+  // 把 fm 的推力结构预编译为纯数值模型，供整网格逐点复用。
   if (isPropAircraft(fm)) {
-    const nEngines = countEngines(fm);
-    const singlePowerHp = getEnginePower(fm, altM);
-    const totalPowerHp = singlePowerHp * nEngines;
-    const [_T, _P, rho] = isaAtmosphere(altM);
-    const tasMps = velKmh / 3.6;
-    const thrustN = propellerThrust(fm, altM, tasMps, rho, totalPowerHp);
+    const cp = compileEnginePower(fm);
+    const radius = getPropRadius(fm);
+    return {
+      kind: 'prop',
+      nEngines: countEngines(fm),
+      propArea: Math.PI * radius * radius,
+      stages: cp.stages,
+      basePower: cp.basePower,
+    };
+  }
+  const thrustData = getThrustData(fm);
+  const table = buildThrustTable(fm);
+  const t0Kgf = float(thrustData.ThrustMax0 != null ? thrustData.ThrustMax0 : 0.0);
+  return { kind: 'jet', t0N: t0Kgf * G * countEngines(fm), table };
+}
+
+function thrustFromModel(model, altM, velKmh, rho = null) {
+  if (model.kind === 'prop') {
+    const powerHp = enginePowerFromCompiled(model.stages, model.basePower, altM)
+      * model.nEngines;
+    if (rho == null) {
+      const [_T, _P, r] = isaAtmosphere(altM);
+      rho = r;
+    }
+    const thrustN = propellerThrustArea(model.propArea, velKmh / 3.6, rho, powerHp);
     // 螺旋桨无加力，军用和加力推力相同
     return [thrustN, thrustN];
   }
 
-  // --- 喷气飞机分支：原有 ThrustMaxCoeff 双线性插值 ---
-  const thrustData = getThrustData(fm);
-  const nEngines = countEngines(fm);
-  const t0Kgf = float(thrustData.ThrustMax0 != null ? thrustData.ThrustMax0 : 0.0);
-  const t0N = t0Kgf * G * nEngines;
-  const coeff = buildCoeffGrid(thrustData, 'ThrustMaxCoeff', 0.0);
-  const aft = buildCoeffGrid(thrustData, 'ThrAftMaxCoeff', 1.0);
-  const c = bilinearInterp(coeff, ALT_NODES, VEL_NODES, altM, velKmh);
-  const a = bilinearInterp(aft, ALT_NODES, VEL_NODES, altM, velKmh);
-  const milN = t0N * c;
-  const abN = milN * a;
-  return [milN, abN];
+  const table = model.table;
+  if (table == null) return [0.0, 0.0];
+  const c = bilinearInterp(table.coeff, table.altNodes, table.velNodes, altM, velKmh);
+  const a = bilinearInterp(table.aft, table.altNodes, table.velNodes, altM, velKmh);
+  const milN = model.t0N * c;
+  return [milN, milN * a];
+}
+
+function interpolateThrust(fm, altM, velKmh, afterburner, table = null) {
+  // 逐点参考接口；网格计算请使用 buildThrustModel + thrustFromModel。
+  let model = buildThrustModel(fm);
+  if (table != null && model.kind === 'jet') {
+    model = { kind: 'jet', t0N: model.t0N, table };
+  }
+  return thrustFromModel(model, altM, velKmh);
 }
 
 // ============================================================
 // 3. 马赫倍增器
 // ============================================================
-function machDragMultiplier(polar, mach) {
-  const m = float(mach);
+function compileMachChannels(polar) {
+  // 把一条极曲线的马赫倍增通道预编译为纯数值数组。
+  // 编译期复现原逐点实现的 float 归一化与通道过滤，运行期只做算术。
+  const channels = [];
   const machFactor = float(polar.MachFactor != null ? polar.MachFactor : 3);
-  let totalMult = 1.0;
-
-  // WT FM 的马赫通道索引为 1-7
   for (let i = 1; i <= 7; i++) {
-    let multMax = polar[`MultMachMax${i}`];
-    multMax = float(multMax != null ? multMax : 1.0);
-
+    const multMax = float(polar[`MultMachMax${i}`] != null ? polar[`MultMachMax${i}`] : 1.0);
     // 跳过削减通道（MultMachMax < 1.0）
     if (multMax < 1.0) continue;
-
     const machCrit = float(polar[`MachCrit${i}`] != null ? polar[`MachCrit${i}`] : 0);
     const machMax = float(polar[`MachMax${i}`] != null ? polar[`MachMax${i}`] : 0);
     if (machCrit <= 0 || machMax <= 0) continue;
-
     const multLimit = float(polar[`MultLimit${i}`] != null ? polar[`MultLimit${i}`] : 1.0);
     const lineCoeff = float(polar[`MultLineCoeff${i}`] != null ? polar[`MultLineCoeff${i}`] : 0.0);
-
     // 跳过 LineCoeff > 0 的通道：原始公式产生负倍率
     if (lineCoeff > 0) continue;
+    channels.push([multMax, machCrit, machMax, multLimit, lineCoeff, machFactor]);
+  }
+  return channels;
+}
 
+function evalMachChannels(channels, mach) {
+  // 由预编译通道求马赫阻力倍增器（整网格计算的热路径）。
+  const m = float(mach);
+  let totalMult = 1.0;
+  for (let k = 0; k < channels.length; k++) {
+    const c = channels[k];
+    const multMax = c[0], machCrit = c[1], machMax = c[2];
+    const multLimit = c[3], lineCoeff = c[4], machFactor = c[5];
     let mult;
     if (m < machCrit) {
       mult = 1.0;
@@ -342,12 +427,19 @@ function machDragMultiplier(polar, mach) {
       const denom = Math.max(machMax - machCrit, 1e-6);
       const t = (m - machCrit) / denom;
       mult = 1.0 + (multMax - 1.0) * Math.pow(t, machFactor);
-    } else {  // m > machMax
+    } else {
       mult = multMax + (multLimit - multMax) * (1.0 - Math.exp(lineCoeff * (m - machMax)));
     }
+    mult = Math.max(0.0, mult);
     totalMult *= mult;
+    if (totalMult === 0.0) return 0.0;
   }
-  return totalMult;
+  return Math.max(0.0, totalMult);
+}
+
+function machDragMultiplier(polar, mach) {
+  // 逐点参考接口；网格计算请使用 compileMachChannels + evalMachChannels。
+  return evalMachChannels(compileMachChannels(polar), mach);
 }
 
 // ============================================================
@@ -367,6 +459,18 @@ function sumAreas(areas) {
     return s;
   }
   return 0.0;
+}
+
+function flatWingArea(fm) {
+  const areas = fm.Areas;
+  if (!isObject(areas)) return 0.0;
+  let total = 0.0;
+  for (const k in areas) {
+    if (k.startsWith('Wing') && typeof areas[k] === 'number') {
+      total += float(areas[k]);
+    }
+  }
+  return total;
 }
 
 function extractDragComponents(fm) {
@@ -391,6 +495,7 @@ function extractDragComponents(fm) {
       if (isObject(wingPolar) && Object.keys(wingPolar).length > 0) {
         let area = sumAreas(aero.Areas);
         if (area <= 0) area = float(wingPolar.Area != null ? wingPolar.Area : 0.0);
+        if (area <= 0) area = flatWingArea(fm);
         comps.push([wingPolar, area]);
         break;
       }
@@ -455,7 +560,9 @@ function getWingData(fm) {
     if (isObject(wingPolar) && Object.keys(wingPolar).length > 0) {
       let area = sumAreas(aero.Areas);
       if (area <= 0) area = float(wingPolar.Area != null ? wingPolar.Area : 0.0);
+      if (area <= 0) area = flatWingArea(fm);
       let span = float(aero.Span != null ? aero.Span : 0.0);
+      if (span <= 0) span = float(fm.Wingspan != null ? fm.Wingspan : 0.0);
       if (area <= 0) area = estimateAreaFromPower(fm);
       if (span <= 0 && area > 0) span = Math.sqrt(area * 6.0);
       return [wingPolar, area, span];
@@ -468,31 +575,83 @@ function getWingData(fm) {
   return [{}, area, span];
 }
 
-function calculateDrag(fm, mach, tasMps, rho, massKg) {
-  const q = 0.5 * rho * tasMps * tasMps;  // 动压
+function flatAircraftMachChannels(fm) {
+  const aero = fm.Aerodynamics;
+  if (!isObject(aero) || isObject(aero.WingPlane)) return {};
+  const channels = {};
+  for (const k in aero) {
+    if (k.startsWith('Mach') || k.startsWith('Mult')) channels[k] = aero[k];
+  }
+  if (Object.keys(channels).some(k => k.startsWith('MachCrit'))) return channels;
+  return {};
+}
+
+function flatFixedDragAreas(fm) {
+  const aero = fm.Aerodynamics;
+  if (!isObject(aero) || isObject(aero.WingPlane)) return 0.0;
+  let total = 0.0;
+  for (const key of ['RadiatorCd', 'OilRadiatorCd', 'CockpitDoorCd', 'FuseCd']) {
+    const val = aero[key];
+    if (typeof val === 'number') total += float(val);
+  }
+  return total;
+}
+
+function buildDragModel(fm) {
+  // 把 fm 的阻力结构预编译为纯数值模型，供整网格逐点复用。
+  const components = [];
+  for (const [polar, area] of extractDragComponents(fm)) {
+    const cdMin = float(polar.CdMin != null ? polar.CdMin : 0.0);
+    components.push([cdMin, area, compileMachChannels(polar)]);
+  }
+
+  const aero = fm.Aerodynamics;
+  const isFlat = isObject(aero) && !isObject(aero.WingPlane);
+  const fixedArea = isFlat ? flatFixedDragAreas(fm) : 0.0;
+  const aeroChannels = isFlat ? compileMachChannels(flatAircraftMachChannels(fm)) : [];
+
+  // 机翼数据（用于诱导阻力）
+  const [wingPolar, wingArea, wingSpan] = getWingData(fm);
+  let e = isObject(wingPolar)
+    ? float(wingPolar.OswaldsEfficiencyNumber != null
+      ? wingPolar.OswaldsEfficiencyNumber : 0.75)
+    : 0.75;
+  if (e <= 0) e = 0.75;
+  // 老格式：机翼 polar 无 e，取顶层 Aerodynamics 的整机 e
+  if (!isObject(wingPolar) || wingPolar.OswaldsEfficiencyNumber == null
+      || wingPolar.OswaldsEfficiencyNumber === 0) {
+    if (isObject(aero)) {
+      const eTop = aero.OswaldsEfficiencyNumber;
+      if (typeof eTop === 'number' && eTop > 0) e = float(eTop);
+    }
+  }
+
+  // 展弦比 AR = Span^2 / S
+  const ar = (wingArea > 0 && wingSpan > 0) ? (wingSpan * wingSpan) / wingArea : 8.0;
+
+  return { components, isFlat, fixedArea, aeroChannels, wingArea, ar, e };
+}
+
+function dragFromModel(model, mach, tasMps, rho, massKg) {
+  const q = 0.5 * rho * tasMps * tasMps;
+  const m = float(mach);
 
   // 寄生阻力：累加各部件
   let parasite = 0.0;
-  for (const [polar, area] of extractDragComponents(fm)) {
-    const cdMin = float(polar.CdMin != null ? polar.CdMin : 0.0);
-    const cd = cdMin * machDragMultiplier(polar, mach);
+  for (const [cdMin, area, channels] of model.components) {
+    const cd = cdMin * evalMachChannels(channels, m);
     parasite += q * cd * area;
   }
 
-  // 诱导阻力：使用机翼极曲线
-  const [wingPolar, wingArea, wingSpan] = getWingData(fm);
-  let e = isObject(wingPolar) ? float(wingPolar.OswaldsEfficiencyNumber != null ? wingPolar.OswaldsEfficiencyNumber : 0.75) : 0.75;
-  if (e <= 0) e = 0.75;
-
-  // 展弦比 AR = Span² / S
-  let ar;
-  if (wingArea > 0 && wingSpan > 0) {
-    ar = (wingSpan * wingSpan) / wingArea;
-  } else {
-    ar = 8.0;
+  // 老格式：整机马赫通道 x 全部寄生阻力，并计入固定阻力面积
+  if (model.isFlat) {
+    if (model.fixedArea > 0) parasite += q * model.fixedArea;
+    parasite *= evalMachChannels(model.aeroChannels, m);
   }
 
-  // 升力系数 CL = m·g / (q·S)（平飞假设），上限 1.5
+  const wingArea = model.wingArea, e = model.e, ar = model.ar;
+
+  // 升力系数 CL = m*g / (q*S)（平飞假设），上限 1.5
   let cl = 0.0;
   if (q > 0 && wingArea > 0) {
     cl = (massKg * G) / (q * wingArea);
@@ -508,6 +667,11 @@ function calculateDrag(fm, mach, tasMps, rho, massKg) {
   return Math.max(0.0, parasite + induced);
 }
 
+function calculateDrag(fm, mach, tasMps, rho, massKg) {
+  // 逐点参考接口；网格计算请使用 buildDragModel + dragFromModel。
+  return dragFromModel(buildDragModel(fm), mach, tasMps, rho, massKg);
+}
+
 // ============================================================
 // 5. 加速度网格
 // ============================================================
@@ -521,7 +685,11 @@ async function computeAccelGrid(fm, massKg, afterburner,
   }
 
   const samples = [];
+  // 预编译一次，784 个网格点复用（避免逐点解析 fm）
+  const dragModel = buildDragModel(fm);
+  const thrustModel = buildThrustModel(fm);
   const totalAlts = altitudes.length;
+  let lastYield = Date.now();
   for (let ai = 0; ai < totalAlts; ai++) {
     const alt = altitudes[ai];
     const [T, _P, rho] = isaAtmosphere(alt);
@@ -530,8 +698,8 @@ async function computeAccelGrid(fm, massKg, afterburner,
       const machF = float(mach);
       const tasMps = machF * aSound;
       const tasKmh = tasMps * 3.6;
-      const [milN, abN] = interpolateThrust(fm, alt, tasKmh, afterburner);
-      const dragN = calculateDrag(fm, machF, tasMps, rho, massKg);
+      const [milN, abN] = thrustFromModel(thrustModel, alt, tasKmh, rho);
+      const dragN = dragFromModel(dragModel, machF, tasMps, rho, massKg);
       const thrustN = afterburner ? abN : milN;
       const netForceN = thrustN - dragN;
       const accelMps2 = massKg > 0 ? netForceN / massKg : 0.0;
@@ -546,12 +714,14 @@ async function computeAccelGrid(fm, massKg, afterburner,
         accel_mps2: accelMps2,
       });
     }
-    // 每完成一个高度层：报告进度，每 3 层让步一次给浏览器
+    // 每完成一个高度层：报告进度值；按实际耗时自适应让步。
+    // 计算很快时避免被固定次数的 setTimeout 开销拖慢；慢设备仍保持 UI 响应。
     if (onProgress) {
       onProgress(ai + 1, totalAlts);
     }
-    if (ai % 3 === 2 || ai === totalAlts - 1) {
+    if (Date.now() - lastYield >= 16 || ai === totalAlts - 1) {
       await yieldToUI();
+      lastYield = Date.now();
     }
   }
 
