@@ -19,7 +19,7 @@ cp "$ROOT_DIR/web/"* "$DIST_DIR/web/"
 
 # 自动 cache-busting：把 index.html 中静态资源的 ?v=手动版本号替换为内容 hash
 # （源码中的 ?v=N 仅作占位；构建时注入 md5，保证资源更新后浏览器必定重新拉取）
-for asset in compute.js app.js style.css; do
+for asset in compute.js compare.js app.js style.css; do
   if [ -f "$ROOT_DIR/web/$asset" ]; then
     hash=$(md5sum "$ROOT_DIR/web/$asset" | cut -d' ' -f1 | cut -c1-10)
     sed -i "s/$asset?v=[0-9]*/$asset?v=$hash/g" "$DIST_DIR/web/index.html"

@@ -1,8 +1,9 @@
 """War Thunder 加速度分析工具 CLI 主入口。
 
-提供五个子命令：
+提供六个子命令：
   - download: 下载飞机飞行模型 .blkx 文件
   - compute:  计算单架飞机的加速度网格与最优剖面
+  - compare:  多机对比（关键指标 + 曲线叠加 + 雷达图数据）
   - run:      串行执行 download + compute，并刷新 manifest
   - serve:    启动本地 HTTP 服务器预览网页
   - list:     列出已计算的数据集
@@ -18,6 +19,7 @@ import sys
 import webbrowser
 from pathlib import Path
 
+from lib.compare import build_comparison, format_comparison_table, save_comparison
 from lib.compute import compute_accel_grid, compute_climb_route, compute_optimal
 from lib.downloader import DEFAULT_RAW_DIR, download_fm
 from lib.schema import build_record, load_json, save_json
@@ -126,6 +128,53 @@ def update_manifest() -> dict:
 
 
 # ============================================================
+# _build_record_for_fm：由 FM + 质量推导完整记录（供 compute / compare 复用）
+# ============================================================
+def _mass_info(fm: dict) -> tuple[float, float]:
+    """从 FM 提取 (空重 kg, 最大内油质量 kg)。"""
+    mass_node = fm.get("Mass", {}) if isinstance(fm, dict) else {}
+    if not isinstance(mass_node, dict):
+        mass_node = {}
+    empty_mass = float(mass_node.get("EmptyMass", 0.0))
+    max_fuel = float(mass_node.get("MaxFuelMass0", 0.0))
+    return empty_mass, max_fuel
+
+
+def _build_record_for_fm(aircraft: str, fm: dict, mass_kg: float,
+                         afterburner: bool, fuel_pct: float) -> dict:
+    """按给定飞行质量构建统一 schema 记录（不写文件）。
+
+    参数:
+        aircraft: 飞机代号。
+        fm: 飞行模型 JSON。
+        mass_kg: 实际参与计算的飞行质量 kg（含挂载）。
+        afterburner: 是否启用加力。
+        fuel_pct: 燃油比例（写入 metadata 与 params）。
+
+    返回:
+        lib.schema.build_record 产出的记录。
+
+    说明:
+        build_record 按 fuel_pct 推导 flight_mass_kg，无法表达自定义质量与挂载，
+        因此这里在质量与推导值不一致时以实际计算质量覆盖 flight_mass_kg，
+        保证「飞行质量 / 推重比」等派生指标与实际物理计算一致。
+    """
+    samples, grid = compute_accel_grid(fm, mass_kg, afterburner=afterburner)
+    optimal = compute_optimal(samples, grid)
+    climb_route = compute_climb_route(samples, grid)
+    params = {
+        "afterburner": afterburner,
+        "fuel_pct": fuel_pct,
+        "wt_fm_version": "datamine-master",
+    }
+    record = build_record(aircraft, fm, samples, grid, optimal, params, climb_route)
+    derived_mass = float(record["metadata"]["flight_mass_kg"])
+    if abs(derived_mass - float(mass_kg)) > 1e-6:
+        record["metadata"]["flight_mass_kg"] = float(mass_kg)
+    return record
+
+
+# ============================================================
 # _compute_one：单架飞机的计算流程（供 compute / run 复用）
 # ============================================================
 def _compute_one(aircraft: str, no_afterburner: bool = False,
@@ -155,14 +204,8 @@ def _compute_one(aircraft: str, no_afterburner: bool = False,
         print(f"✗ 读取 {fm_path} 失败: {e}", file=sys.stderr)
         return 1
 
-    # 2. 提取质量信息
-    mass_node = fm.get("Mass", {}) if isinstance(fm, dict) else {}
-    if not isinstance(mass_node, dict):
-        mass_node = {}
-    empty_mass = float(mass_node.get("EmptyMass", 0.0))
-    max_fuel = float(mass_node.get("MaxFuelMass0", 0.0))
-
-    # 3. 计算飞行质量
+    # 2. 计算飞行质量
+    empty_mass, max_fuel = _mass_info(fm)
     if mass is not None:
         mass_kg = float(mass)
     else:
@@ -171,21 +214,9 @@ def _compute_one(aircraft: str, no_afterburner: bool = False,
     afterburner = not no_afterburner
 
     try:
-        # 4. 计算加速度网格
-        samples, grid = compute_accel_grid(fm, mass_kg, afterburner=afterburner)
-        # 5. 计算最优剖面
-        optimal = compute_optimal(samples, grid)
-        # 5.5 计算最佳爬升速度程序（基于剩余功率 SEP）
-        climb_route = compute_climb_route(samples, grid)
-        # 6. 组装参数
-        params = {
-            "afterburner": afterburner,
-            "fuel_pct": fuel_pct,
-            "wt_fm_version": "datamine-master",
-        }
-        # 7. 构建 record
-        record = build_record(aircraft, fm, samples, grid, optimal, params, climb_route)
-        # 8. 保存
+        # 3. 计算加速度网格 / 最优剖面 / 爬升速度程序，组装 record
+        record = _build_record_for_fm(aircraft, fm, mass_kg, afterburner, fuel_pct)
+        # 4. 保存
         COMPUTED_DIR.mkdir(parents=True, exist_ok=True)
         out_path = COMPUTED_DIR / f"{aircraft}.json"
         save_json(record, out_path)
@@ -193,8 +224,8 @@ def _compute_one(aircraft: str, no_afterburner: bool = False,
         print(f"✗ {aircraft} 计算失败: {e}", file=sys.stderr)
         return 1
 
-    # 9. 打印完成信息（路径用 spec 约定的相对形式）
-    print(f"✓ 计算完成: data/computed/{aircraft}.json (samples={len(samples)})")
+    # 5. 打印完成信息（路径用 spec 约定的相对形式）
+    print(f"✓ 计算完成: data/computed/{aircraft}.json (samples={len(record['samples'])})")
     return 0
 
 
@@ -226,6 +257,114 @@ def cmd_compute(args: argparse.Namespace) -> int:
         fuel_pct=args.fuel_pct,
         mass=args.mass,
     )
+
+
+# ============================================================
+# compare：多机对比
+# ============================================================
+def _load_fm_json(aircraft: str) -> dict:
+    """读取 data/raw/<aircraft>.blkx；不存在时抛 FileNotFoundError。"""
+    fm_path = RAW_DIR / f"{aircraft}.blkx"
+    if not fm_path.exists():
+        raise FileNotFoundError(f"找不到原始数据: {fm_path}（可先执行 download）")
+    with open(fm_path, "r", encoding="utf-8") as fp:
+        return json.load(fp)
+
+
+def _load_record_for_compare(aircraft: str, args: argparse.Namespace) -> tuple[dict, str]:
+    """为对比取一架飞机的记录，返回 (record, 说明文字)。
+
+    优先用 data/raw/<aircraft>.blkx 按给定参数现场计算（保证各机参数一致）；
+    缺少原始数据或指定 --from-computed 时，退回 data/computed/<aircraft>.json，
+    并在参数与请求不一致时给出提示（预计算文件无法按新参数重算）。
+    """
+    fuel_pct = float(args.fuel_pct)
+    payload = float(args.payload)
+    afterburner = not args.no_afterburner
+    raw_path = RAW_DIR / f"{aircraft}.blkx"
+    computed_path = COMPUTED_DIR / f"{aircraft}.json"
+
+    if args.from_computed or not raw_path.exists():
+        if not computed_path.exists():
+            raise FileNotFoundError(
+                f"既无 data/raw/{aircraft}.blkx 也无 data/computed/{aircraft}.json")
+        record = load_json(computed_path)
+        meta = record.get("metadata", {})
+        notes: list[str] = []
+        if bool(meta.get("afterburner")) != afterburner:
+            notes.append(f"存档为{'加力' if meta.get('afterburner') else '军推'}，"
+                         f"与请求的{'加力' if afterburner else '军推'}不同")
+        if payload > 0:
+            notes.append(f"请求挂载 {payload:.0f} kg，存档未含挂载")
+        note = f"↺ {aircraft}: 使用预计算 data/computed/{aircraft}.json"
+        if notes:
+            note += "（" + "；".join(notes) + "）"
+        return record, note
+
+    fm = _load_fm_json(aircraft)
+    empty_mass, max_fuel = _mass_info(fm)
+    base_mass = float(args.mass) if args.mass is not None else empty_mass + fuel_pct * max_fuel
+    mass_kg = base_mass + payload
+    record = _build_record_for_fm(aircraft, fm, mass_kg, afterburner, fuel_pct)
+    note = (f"✓ {aircraft}: 现场计算 (飞行质量 {mass_kg:,.0f} kg, "
+            f"燃油 {fuel_pct * 100:.0f}%, 挂载 {payload:.0f} kg, "
+            f"{'加力' if afterburner else '军推'})")
+    return record, note
+
+
+def cmd_compare(args: argparse.Namespace) -> int:
+    """compare 子命令：构建多机对比数据并打印对比表。"""
+    names: list[str] = list(args.aircraft)
+    if len(names) < 2:
+        print("✗ compare 至少需要两架飞机（例：python analyze.py compare j_10c su_27）",
+              file=sys.stderr)
+        return 1
+
+    nations_map = _load_nations_map()
+    records: list[dict] = []
+    failed = 0
+    for name in names:
+        try:
+            record, note = _load_record_for_compare(name, args)
+        except Exception as e:  # noqa: BLE001 - 单架失败不中断其余
+            print(f"✗ {name} 对比数据获取失败: {e}", file=sys.stderr)
+            failed += 1
+            continue
+        record["nation"] = nations_map.get(name, "other")
+        record["fuel_pct"] = float(args.fuel_pct)
+        record["payload_kg"] = float(args.payload)
+        records.append(record)
+        print(note)
+
+    if len(records) < 2:
+        print("✗ 可对比的飞机不足两架，已中止", file=sys.stderr)
+        return 1
+
+    data = build_comparison(records)
+    print()
+    print(format_comparison_table(data))
+
+    if not args.no_save:
+        if args.out:
+            out_path = Path(args.out)
+            if not out_path.is_absolute():
+                out_path = PROJECT_ROOT / out_path
+        else:
+            suffix = "_".join(names)
+            out_path = COMPUTED_DIR / f"compare_{suffix}.json"
+        try:
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            save_comparison(data, out_path)
+        except Exception as e:  # noqa: BLE001
+            print(f"✗ 对比数据保存失败: {e}", file=sys.stderr)
+            return 1
+        rel = out_path.relative_to(PROJECT_ROOT) if out_path.is_relative_to(PROJECT_ROOT) else out_path
+        print(f"\n✓ 对比数据已保存: {rel}")
+
+    if failed:
+        print(f"✗ 有 {failed} 架飞机未能纳入对比", file=sys.stderr)
+        return 1
+    return 0
 
 
 def _run_one(aircraft: str, no_afterburner: bool, fuel_pct: float,
@@ -381,6 +520,33 @@ def build_parser() -> argparse.ArgumentParser:
         "--mass", type=float, default=None,
         help="自定义飞行质量 kg（覆盖 fuel-pct 计算）")
     p_compute.set_defaults(func=cmd_compute)
+
+    # compare：多机对比
+    p_compare = subparsers.add_parser(
+        "compare", help="多机对比：关键指标表 + 曲线叠加 + 雷达图数据")
+    p_compare.add_argument("aircraft", nargs="+", help="飞机代号（至少两架）")
+    p_compare.add_argument(
+        "--fuel-pct", type=float, default=0.5,
+        help="燃油比例（默认 0.5，应用到所有参与对比的飞机）")
+    p_compare.add_argument(
+        "--mass", type=float, default=None,
+        help="自定义基准飞行质量 kg，覆盖燃油推导值（挂载另行叠加）")
+    p_compare.add_argument(
+        "--payload", type=float, default=0.0,
+        help="挂载质量 kg，叠加到每架飞机的飞行质量（默认 0）")
+    p_compare.add_argument(
+        "--no-afterburner", action="store_true",
+        help="仅计算军用推力（禁用加力）")
+    p_compare.add_argument(
+        "--from-computed", action="store_true",
+        help="仅使用 data/computed/*.json 预计算结果，不重新计算")
+    p_compare.add_argument(
+        "--out", default=None,
+        help="对比数据输出路径（默认 data/computed/compare_<机型>.json）")
+    p_compare.add_argument(
+        "--no-save", action="store_true",
+        help="只打印对比表，不写 JSON 文件")
+    p_compare.set_defaults(func=cmd_compare)
 
     # run：并发 download + compute
     p_run = subparsers.add_parser(

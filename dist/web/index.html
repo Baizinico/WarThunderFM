@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#080b10">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="War Thunder 飞行模型 3D 加速度分析：基于拆包 .blkx 数据在浏览器端实时计算高度 × 马赫加速度网格、最优爬升速度程序与 SEP 爬升率。">
+  <meta name="description" content="War Thunder 飞行模型 3D 加速度分析：基于拆包 .blkx 数据在浏览器端实时计算高度 × 马赫加速度网格、最优爬升速度程序与 SEP 爬升率，并支持多架飞机的指标 / 曲线 / 雷达对比。">
   <title>War Thunder 飞行模型 3D 加速度分析</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <!-- Google Fonts：Inter 用于界面正文，JetBrains Mono 用于仪表式数值与标签 -->
@@ -15,10 +15,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- 加速度计算引擎（浏览器端实现，移植自 lib/compute.py） -->
   <script src="compute.js?v=d7e2ede7b6"></script>
+  <!-- 多机对比数据构建（浏览器端实现，移植自 lib/compare.py） -->
+  <script src="compare.js?v=3677411cca"></script>
   <!-- 应用逻辑 -->
-  <script src="app.js?v=d5db9dc8ff"></script>
+  <script src="app.js?v=502d1629aa"></script>
   <!-- 应用样式 -->
-  <link rel="stylesheet" href="style.css?v=fbf7dceed7">
+  <link rel="stylesheet" href="style.css?v=d6010162ea">
 </head>
 <body>
   <!-- 背景网格与光晕装饰层（纯装饰，不参与交互） -->
@@ -38,7 +40,7 @@
         <div class="brand-text">
           <p class="brand-eyebrow">WT · Flight Model Analyzer</p>
           <h1>War Thunder 飞行模型 3D 加速度分析</h1>
-          <p class="brand-sub">高度 × 马赫加速度网格 · 最优爬升速度程序 · 剩余功率（SEP）剖面</p>
+          <p class="brand-sub">高度 × 马赫加速度网格 · 最优爬升速度程序 · 剩余功率（SEP）剖面 · 多机对比</p>
         </div>
       </div>
       <!-- 状态指示灯 -->
@@ -82,6 +84,25 @@
           <span class="unit">kg</span>
         </div>
       </div>
+
+      <div class="control-field control-compare">
+        <label>多机对比</label>
+        <div class="compare-actions">
+          <button type="button" id="compare-add" class="btn btn-accent" title="把当前飞机的计算结果加入对比队列">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+            加入对比
+          </button>
+          <button type="button" id="compare-sync" class="btn" title="用当前燃油 / 挂载参数重算队列中的全部飞机">同步参数</button>
+          <button type="button" id="compare-clear" class="btn btn-ghost" title="清空对比队列">清空</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 对比队列：已加入对比的飞机（最多 4 架） -->
+    <div id="compare-bar" class="compare-bar" hidden>
+      <span class="compare-bar-label">对比队列</span>
+      <div id="compare-chips" class="compare-chips" role="list"></div>
+      <span class="compare-bar-hint" id="compare-bar-hint">已选 0 / 4</span>
     </div>
   </header>
 
@@ -132,6 +153,59 @@
       </div>
       <div id="plot-climb" class="plot-area plot-area-climb"></div>
     </section>
+
+    <!-- 多机对比区：至少两架飞机加入队列后才显示 -->
+    <section id="compare-section" class="compare-section" aria-label="多机对比" hidden>
+      <div class="compare-head">
+        <h2>多机对比</h2>
+        <span class="card-sub" id="compare-sub"></span>
+      </div>
+
+      <!-- 关键指标对比表 -->
+      <div class="plot-card">
+        <div class="card-head">
+          <div class="card-title-group">
+            <h2>关键指标对比</h2>
+            <span class="card-sub">同参数下的静态指标 · 每行最优值高亮 · 窄屏可横向滑动查看</span>
+          </div>
+          <span class="badge">指标表</span>
+        </div>
+        <div id="compare-table" class="compare-table-wrap"></div>
+      </div>
+
+      <!-- 曲线叠加 -->
+      <div class="plot-card">
+        <div class="card-head">
+          <div class="card-title-group">
+            <h2>曲线叠加</h2>
+            <span class="card-sub" id="compare-curve-sub">最佳爬升路线（高度 → 马赫数）</span>
+          </div>
+          <div class="compare-tools">
+            <div class="segmented" id="compare-mode" role="group" aria-label="叠加曲线类型">
+              <button type="button" class="seg-btn is-active" data-mode="climb">爬升路线</button>
+              <button type="button" class="seg-btn" data-mode="sep">爬升率</button>
+              <button type="button" class="seg-btn" data-mode="accel">定高加速</button>
+            </div>
+            <div class="select-wrap compare-alt-select">
+              <select id="compare-altitude" aria-label="定高加速剖面高度"></select>
+            </div>
+          </div>
+        </div>
+        <div id="plot-compare" class="plot-area plot-area-climb"></div>
+      </div>
+
+      <!-- 归一化雷达图 -->
+      <div class="plot-card">
+        <div class="card-head">
+          <div class="card-title-group">
+            <h2>综合能力雷达</h2>
+            <span class="card-sub">各指标在本次对比集合内归一化到 0-100（相对强弱）</span>
+          </div>
+          <span class="badge badge-alt">归一化</span>
+        </div>
+        <div id="plot-radar" class="plot-area plot-area-radar"></div>
+      </div>
+    </section>
   </main>
 
   <!-- 页脚信息 -->
@@ -146,7 +220,7 @@
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
         数据由网络拆包计算获得，并不一定 100% 准确
       </p>
-      <p class="app-version">v0.5.0</p>
+      <p class="app-version">v0.6.0</p>
     </div>
   </footer>
 </body>

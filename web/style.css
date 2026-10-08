@@ -1130,6 +1130,396 @@ progress::-moz-progress-bar {
 }
 
 /* ============================================================
+   多机对比：控制按钮 / 对比队列 / 指标表 / 曲线叠加工具条
+   ============================================================ */
+.control-compare {
+  flex: 0 1 auto;
+}
+
+.compare-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* 通用按钮：玻璃拟态，与输入框同一视觉语言 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.52rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 12, 17, 0.72);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease,
+    background-color 0.18s ease, color 0.18s ease, transform 0.12s ease;
+}
+
+.btn svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.btn svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.btn:hover {
+  border-color: var(--line-strong);
+  background: rgba(13, 19, 26, 0.92);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-accent {
+  border-color: rgba(255, 139, 77, 0.42);
+  background: linear-gradient(180deg, rgba(255, 139, 77, 0.2), rgba(255, 139, 77, 0.08));
+  color: var(--accent-soft);
+}
+
+.btn-accent:hover {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(255, 139, 77, 0.3), rgba(255, 139, 77, 0.12));
+  color: #ffd9bd;
+}
+
+.btn-ghost {
+  color: var(--text-2);
+}
+
+/* ---------- 对比队列条 ---------- */
+.compare-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.85rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(78, 197, 241, 0.08), rgba(13, 19, 26, 0.5));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.compare-bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  flex: 0 0 auto;
+}
+
+.compare-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.compare-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.32rem 0.4rem 0.32rem 0.6rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(8, 12, 17, 0.66);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text);
+  max-width: 100%;
+}
+
+/* 队列配色圆点（颜色由内联 --chip 变量给定） */
+.compare-chip-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--chip, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip, var(--accent)) 22%, transparent);
+}
+
+.compare-chip-name {
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.compare-chip-name:hover {
+  color: var(--accent-soft);
+}
+
+.compare-chip-params {
+  color: var(--text-3);
+  font-size: 0.68rem;
+}
+
+.compare-chip-remove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(148, 170, 196, 0.14);
+  color: var(--text-2);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.compare-chip-remove:hover {
+  background: rgba(255, 107, 94, 0.32);
+  color: #fff;
+}
+
+.compare-bar-hint {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+
+.compare-bar-hint.is-ready {
+  color: var(--green);
+}
+
+/* ---------- 对比区容器 ---------- */
+.compare-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.compare-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-left: 0.1rem;
+}
+
+.compare-head h2 {
+  font-size: 1.06rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.compare-head h2::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 0.95em;
+  margin-right: 0.5rem;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--accent), var(--cyan));
+  vertical-align: -0.08em;
+}
+
+/* 图表卡片内右侧工具组（分段控件 + 高度选择） */
+.compare-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(8, 12, 17, 0.66);
+}
+
+.seg-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  background: none;
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.seg-btn:hover {
+  color: var(--text);
+}
+
+.seg-btn.is-active {
+  background: linear-gradient(180deg, rgba(255, 139, 77, 0.28), rgba(255, 139, 77, 0.12));
+  color: #ffd9bd;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* 定高剖面高度选择器：仅「定高加速」模式下可用 */
+.compare-alt-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0.42rem 1.9rem 0.42rem 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text);
+  background: rgba(8, 12, 17, 0.72);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.compare-alt-select select:hover {
+  border-color: var(--line-strong);
+}
+
+.compare-alt-select select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+
+.compare-alt-select.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* 雷达图容器：限制宽度并居中，避免超宽屏下极坐标被压小 */
+.plot-area-radar {
+  height: 46vh;
+  min-height: 360px;
+  max-height: 520px;
+  max-width: 700px;
+  margin-inline: auto;
+}
+
+/* ---------- 指标对比表 ---------- */
+.compare-table-wrap {
+  overflow-x: auto;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 0.5rem 0.7rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 首列（指标名）左对齐并固定底色，横向滚动时仍可辨认 */
+.compare-table .cmp-metric-col {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-2);
+  background: linear-gradient(90deg, rgba(11, 16, 22, 0.98) 78%, rgba(11, 16, 22, 0.7));
+  border-right: 1px solid var(--line);
+}
+
+.compare-table .cmp-unit {
+  margin-left: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--text-3);
+}
+
+.compare-table thead th {
+  border-bottom: 1px solid var(--line-strong);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.compare-table thead th .cmp-head-sub {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-3);
+}
+
+.compare-table tbody tr + tr th,
+.compare-table tbody tr + tr td {
+  border-top: 1px solid var(--line);
+}
+
+.compare-table tbody tr:hover td,
+.compare-table tbody tr:hover .cmp-metric-col {
+  background-color: rgba(148, 170, 196, 0.06);
+}
+
+/* 最优值：强调色 + 三角标 */
+.compare-table tbody tr:hover td.is-best {
+  background-color: rgba(255, 139, 77, 0.14);
+}
+
+.compare-table td.is-best {
+  color: var(--accent-soft);
+  font-weight: 600;
+}
+
+.compare-table td.is-best::after {
+  content: '▲';
+  margin-left: 0.35rem;
+  font-size: 0.6rem;
+  vertical-align: 0.15em;
+  opacity: 0.9;
+}
+
+.compare-table td.is-empty {
+  color: var(--text-3);
+}
+
+/* ============================================================
    Footer 页脚
    ============================================================ */
 .app-footer {
@@ -1341,6 +1731,12 @@ progress::-moz-progress-bar {
   .plot-area-climb {
     height: 30vh;
     min-height: 230px;
+  }
+
+  .plot-area-radar {
+    height: 34vh;
+    min-height: 260px;
+    max-height: 380px;
   }
 
   .ad-container {

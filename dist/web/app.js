@@ -17,6 +17,16 @@ let currentPayloadKg = 0;       // 当前挂载质量 kg（由数字输入框控
 let currentFm = null;           // 当前飞机的原始 .blkx 数据（供燃油调整时重算）
 let currentAircraftName = null; // 当前飞机代号
 let currentAircraftNation = null;  // 当前飞机国家
+let currentAircraftPath = null; // 当前飞机原始数据路径（供对比队列重新加载）
+let currentDataFuelPct = null;  // currentData 对应的燃油比例
+let currentDataPayloadKg = null;  // currentData 对应的挂载质量
+
+// 多机对比状态
+let compareEntries = [];        // 对比队列：[{name,path,nation,fuelPct,payloadKg,fm,data,color,error}]
+let compareMode = 'climb';      // 叠加曲线类型：climb（爬升马赫）| sep（爬升率）| accel（定高加速）
+let compareProfileAlt = null;   // 定高加速剖面的高度层（m）
+let compareToken = 0;           // 对比渲染竞态令牌
+let lastComparison = null;      // 最近一次构建的对比数据（供模式切换时重绘）
 
 // 主题色（与 style.css 中的 CSS 变量保持一致）
 const COLOR_ACCENT = '#ff8b4d';   // 橙色强调（高加速度）
@@ -946,6 +956,9 @@ function clearPlot() {
   currentFm = null;            // 清空缓存的飞机数据
   currentAircraftName = null;
   currentAircraftNation = null;
+  currentAircraftPath = null;
+  currentDataFuelPct = null;
+  currentDataPayloadKg = null;
   currentPayloadKg = 0;        // 重置挂载质量
   // 重置挂载质量输入框
   const payloadInput = document.getElementById('payload-input');
@@ -991,6 +1004,7 @@ async function loadAircraft(name, path, nation) {
     currentFm = fm;
     currentAircraftName = name;
     currentAircraftNation = nation;
+    currentAircraftPath = path;
 
     // 2. 在浏览器端实时计算加速度网格（服务器只提供数据）
     //    使用当前燃油滑动条值（currentFuelPct），默认 0.5
@@ -1003,27 +1017,29 @@ async function loadAircraft(name, path, nation) {
   }
 }
 
-/** 基于当前 currentFm + currentFuelPct + currentPayloadKg 重新计算并渲染 */
-async function recomputeAndRender(statusMsg) {
-  if (!currentFm || !currentAircraftName) return;
-  if (statusMsg) setStatus(statusMsg, false, 'busy');
-  // 让 UI 有机会更新状态栏
-  await new Promise(r => setTimeout(r, 0));
-
-  showProgress('计算加速度网格...');
-  const data = await analyzeAircraft(currentAircraftName, currentFm, {
-    fuel_pct: currentFuelPct,
+/**
+ * 按指定燃油 / 挂载参数计算一架飞机的完整分析数据（不渲染）。
+ * recomputeAndRender 与多机对比共用，保证两条路径的质量与网格口径一致。
+ * @param {string} name 飞机代号
+ * @param {object} fm 原始 .blkx 飞行模型
+ * @param {number} fuelPct 燃油比例（0.3-1.0）
+ * @param {number} payloadKg 挂载质量 kg
+ * @param {string} [progressLabel] 进度条文案
+ * @returns {Promise<object>} analyzeAircraft 结果（含 samples/grid/optimal/climb_route/metadata）
+ */
+async function analyzeWithParams(name, fm, fuelPct, payloadKg, progressLabel) {
+  showProgress(progressLabel || '计算加速度网格...');
+  const data = await analyzeAircraft(name, fm, {
+    fuel_pct: fuelPct,
     afterburner: true,
   }, updateProgress);
 
   // 挂载质量叠加到飞行质量，并重算加速度网格（质量变大→加速度降低）
   // 需同步重算 optimal 与 climb_route，使其与新质量下的 samples 一致
-  if (currentPayloadKg > 0) {
+  if (payloadKg > 0) {
     showProgress('重算挂载质量加速度...');
-    const baseMass = data.metadata.flight_mass_kg;
-    const newMass = baseMass + currentPayloadKg;
-    // 用新质量重算加速度网格
-    const [samples, grid] = await computeAccelGrid(currentFm, newMass, true, 0.1, 2.5, 0.05, updateProgress);
+    const newMass = data.metadata.flight_mass_kg + payloadKg;
+    const [samples, grid] = await computeAccelGrid(fm, newMass, true, 0.1, 2.5, 0.05, updateProgress);
     data.samples = samples;
     data.grid = grid;
     data.metadata.flight_mass_kg = newMass;
@@ -1031,10 +1047,33 @@ async function recomputeAndRender(statusMsg) {
     data.climb_route = computeClimbRoute(samples, grid);
   }
   hideProgress();
+  return data;
+}
+
+/** 基于当前 currentFm + currentFuelPct + currentPayloadKg 重新计算并渲染 */
+async function recomputeAndRender(statusMsg) {
+  if (!currentFm || !currentAircraftName) return;
+  if (statusMsg) setStatus(statusMsg, false, 'busy');
+  // 让 UI 有机会更新状态栏
+  await new Promise(r => setTimeout(r, 0));
+
+  let data;
+  try {
+    data = await analyzeWithParams(currentAircraftName, currentFm,
+      currentFuelPct, currentPayloadKg);
+  } catch (err) {
+    hideProgress();
+    console.error('计算失败:', err);
+    setStatus(`计算失败: ${err.message}`, true);
+    return;
+  }
 
   data.metadata.computed_at = new Date(Date.now() + 8 * 3600 * 1000)
     .toISOString().replace('Z', '+08:00');
   currentData = data;
+  // 记录 currentData 对应的参数，供「加入对比」判断能否直接复用
+  currentDataFuelPct = currentFuelPct;
+  currentDataPayloadKg = currentPayloadKg;
   renderMetadata(data.metadata, currentAircraftNation, data);
   try {
     await render3DSurface(data.samples, data.grid, data.climb_route);
@@ -1112,6 +1151,594 @@ function initFuelSlider() {
   }
 }
 
+// ===== 6.8 多机对比 =====
+// 依赖 compare.js（buildComparison / computeCompareMetrics / MAX_COMPARE_AIRCRAFT）。
+// 流程：把飞机的「当前参数快照」加入对比队列 → 逐架计算（复用 analyzer）→
+//       buildComparison 构建对比数据 → 渲染指标表 / 曲线叠加 / 雷达图。
+
+// 队列配色（橙 / 青 / 绿 / 紫），与图表线条一一对应
+const COMPARE_COLORS = ['#ff8b4d', '#4ec5f1', '#8fd07a', '#c9a0ff'];
+
+/** HTML 转义（机型名来自文件名，仍转义以防注入） */
+function escapeHtml(text) {
+  return String(text == null ? '' : text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** compare.js 是否已加载 */
+function compareAvailable() {
+  return typeof buildComparison === 'function' && typeof computeCompareMetrics === 'function';
+}
+
+/** 取对比队列中某机型的配色（未入队时用首位配色） */
+function compareColorOf(name) {
+  const entry = compareEntries.find(e => e.name === name);
+  return entry ? entry.color : COMPARE_COLORS[0];
+}
+
+/** 在图表容器内显示占位提示 */
+function showComparePlaceholder(el, msg, sub) {
+  if (!el) return;
+  if (window.Plotly) { try { Plotly.purge(el); } catch (e) { /* 忽略 */ } }
+  el.innerHTML = `<div class="plot-placeholder">${escapeHtml(msg)}` +
+    (sub ? `<br><span class="plot-placeholder-sub">${escapeHtml(sub)}</span>` : '') + `</div>`;
+}
+
+/** 初始化对比控件（按钮 / 曲线模式 / 剖面高度） */
+function initCompareControls() {
+  if (!compareAvailable()) {
+    // compare.js 未加载：隐藏对比入口，避免出现无效按钮
+    const field = document.querySelector('.control-compare');
+    if (field) field.hidden = true;
+    console.warn('compare.js 未加载，多机对比功能不可用');
+    return;
+  }
+
+  const addBtn = document.getElementById('compare-add');
+  const syncBtn = document.getElementById('compare-sync');
+  const clearBtn = document.getElementById('compare-clear');
+  if (addBtn) addBtn.addEventListener('click', addCurrentToCompare);
+  if (syncBtn) syncBtn.addEventListener('click', syncCompareParams);
+  if (clearBtn) clearBtn.addEventListener('click', clearCompare);
+
+  // 曲线类型切换（爬升路线 / 爬升率 / 定高加速）
+  const seg = document.getElementById('compare-mode');
+  if (seg) {
+    seg.querySelectorAll('.seg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        compareMode = btn.getAttribute('data-mode') || 'climb';
+        seg.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('is-active', b === btn));
+        updateCompareAltitudeState();
+        if (lastComparison) renderCompareOverlay(lastComparison);
+      });
+    });
+  }
+
+  // 定高剖面高度选择
+  const altSel = document.getElementById('compare-altitude');
+  if (altSel) {
+    altSel.addEventListener('change', () => {
+      const v = parseFloat(altSel.value);
+      if (isFinite(v)) compareProfileAlt = v;
+      if (lastComparison) renderCompareOverlay(lastComparison);
+    });
+  }
+
+  updateCompareAltitudeState();
+  renderCompareBar();
+}
+
+/** 高度选择器仅在「定高加速」模式下可用 */
+function updateCompareAltitudeState() {
+  const wrap = document.querySelector('.compare-alt-select');
+  if (wrap) wrap.classList.toggle('is-disabled', compareMode !== 'accel');
+}
+
+/** 重新渲染对比队列（chips）+ 按钮可用状态 */
+function renderCompareBar() {
+  const bar = document.getElementById('compare-bar');
+  const chips = document.getElementById('compare-chips');
+  const hint = document.getElementById('compare-bar-hint');
+  const syncBtn = document.getElementById('compare-sync');
+  const clearBtn = document.getElementById('compare-clear');
+  const count = compareEntries.length;
+
+  if (bar) bar.hidden = count === 0;
+  if (syncBtn) syncBtn.disabled = count === 0;
+  if (clearBtn) clearBtn.disabled = count === 0;
+  if (hint) {
+    hint.textContent = count < 2
+      ? `已选 ${count} / ${MAX_COMPARE_AIRCRAFT} · 至少 2 架后开始对比`
+      : `已选 ${count} / ${MAX_COMPARE_AIRCRAFT} · 对比已生成`;
+    hint.classList.toggle('is-ready', count >= 2);
+  }
+  if (!chips) return;
+
+  chips.innerHTML = compareEntries.map(e => {
+    const pct = Math.round(e.fuelPct * 100);
+    const params = [
+      `燃油 ${pct}%`,
+      e.payloadKg > 0 ? `挂载 ${Math.round(e.payloadKg)} kg` : '无挂载',
+      e.nation ? getNationLabel(e.nation) : '',
+    ].filter(Boolean).join(' · ');
+    const state = e.error ? ' ⚠' : (e.data ? '' : ' …');
+    return `<span class="compare-chip" role="listitem" style="--chip:${e.color}">` +
+      `<i class="compare-chip-dot" aria-hidden="true"></i>` +
+      `<button type="button" class="compare-chip-name" data-name="${escapeHtml(e.name)}" ` +
+      `title="在主视图中打开 ${escapeHtml(e.name)}">${escapeHtml(e.name.toUpperCase())}${state}</button>` +
+      `<span class="compare-chip-params">${escapeHtml(params)}</span>` +
+      `<button type="button" class="compare-chip-remove" data-remove="${escapeHtml(e.name)}" ` +
+      `aria-label="从对比中移除 ${escapeHtml(e.name)}">×</button>` +
+      `</span>`;
+  }).join('');
+
+  chips.querySelectorAll('.compare-chip-name').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const entry = compareEntries.find(x => x.name === btn.getAttribute('data-name'));
+      if (entry) loadAircraft(entry.name, entry.path, entry.nation);
+    });
+  });
+  chips.querySelectorAll('.compare-chip-remove').forEach(btn => {
+    btn.addEventListener('click', () => removeFromCompare(btn.getAttribute('data-remove')));
+  });
+}
+
+/** 把当前飞机（含当前燃油 / 挂载参数）加入对比队列 */
+async function addCurrentToCompare() {
+  if (!compareAvailable()) return;
+  if (!currentFm || !currentAircraftName) {
+    setStatus('请先选择一架飞机再加入对比', true, 'error');
+    return;
+  }
+  if (compareEntries.some(e => e.name === currentAircraftName)) {
+    setStatus(`${currentAircraftName.toUpperCase()} 已在对比队列中`, true, 'error');
+    return;
+  }
+  if (compareEntries.length >= MAX_COMPARE_AIRCRAFT) {
+    setStatus(`最多同时对比 ${MAX_COMPARE_AIRCRAFT} 架，请先移除其中一架`, true, 'error');
+    return;
+  }
+
+  // 当前分析结果与控件参数一致时直接复用，避免重复计算
+  const reusable = !!currentData
+    && currentDataFuelPct === currentFuelPct
+    && currentDataPayloadKg === currentPayloadKg;
+  const entry = {
+    name: currentAircraftName,
+    path: currentAircraftPath,
+    nation: currentAircraftNation,
+    fuelPct: currentFuelPct,
+    payloadKg: currentPayloadKg,
+    fm: currentFm,
+    data: reusable ? currentData : null,
+    color: COMPARE_COLORS[compareEntries.length % COMPARE_COLORS.length],
+    error: null,
+  };
+  compareEntries.push(entry);
+  renderCompareBar();
+  await refreshComparison(`加入对比：${entry.name.toUpperCase()} ...`);
+}
+
+/** 从对比队列移除一架飞机 */
+async function removeFromCompare(name) {
+  const idx = compareEntries.findIndex(e => e.name === name);
+  if (idx < 0) return;
+  compareEntries.splice(idx, 1);
+  // 移除后重排配色，保证图表配色稳定可辨
+  compareEntries.forEach((e, i) => { e.color = COMPARE_COLORS[i % COMPARE_COLORS.length]; });
+  renderCompareBar();
+  await refreshComparison(null);
+}
+
+/** 清空对比队列 */
+function clearCompare() {
+  compareToken++;  // 使进行中的对比计算失效
+  compareEntries = [];
+  lastComparison = null;
+  const section = document.getElementById('compare-section');
+  if (section) section.hidden = true;
+  ['plot-compare', 'plot-radar'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (window.Plotly) { try { Plotly.purge(el); } catch (e) { /* 忽略 */ } }
+    el.innerHTML = '';
+  });
+  const tableWrap = document.getElementById('compare-table');
+  if (tableWrap) tableWrap.innerHTML = '';
+  renderCompareBar();
+  setStatus('对比队列已清空', false, 'idle');
+}
+
+/** 把当前燃油 / 挂载参数应用到队列中所有飞机并重算 */
+async function syncCompareParams() {
+  if (!compareAvailable() || compareEntries.length === 0) return;
+  for (const entry of compareEntries) {
+    entry.fuelPct = currentFuelPct;
+    entry.payloadKg = currentPayloadKg;
+    entry.error = null;
+    // 当前飞机的数据若与控件参数一致可直接复用，其余置空触发重算
+    const reusable = entry.name === currentAircraftName && !!currentData
+      && currentDataFuelPct === currentFuelPct
+      && currentDataPayloadKg === currentPayloadKg;
+    entry.data = reusable ? currentData : null;
+  }
+  renderCompareBar();
+  await refreshComparison(`按当前参数重算对比（${compareEntries.length} 架）...`);
+}
+
+/**
+ * 补齐队列中缺失的数据并重建整个对比区。
+ * @param {string|null} statusMsg 状态栏文案；null 表示沿用当前状态
+ */
+async function refreshComparison(statusMsg) {
+  if (!compareAvailable()) return;
+  const token = ++compareToken;
+  const section = document.getElementById('compare-section');
+
+  if (compareEntries.length === 0) {
+    if (section) section.hidden = true;
+    lastComparison = null;
+    return;
+  }
+
+  const pending = compareEntries.filter(e => !e.data && !e.error);
+  if (pending.length > 0) {
+    setStatus(statusMsg || `计算对比数据（${pending.length} 架）...`, false, 'busy');
+    for (const entry of pending) {
+      if (token !== compareToken) return;  // 已被更新的请求取代
+      try {
+        entry.data = await analyzeWithParams(entry.name, entry.fm, entry.fuelPct,
+          entry.payloadKg, `计算 ${entry.name.toUpperCase()} 对比数据...`);
+        entry.error = null;
+      } catch (err) {
+        console.error(`对比数据计算失败 (${entry.name}):`, err);
+        entry.error = (err && err.message) ? err.message : String(err);
+      }
+    }
+  }
+  if (token !== compareToken) return;
+  renderCompareBar();
+
+  const ready = compareEntries.filter(e => e.data);
+  const failed = compareEntries.filter(e => !e.data);
+  if (ready.length < 2) {
+    if (section) section.hidden = true;
+    lastComparison = null;
+    if (failed.length > 0) setStatus(`对比数据不足：${failed.length} 架计算失败`, true, 'error');
+    else setStatus('再加入至少 1 架飞机即可开始对比', false, 'idle');
+    return;
+  }
+
+  // 必须先显示容器再渲染：隐藏元素宽度为 0，Plotly 会画出空图
+  if (section) section.hidden = false;
+
+  const cmp = buildComparison(ready.map(e => Object.assign({}, e.data, {
+    nation: e.nation,
+    fuel_pct: e.fuelPct,
+    payload_kg: e.payloadKg,
+  })));
+  lastComparison = cmp;
+
+  renderCompareTable(cmp);
+  populateCompareAltitude(cmp);
+  const sub = document.getElementById('compare-sub');
+  if (sub) {
+    sub.textContent = `${cmp.entries.length} 架同参数对比 · 加力全开` +
+      (failed.length > 0 ? ` · ${failed.length} 架计算失败未纳入` : '');
+  }
+  await renderCompareOverlay(cmp);
+  await renderCompareRadar(cmp);
+  if (token !== compareToken) return;
+  setStatus(failed.length > 0 ? `对比就绪（${failed.length} 架失败）` : `对比就绪 · ${cmp.entries.length} 架`,
+    failed.length > 0, failed.length > 0 ? 'error' : 'ready');
+}
+
+/** 渲染关键指标对比表（每行最优值高亮） */
+function renderCompareTable(cmp) {
+  const wrap = document.getElementById('compare-table');
+  if (!wrap) return;
+  const fmtValue = (v, decimals) => {
+    if (v === null || v === undefined) return '—';
+    return Number(v).toLocaleString('zh-CN', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+  };
+
+  let html = '<table class="compare-table"><thead><tr>' +
+    '<th class="cmp-metric-col" scope="col">指标</th>';
+  for (const e of cmp.entries) {
+    const sub = [
+      `燃油 ${Math.round((e.fuel_pct != null ? e.fuel_pct : 0) * 100)}%`,
+      e.payload_kg ? `挂载 ${Math.round(e.payload_kg)} kg` : '无挂载',
+      e.nation ? getNationLabel(e.nation) : '',
+    ].filter(Boolean).join(' · ');
+    html += `<th scope="col">${escapeHtml(e.name.toUpperCase())}` +
+      `<span class="cmp-head-sub">${escapeHtml(sub)}</span></th>`;
+  }
+  html += '</tr></thead><tbody>';
+
+  for (const m of cmp.metrics) {
+    const bestNames = cmp.best[m.key] || [];
+    html += `<tr><th scope="row" class="cmp-metric-col">${escapeHtml(m.label)}` +
+      (m.unit ? `<span class="cmp-unit">${escapeHtml(m.unit)}</span>` : '') + `</th>`;
+    for (const e of cmp.entries) {
+      const v = e.metrics[m.key];
+      const hasValue = v !== null && v !== undefined;
+      const isBest = hasValue && bestNames.indexOf(e.name) >= 0;
+      html += `<td class="${isBest ? 'is-best' : ''}${hasValue ? '' : ' is-empty'}">` +
+        `${fmtValue(v, m.decimals)}</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+/** 填充定高剖面的高度层选项 */
+function populateCompareAltitude(cmp) {
+  const sel = document.getElementById('compare-altitude');
+  if (!sel) return;
+  const alts = (cmp.profiles || []).map(p => p.altitude_m);
+  if (alts.length === 0) {
+    sel.innerHTML = '';
+    return;
+  }
+  if (compareProfileAlt == null || alts.indexOf(compareProfileAlt) < 0) {
+    compareProfileAlt = alts.indexOf(5000) >= 0 ? 5000 : alts[0];
+  }
+  sel.innerHTML = alts.map(a => `<option value="${a}"` +
+    (a === compareProfileAlt ? ' selected' : '') + `>` +
+    `${Number(a).toLocaleString('zh-CN')} m</option>`).join('');
+}
+
+// 对比图表通用布局片段（与主图保持同一视觉语言）
+function compareAxis(title, color) {
+  return {
+    title: { text: title, font: { family: FONT_UI, size: 13, color: color || COLOR_TEXT } },
+    gridcolor: COLOR_GRID,
+    zerolinecolor: 'rgba(148,170,196,0.4)',
+    tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
+    showgrid: true,
+    showline: true,
+    linecolor: 'rgba(148,170,196,0.22)',
+    ticks: 'outside',
+    tickcolor: 'rgba(148,170,196,0.22)',
+  };
+}
+
+function compareLegend() {
+  return {
+    orientation: 'h',
+    x: 0,
+    y: 1.16,
+    xanchor: 'left',
+    yanchor: 'top',
+    bgcolor: 'rgba(0,0,0,0)',
+    font: { family: FONT_MONO, size: 11, color: COLOR_TEXT_DIM },
+  };
+}
+
+/**
+ * 渲染叠加曲线图（三种模式共用一张图）。
+ * climb: 高度 → 最佳爬升马赫数；sep: 高度 → SEP 爬升率；accel: 马赫 → 加速度（定高剖面）
+ */
+async function renderCompareOverlay(cmp) {
+  const el = document.getElementById('plot-compare');
+  if (!el) return;
+  try {
+    await loadPlotlyOnce();
+  } catch (err) {
+    showComparePlaceholder(el, '渲染库加载失败', '请检查网络后重试');
+    return;
+  }
+
+  const traces = [];
+  const shapes = [];
+  let xTitle = '高度 (m)';
+  let yTitle = '最佳爬升马赫数';
+  let subText = '最佳爬升路线（高度 → 马赫数）';
+  let fileTag = 'climb-route';
+
+  if (compareMode === 'accel') {
+    const profiles = cmp.profiles || [];
+    const profile = profiles.find(p => p.altitude_m === compareProfileAlt) || profiles[0];
+    if (!profile) {
+      showComparePlaceholder(el, '暂无可用的定高加速剖面', '请调整参数后重试');
+      return;
+    }
+    xTitle = '马赫数';
+    yTitle = '加速度 (m/s²)';
+    const altText = Number(profile.altitude_m).toLocaleString('zh-CN');
+    subText = `定高 ${altText} m 加速度剖面（马赫 → 加速度）`;
+    fileTag = `accel-${profile.altitude_m}m`;
+    profile.series.forEach(s => {
+      const color = compareColorOf(s.name);
+      traces.push({
+        type: 'scatter',
+        mode: 'lines',
+        x: s.mach,
+        y: s.accel_mps2,
+        name: s.name.toUpperCase(),
+        line: { color: color, width: 2.4 },
+        hovertemplate: `<b>${escapeHtml(s.name.toUpperCase())}</b><br>` +
+          '马赫 %{x:.3f}<br>加速度 <b>%{y:.2f} m/s²</b><extra></extra>',
+      });
+    });
+    // 零加速度参考线：线右侧可加速
+    shapes.push({
+      type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 0,
+      line: { color: 'rgba(148,170,196,0.45)', width: 1, dash: 'dot' },
+    });
+  } else {
+    const isSep = compareMode === 'sep';
+    if (isSep) {
+      yTitle = 'SEP 爬升率 (m/s)';
+      subText = '最佳爬升率（高度 → SEP）';
+      fileTag = 'climb-sep';
+    }
+    (cmp.climb_routes || []).forEach(r => {
+      const color = compareColorOf(r.name);
+      traces.push({
+        type: 'scatter',
+        mode: 'lines+markers',
+        x: r.altitude_m,
+        y: isSep ? r.sep_mps : r.mach,
+        name: r.name.toUpperCase(),
+        line: { color: color, width: 2.4 },
+        marker: { size: 6, color: color, line: { color: '#0b1017', width: 1 } },
+        hovertemplate: `<b>${escapeHtml(r.name.toUpperCase())}</b><br>高度 %{x:.0f} m<br>` +
+          (isSep ? 'SEP <b>%{y:.1f} m/s</b>' : '马赫 <b>%{y:.3f}</b>') + '<extra></extra>',
+      });
+    });
+  }
+
+  const subEl = document.getElementById('compare-curve-sub');
+  if (subEl) subEl.textContent = subText;
+
+  const hasData = traces.some(t => Array.isArray(t.x) && t.x.length > 0);
+  if (!hasData) {
+    showComparePlaceholder(el, '当前模式下无可用曲线', '这些飞机在该参数下没有可加速状态');
+    return;
+  }
+
+  const layout = {
+    autosize: true,
+    margin: { l: 64, r: 30, t: 46, b: 48 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: FONT_UI, color: COLOR_TEXT, size: 12 },
+    hovermode: 'closest',
+    hoverlabel: {
+      bgcolor: 'rgba(8,12,17,0.94)',
+      bordercolor: 'rgba(255,139,77,0.4)',
+      font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 },
+    },
+    showlegend: true,
+    legend: compareLegend(),
+    xaxis: compareAxis(xTitle),
+    yaxis: compareAxis(yTitle),
+    shapes: shapes,
+  };
+  const config = {
+    responsive: true,
+    displaylogo: false,
+    toImageButtonOptions: {
+      format: 'png',
+      filename: `wt-compare_${fileTag}`,
+      width: 1600,
+      height: 800,
+    },
+  };
+  // 与主图共用渲染队列，避免并发 Plotly 操作互相干扰
+  renderQueue = renderQueue.then(() => {
+    try {
+      return Plotly.newPlot(el, traces, layout, config).catch(err => {
+        console.error('对比曲线渲染失败:', err);
+      });
+    } catch (err) {
+      console.error('对比曲线渲染失败:', err);
+      return undefined;
+    }
+  });
+}
+
+/** 渲染归一化雷达图（指标在本次对比集合内 0-100） */
+async function renderCompareRadar(cmp) {
+  const el = document.getElementById('plot-radar');
+  if (!el) return;
+  try {
+    await loadPlotlyOnce();
+  } catch (err) {
+    showComparePlaceholder(el, '渲染库加载失败', '请检查网络后重试');
+    return;
+  }
+
+  const indicators = cmp.radar_indicators || [];
+  if (indicators.length === 0) {
+    showComparePlaceholder(el, '暂无可用于雷达图的指标');
+    return;
+  }
+  const labels = indicators.map(i => (i.unit ? `${i.label} (${i.unit})` : i.label));
+
+  const traces = cmp.entries.map(e => {
+    const r = (e.radar || []).map(v => (v === null || v === undefined ? 0 : v));
+    const theta = labels.slice();
+    // 闭合多边形：首值补到末尾
+    if (r.length > 0) {
+      r.push(r[0]);
+      theta.push(theta[0]);
+    }
+    const color = compareColorOf(e.name);
+    return {
+      type: 'scatterpolar',
+      r: r,
+      theta: theta,
+      fill: 'toself',
+      name: e.name.toUpperCase(),
+      line: { color: color, width: 2 },
+      opacity: 0.5,
+      hovertemplate: `<b>${escapeHtml(e.name.toUpperCase())}</b><br>` +
+        '%{theta}<br>相对得分 <b>%{r:.0f}/100</b><extra></extra>',
+    };
+  });
+
+  const layout = {
+    autosize: true,
+    margin: { l: 46, r: 46, t: 56, b: 32 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: FONT_UI, color: COLOR_TEXT, size: 12 },
+    hoverlabel: {
+      bgcolor: 'rgba(8,12,17,0.94)',
+      bordercolor: 'rgba(78,197,241,0.4)',
+      font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 },
+    },
+    showlegend: true,
+    legend: compareLegend(),
+    polar: {
+      bgcolor: 'rgba(0,0,0,0)',
+      radialaxis: {
+        range: [0, 100],
+        gridcolor: COLOR_GRID,
+        linecolor: 'rgba(148,170,196,0.22)',
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 10 },
+        tickvals: [20, 40, 60, 80, 100],
+        angle: 90,
+      },
+      angularaxis: {
+        gridcolor: COLOR_GRID,
+        linecolor: 'rgba(148,170,196,0.22)',
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 10 },
+      },
+    },
+  };
+  const config = {
+    responsive: true,
+    displaylogo: false,
+    toImageButtonOptions: {
+      format: 'png',
+      filename: 'wt-compare_radar',
+      width: 1200,
+      height: 900,
+    },
+  };
+  renderQueue = renderQueue.then(() => {
+    try {
+      return Plotly.newPlot(el, traces, layout, config).catch(err => {
+        console.error('对比雷达图渲染失败:', err);
+      });
+    } catch (err) {
+      console.error('对比雷达图渲染失败:', err);
+      return undefined;
+    }
+  });
+}
+
 // ===== 7. 初始化 =====
 async function init() {
   setStatus('初始化...', false, 'busy');
@@ -1144,6 +1771,9 @@ async function init() {
 
     // 注册燃油滑动条事件
     initFuelSlider();
+
+    // 注册多机对比控件（加入 / 同步参数 / 清空 / 曲线模式）
+    initCompareControls();
 
     // 进入网页时不自动选择飞机，显示占位提示等待用户选择
     if (datasets.length > 0) {
