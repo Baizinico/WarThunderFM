@@ -18,34 +18,45 @@ let currentFm = null;           // 当前飞机的原始 .blkx 数据（供燃�
 let currentAircraftName = null; // 当前飞机代号
 let currentAircraftNation = null;  // 当前飞机国家
 
-// Anthropic 品牌色
-const COLOR_ACCENT = '#d97757';   // 橙色强调（高加速度）
-const COLOR_BLUE = '#6a9bcc';     // 冷色低值（低/负加速度）
-const COLOR_CREAM = '#faf9f5';    // 中性白（零加速度）
-const COLOR_GREEN = '#788c5d';    // Anthropic 绿
+// 主题色（与 style.css 中的 CSS 变量保持一致）
+const COLOR_ACCENT = '#ff8b4d';   // 橙色强调（高加速度）
+const COLOR_BLUE = '#4ec5f1';     // 冷色低值（低/负加速度）
+const COLOR_CREAM = '#f7ece1';    // 中性暖白（零加速度）
+const COLOR_GREEN = '#8fd07a';    // 爬升路线绿
+const COLOR_TEXT = '#eaf2fb';     // 主文字
+const COLOR_TEXT_DIM = '#9fb0c3'; // 次要文字
+const COLOR_GRID = 'rgba(148,170,196,0.16)';   // 网格线
+const COLOR_AXIS_BG = 'rgba(8,12,17,0.55)';    // 坐标轴背景
+const FONT_UI = "'Inter', system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif";
+const FONT_MONO = "'JetBrains Mono', ui-monospace, Consolas, monospace";
 // 色阶：仅显示加速度 ≥ 0 的区域
-//   奶白(零加速) → 浅橙 → 橙(中等加速) → 深橙红(强加速)
+//   暖白(零加速) → 浅橙 → 橙(中等加速) → 深橙红(强加速)
 // 负加速度区域通过 z=null 过滤，不渲染曲面
 const COLORSCALE = [
   [0.00, COLOR_CREAM],
-  [0.35, '#e8a585'],
+  [0.35, '#f3ab7c'],
   [0.65, COLOR_ACCENT],
-  [1.00, '#b85a3e']
+  [1.00, '#c2461f']
 ];
 // 色阶映射范围：0 m/s² 到 6 m/s²（典型最大加速度）
 const COLOR_MIN = 0;
 const COLOR_MAX = 6;
 
 // ===== 1. 状态栏更新 =====
-function setStatus(msg, isError = false) {
+/**
+ * 更新顶部状态指示灯。
+ * @param {string} msg 显示文案
+ * @param {boolean} isError 是否为错误状态（等价于 state='error'）
+ * @param {'idle'|'busy'|'ready'|'error'} [state] 指示灯状态，省略时按 isError 推断
+ */
+function setStatus(msg, isError = false, state) {
   const bar = document.getElementById('status-bar');
   if (!bar) return;
-  bar.textContent = msg;
-  if (isError) {
-    bar.classList.add('error');
-  } else {
-    bar.classList.remove('error');
-  }
+  const textEl = bar.querySelector('.status-text');
+  if (textEl) textEl.textContent = msg;
+  else bar.textContent = msg;
+  bar.dataset.state = state || (isError ? 'error' : 'idle');
+  bar.classList.toggle('error', !!isError);
 }
 
 // ===== 1.5 进度条控制 =====
@@ -342,7 +353,38 @@ function initAircraftSearch() {
 }
 
 // ===== 3. 渲染元数据卡片 =====
-function renderMetadata(metadata, nation) {
+// 卡片图标（内联 SVG，24×24 视框，线条由 CSS 统一设色）
+const META_ICONS = {
+  plane: '<path d="M3 11l18-8-8 18-2-7-8-3z"/>',
+  mass: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5.5A1.5 1.5 0 0 1 9.5 4h5A1.5 1.5 0 0 1 16 5.5V7"/>',
+  fuel: '<path d="M12 3.5c3 3.9 5.5 6.6 5.5 9.5a5.5 5.5 0 1 1-11 0c0-2.9 2.5-5.6 5.5-9.5z"/>',
+  payload: '<path d="M12 3v9m0 0 3.5-3.5M12 12 8.5 8.5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
+  thrust: '<path d="M12 22c4 0 6-2.9 6-6.2C18 11.5 12 2 12 2S6 11.5 6 15.8C6 19.1 8 22 12 22z"/><path d="M12 18.5c1.3 0 2-1.1 2-2.3 0-1.3-2-3.7-2-3.7s-2 2.4-2 3.7c0 1.2.7 2.3 2 2.3z"/>',
+  gauge: '<path d="M4.5 19a9 9 0 1 1 15 0"/><path d="M12 15.5 15.5 10"/><circle cx="12" cy="16.5" r="1.6"/>',
+  climb: '<path d="M3 18l5.5-6 4 3.5L21 6"/><path d="M21 11V6h-5"/>',
+  ceiling: '<path d="M4 5h16"/><path d="M12 20V9"/><path d="m7.5 13.5 4.5-4.5 4.5 4.5"/>',
+  speed: '<path d="M4 9h9a2.5 2.5 0 1 0-2.5-2.5"/><path d="M3 13h13a2.5 2.5 0 1 1-2.5 2.5"/><path d="M5 17h5"/>'
+};
+
+/** 生成单个元数据卡片 HTML */
+function metaCard({ label, value, sub, icon, tone, className }) {
+  const iconSvg = icon && META_ICONS[icon]
+    ? `<svg class="meta-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${META_ICONS[icon]}</svg>`
+    : '';
+  return `<div class="meta-item${className ? ' ' + className : ''}"${tone ? ` style="--tone:${tone}"` : ''}>` +
+    `<div class="meta-label">${iconSvg}${label}</div>` +
+    `<div class="meta-value">${value}</div>` +
+    (sub ? `<div class="meta-sub">${sub}</div>` : '') +
+    `</div>`;
+}
+
+/**
+ * 渲染参数面板：平台参数（质量/推力）+ 性能包线（加速度/爬升/升限/极速）。
+ * @param {object} metadata analyzeAircraft 返回的 metadata
+ * @param {string} nation 国家代码
+ * @param {object} [data] 完整分析结果，用于提取性能包线指标
+ */
+function renderMetadata(metadata, nation, data) {
   const panel = document.getElementById('metadata-panel');
   if (!panel) return;
   if (!metadata) {
@@ -350,18 +392,94 @@ function renderMetadata(metadata, nation) {
     return;
   }
   const fmtNum = v => (v === undefined || v === null) ? '—' : Number(v).toLocaleString('zh-CN');
-  const items = [
-    { label: '空重', value: metadata.empty_mass_kg != null ? `${fmtNum(metadata.empty_mass_kg)} kg` : '—' },
-    { label: '燃油质量', value: metadata.fuel_mass_kg != null ? `${fmtNum(metadata.fuel_mass_kg)} kg` : '—' },
-    { label: '挂载质量', value: fmtNum(currentPayloadKg) + ' kg' },
-    { label: '飞行质量', value: metadata.flight_mass_kg != null ? `${fmtNum(metadata.flight_mass_kg)} kg` : '—' },
-  ];
-  panel.innerHTML = items.map(it => {
-    return `<div class="meta-item">` +
-      `<div class="meta-label">${it.label}</div>` +
-      `<div class="meta-value">${it.value}</div>` +
-      `</div>`;
-  }).join('');
+  const fmt1 = v => (v === undefined || v === null || !isFinite(v)) ? '—' : Number(v).toFixed(1);
+  const fmt2 = v => (v === undefined || v === null || !isFinite(v)) ? '—' : Number(v).toFixed(2);
+  const kg = v => (v === undefined || v === null) ? '—' : `${fmtNum(v)} kg`;
+
+  // ---- 性能包线：由 samples / climb_route / optimal 提取关键指标 ----
+  const samples = (data && data.samples) || [];
+  const climbRoute = (data && data.climb_route) || [];
+  let maxAccel = null;
+  for (const s of samples) {
+    if (s.accel_mps2 != null && (maxAccel === null || s.accel_mps2 > maxAccel)) maxAccel = s.accel_mps2;
+  }
+  let maxSep = null, ceiling = null;
+  for (const p of climbRoute) {
+    if (p.sep_mps != null && (maxSep === null || p.sep_mps > maxSep)) maxSep = p.sep_mps;
+    if (p.altitude_m != null && (ceiling === null || p.altitude_m > ceiling)) ceiling = p.altitude_m;
+  }
+  let topMach = null, topTas = null;
+  const maxSpeedPerAlt = (data && data.optimal && data.optimal.max_speed_per_alt) || [];
+  for (const row of maxSpeedPerAlt) {
+    if (row.mach_max != null && (topMach === null || row.mach_max > topMach)) {
+      topMach = row.mach_max;
+      topTas = row.tas_max_kmh;
+    }
+  }
+
+  const nationLabel = nation ? getNationLabel(nation) : '';
+  const identity = metaCard({
+    label: '机型',
+    value: `${currentAircraftName ? currentAircraftName.toUpperCase() : '—'}` +
+      (nationLabel ? `<span class="meta-chip">${nationLabel}</span>` : ''),
+    sub: `飞行质量 ${fmtNum(metadata.flight_mass_kg)} kg · 燃油 ${Math.round(currentFuelPct * 100)}%`,
+    icon: 'plane',
+    className: 'meta-item-identity'
+  });
+
+  const platformCards = [
+    identity,
+    metaCard({ label: '空重', value: kg(metadata.empty_mass_kg), sub: '机体 + 固定设备', icon: 'mass', tone: '#9fb0c3' }),
+    metaCard({ label: '燃油质量', value: kg(metadata.fuel_mass_kg), sub: `${Math.round(currentFuelPct * 100)}% 内油`, icon: 'fuel', tone: '#4ec5f1' }),
+    metaCard({ label: '挂载质量', value: kg(currentPayloadKg), sub: '外挂载荷', icon: 'payload', tone: '#ffab76' }),
+    metaCard({ label: '飞行质量', value: kg(metadata.flight_mass_kg), sub: '含燃油与挂载', icon: 'gauge', tone: '#ff8b4d' }),
+    metaCard({
+      label: '加力推力',
+      value: metadata.thrust_max0_kgf ? `${fmtNum(metadata.thrust_max0_kgf)} kgf` : '—',
+      sub: metadata.afterburner === false ? '军用推力' : '全加力静推力',
+      icon: 'thrust',
+      tone: '#ff8b4d'
+    })
+  ].join('');
+
+  const envelopeCards = [
+    metaCard({ label: '最大加速度', value: maxAccel == null ? '—' : `${fmt2(maxAccel)} m/s²`, sub: '网格内峰值', icon: 'gauge', tone: '#ff8b4d' }),
+    metaCard({ label: '最大爬升率', value: maxSep == null ? '—' : `${fmt1(maxSep)} m/s`, sub: 'SEP 峰值', icon: 'climb', tone: '#8fd07a' }),
+    metaCard({ label: '实用升限', value: ceiling == null ? '—' : `${fmtNum(ceiling)} m`, sub: 'SEP > 0 的最高层', icon: 'ceiling', tone: '#4ec5f1' }),
+    metaCard({
+      label: '极速',
+      value: topMach == null ? '—' : `Mach ${fmt2(topMach)}`,
+      sub: topTas == null ? '平飞可加速上限' : `TAS ${fmtNum(Math.round(topTas))} km/h`,
+      icon: 'speed',
+      tone: '#ffab76'
+    })
+  ].join('');
+
+  panel.innerHTML =
+    `<div class="meta-section">` +
+      `<h3 class="meta-section-title">平台参数</h3>` +
+      `<div class="meta-grid">${platformCards}</div>` +
+    `</div>` +
+    `<div class="meta-section">` +
+      `<h3 class="meta-section-title">性能包线</h3>` +
+      `<div class="meta-grid">${envelopeCards}</div>` +
+    `</div>`;
+
+  // 同步图表卡片副标题与页面标题
+  const sub3d = document.getElementById('plot-sub-3d');
+  if (sub3d) {
+    sub3d.textContent = `${currentAircraftName ? currentAircraftName.toUpperCase() : '—'}` +
+      ` · 燃油 ${Math.round(currentFuelPct * 100)}% · 飞行质量 ${fmtNum(metadata.flight_mass_kg)} kg`;
+  }
+  const subClimb = document.getElementById('plot-sub-climb');
+  if (subClimb) {
+    subClimb.textContent = maxSep == null
+      ? '该参数下无可用爬升状态'
+      : `最佳爬升率 ${fmt1(maxSep)} m/s · 升限 ${fmtNum(ceiling)} m`;
+  }
+  if (currentAircraftName) {
+    document.title = `${currentAircraftName.toUpperCase()} · WT 飞行模型加速度分析`;
+  }
 }
 
 // ===== 4. 扁平 samples 转 Z 矩阵 =====
@@ -490,6 +608,9 @@ async function render3DSurface(samples, grid, climbRoute) {
     colorscale: COLORSCALE,
     cmin: COLOR_MIN,
     cmax: COLOR_MAX,
+    // 曲面光照：略偏漫反射，突出坡度
+    lighting: { ambient: 0.72, diffuse: 0.9, specular: 0.12, roughness: 0.85 },
+    lightposition: { x: 800, y: 1200, z: 2200 },
     // 等高线增强可读性：在曲面表面绘制等值线
     contours: {
       z: {
@@ -498,6 +619,13 @@ async function render3DSurface(samples, grid, climbRoute) {
         highlightcolor: '#ffffff',
         project: { z: true }
       }
+    },
+    colorbar: {
+      thickness: 12,
+      len: 0.72,
+      outlinewidth: 0,
+      tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
+      title: { text: 'm/s²', side: 'right', font: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 } }
     },
     hovertemplate:
       '<b>高度 %{y} m · 马赫 %{x}</b><br>' +
@@ -543,50 +671,67 @@ async function render3DSurface(samples, grid, climbRoute) {
         '机头向上: <b>%{customdata[1]:.1f}°</b><extra></extra>'
     });
   }
+  // 窄屏（手机）时相机拉远并降低俯角，避免 3D 场景被容器裁切
+  const narrowView = typeof window !== 'undefined' && window.innerWidth < 768;
   const layout = {
     autosize: true,
-    margin: { l: 0, r: 0, b: 0, t: 20 },
+    margin: { l: 0, r: 0, b: 0, t: 8 },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: {
-      family: "'Lora', 'Georgia', serif",
-      color: '#faf9f5',
+      family: FONT_UI,
+      color: COLOR_TEXT,
       size: 12
     },
+    hoverlabel: {
+      bgcolor: 'rgba(8,12,17,0.94)',
+      bordercolor: 'rgba(255,139,77,0.45)',
+      font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 }
+    },
     scene: {
+      bgcolor: 'rgba(0,0,0,0)',
       xaxis: {
-        title: { text: '马赫数', font: { size: 13, color: '#faf9f5' } },
-        backgroundcolor: 'rgba(31,31,29,0.6)',
-        gridcolor: '#3a3a36',
-        zerolinecolor: '#b0aea5',
-        tickfont: { color: '#b0aea5', size: 11 },
+        title: { text: '马赫数', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
+        backgroundcolor: COLOR_AXIS_BG,
+        gridcolor: COLOR_GRID,
+        zerolinecolor: 'rgba(148,170,196,0.4)',
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
         showbackground: true
       },
       yaxis: {
-        title: { text: '高度 (m)', font: { size: 13, color: '#faf9f5' } },
-        backgroundcolor: 'rgba(31,31,29,0.6)',
-        gridcolor: '#3a3a36',
-        zerolinecolor: '#b0aea5',
-        tickfont: { color: '#b0aea5', size: 11 },
+        title: { text: '高度 (m)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
+        backgroundcolor: COLOR_AXIS_BG,
+        gridcolor: COLOR_GRID,
+        zerolinecolor: 'rgba(148,170,196,0.4)',
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
         showbackground: true
       },
       zaxis: {
-        title: { text: '加速度 (m/s²)', font: { size: 13, color: '#faf9f5' } },
-        backgroundcolor: 'rgba(31,31,29,0.6)',
-        gridcolor: '#3a3a36',
-        zerolinecolor: '#b0aea5',
-        tickfont: { color: '#b0aea5', size: 11 },
+        title: { text: '加速度 (m/s²)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
+        backgroundcolor: COLOR_AXIS_BG,
+        gridcolor: COLOR_GRID,
+        zerolinecolor: 'rgba(148,170,196,0.4)',
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
         showbackground: true,
         rangemode: 'nonnegative'
       },
-      camera: { eye: { x: 1.8, y: -1.6, z: 0.85 } },
-      aspectratio: { x: 1.2, y: 1, z: 0.75 }
+      camera: {
+        eye: narrowView
+          ? { x: 1.95, y: -1.85, z: 1.05 }
+          : { x: 1.5, y: -1.42, z: 0.8 }
+      },
+      aspectratio: { x: 1.35, y: 1, z: 0.78 }
     }
   };
   const config = {
     responsive: true,
     displaylogo: false,
-    toImageButtonOptions: { format: 'png', filename: 'wt-accel-3d', width: 1600, height: 1000 }
+    toImageButtonOptions: {
+      format: 'png',
+      filename: `wt-accel-3d_${currentAircraftName || 'aircraft'}`,
+      width: 1600,
+      height: 1000
+    }
   };
   // 检测全 null 数据：若所有 z 值均为 null（飞机无法加速），Plotly surface 会因
   // 缺少有效顶点而触发 WebGL uniformMatrix4fv 错误。此时显示占位提示，跳过渲染。
@@ -714,49 +859,74 @@ async function renderClimbRouteChart(climbRoute) {
 
   const layout = {
     autosize: true,
-    margin: { l: 60, r: 60, t: 20, b: 50 },
+    margin: { l: 62, r: 62, t: 46, b: 48 },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: {
-      family: "'Lora', 'Georgia', serif",
-      color: '#faf9f5',
+      family: FONT_UI,
+      color: COLOR_TEXT,
       size: 12
+    },
+    hovermode: 'x unified',
+    hoverlabel: {
+      bgcolor: 'rgba(8,12,17,0.94)',
+      bordercolor: 'rgba(255,139,77,0.4)',
+      font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 }
     },
     showlegend: true,
     legend: {
-      x: 0.02, y: 0.98,
-      bgcolor: 'rgba(31,31,29,0.7)',
-      bordercolor: '#3a3a36',
-      borderwidth: 1,
-      font: { size: 11 }
+      orientation: 'h',
+      x: 0,
+      y: 1.16,
+      xanchor: 'left',
+      yanchor: 'top',
+      bgcolor: 'rgba(0,0,0,0)',
+      font: { family: FONT_MONO, size: 11, color: COLOR_TEXT_DIM }
     },
     xaxis: {
-      title: { text: '高度 (m)', font: { size: 13, color: '#faf9f5' } },
-      gridcolor: '#3a3a36',
-      zerolinecolor: '#b0aea5',
-      tickfont: { color: '#b0aea5', size: 11 },
-      showgrid: true
+      title: { text: '高度 (m)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
+      gridcolor: COLOR_GRID,
+      zerolinecolor: 'rgba(148,170,196,0.4)',
+      tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
+      showgrid: true,
+      showline: true,
+      linecolor: 'rgba(148,170,196,0.22)',
+      ticks: 'outside',
+      tickcolor: 'rgba(148,170,196,0.22)'
     },
     yaxis: {
-      title: { text: '马赫数', font: { size: 13, color: COLOR_GREEN } },
-      gridcolor: '#3a3a36',
-      zerolinecolor: '#b0aea5',
-      tickfont: { color: COLOR_GREEN, size: 11 },
-      showgrid: true
+      title: { text: '马赫数', font: { family: FONT_UI, size: 13, color: COLOR_GREEN } },
+      gridcolor: COLOR_GRID,
+      zerolinecolor: 'rgba(148,170,196,0.4)',
+      tickfont: { family: FONT_MONO, color: COLOR_GREEN, size: 11 },
+      showgrid: true,
+      showline: true,
+      linecolor: 'rgba(143,208,122,0.35)',
+      ticks: 'outside',
+      tickcolor: 'rgba(143,208,122,0.35)'
     },
     yaxis2: {
-      title: { text: '机头向上角度 (°)', font: { size: 13, color: COLOR_ACCENT } },
+      title: { text: '机头向上角度 (°)', font: { family: FONT_UI, size: 13, color: COLOR_ACCENT } },
       overlaying: 'y',
       side: 'right',
       gridcolor: 'rgba(0,0,0,0)',
-      tickfont: { color: COLOR_ACCENT, size: 11 },
-      showgrid: false
+      tickfont: { family: FONT_MONO, color: COLOR_ACCENT, size: 11 },
+      showgrid: false,
+      showline: true,
+      linecolor: 'rgba(255,139,77,0.35)',
+      ticks: 'outside',
+      tickcolor: 'rgba(255,139,77,0.35)'
     }
   };
   const config = {
     responsive: true,
     displaylogo: false,
-    toImageButtonOptions: { format: 'png', filename: 'wt-climb-route', width: 1600, height: 800 }
+    toImageButtonOptions: {
+      format: 'png',
+      filename: `wt-climb-route_${currentAircraftName || 'aircraft'}`,
+      width: 1600,
+      height: 800
+    }
   };
   // 与 3D 渲染共用渲染队列，避免并发 WebGL/Canvas 操作冲突
   renderQueue = renderQueue.then(() => {
@@ -796,12 +966,18 @@ function clearPlot() {
   // 清空元数据面板
   const metaPanel = document.getElementById('metadata-panel');
   if (metaPanel) metaPanel.innerHTML = '';
-  setStatus('请选择飞机');
+  // 复位图表卡片副标题与页面标题
+  const sub3d = document.getElementById('plot-sub-3d');
+  if (sub3d) sub3d.textContent = '选择飞机后显示加速度包线';
+  const subClimb = document.getElementById('plot-sub-climb');
+  if (subClimb) subClimb.textContent = '速度程序 · 机头向上角度 · 剩余功率';
+  document.title = 'War Thunder 飞行模型 3D 加速度分析';
+  setStatus('请选择飞机', false, 'idle');
 }
 
 // ===== 6. 加载飞机原始数据并在浏览器端计算 =====
 async function loadAircraft(name, path, nation) {
-  setStatus(`加载 ${name} ...`);
+  setStatus(`加载 ${name} ...`, false, 'busy');
   try {
     // 0. 选择飞机时即开始预加载 Plotly.js（与下方 .blkx 下载并行）
     //    首次渲染无需串行等待：飞机数据下载 + Plotly.js 下载同时进行
@@ -830,7 +1006,7 @@ async function loadAircraft(name, path, nation) {
 /** 基于当前 currentFm + currentFuelPct + currentPayloadKg 重新计算并渲染 */
 async function recomputeAndRender(statusMsg) {
   if (!currentFm || !currentAircraftName) return;
-  if (statusMsg) setStatus(statusMsg);
+  if (statusMsg) setStatus(statusMsg, false, 'busy');
   // 让 UI 有机会更新状态栏
   await new Promise(r => setTimeout(r, 0));
 
@@ -859,14 +1035,14 @@ async function recomputeAndRender(statusMsg) {
   data.metadata.computed_at = new Date(Date.now() + 8 * 3600 * 1000)
     .toISOString().replace('Z', '+08:00');
   currentData = data;
-  renderMetadata(data.metadata, currentAircraftNation);
+  renderMetadata(data.metadata, currentAircraftNation, data);
   try {
     await render3DSurface(data.samples, data.grid, data.climb_route);
     await renderClimbRouteChart(data.climb_route);
   } catch (renderErr) {
     console.error('渲染出错（不影响数据）:', renderErr);
   }
-  setStatus('就绪');
+  setStatus('就绪', false, 'ready');
 }
 
 // ===== 6.5 燃油与挂载质量控件 =====
@@ -877,10 +1053,15 @@ function initFuelSlider() {
   const fuelInput = document.getElementById('fuel-input');
   if (!slider || !fuelInput) return;
 
+  // 同步滑动条已填充轨道宽度（CSS 变量 --fill，见 style.css）
+  const syncFill = pct => slider.style.setProperty('--fill', `${pct}%`);
+  syncFill(parseInt(slider.value, 10) || 50);
+
   // 滑动条输入时同步数字框
   slider.addEventListener('input', () => {
     const pct = parseInt(slider.value, 10);
     fuelInput.value = pct;
+    syncFill(pct);
   });
 
   // 松开滑动条时才重算（避免拖动卡顿）
@@ -888,6 +1069,7 @@ function initFuelSlider() {
     const pct = parseInt(slider.value, 10);
     currentFuelPct = pct / 100;
     fuelInput.value = pct;
+    syncFill(pct);
     if (currentFm && currentAircraftName) {
       recomputeAndRender(`重算 (${pct}% 燃油)...`);
     }
@@ -899,6 +1081,7 @@ function initFuelSlider() {
     if (isNaN(pct)) return;
     pct = Math.max(30, Math.min(100, pct));  // 钳制到 30-100
     slider.value = pct;
+    syncFill(pct);
   });
   fuelInput.addEventListener('change', () => {
     let pct = parseInt(fuelInput.value, 10);
@@ -906,6 +1089,7 @@ function initFuelSlider() {
     pct = Math.max(30, Math.min(100, pct));
     fuelInput.value = pct;
     slider.value = pct;
+    syncFill(pct);
     currentFuelPct = pct / 100;
     if (currentFm && currentAircraftName) {
       recomputeAndRender(`重算 (${pct}% 燃油)...`);
@@ -930,9 +1114,9 @@ function initFuelSlider() {
 
 // ===== 7. 初始化 =====
 async function init() {
-  setStatus('初始化...');
+  setStatus('初始化...', false, 'busy');
   try {
-    const resp = await fetch('manifest.json?v=b817880dfa');
+    const resp = await fetch('manifest.json?v=ed77a1f7aa');
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const manifest = await resp.json();
     const datasets = manifest.datasets || [];

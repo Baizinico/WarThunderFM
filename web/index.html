@@ -4,86 +4,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080b10">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="War Thunder 飞行模型 3D 加速度分析：基于拆包 .blkx 数据在浏览器端实时计算高度 × 马赫加速度网格、最优爬升速度程序与 SEP 爬升率。">
   <title>War Thunder 飞行模型 3D 加速度分析</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <!-- Google Fonts: Poppins 用于标题，Lora 用于正文 -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Google Fonts：Inter 用于界面正文，JetBrains Mono 用于仪表式数值与标签 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- 加速度计算引擎（浏览器端实现，移植自 lib/compute.py） -->
   <script src="compute.js?v=25"></script>
   <!-- 应用逻辑 -->
-  <script src="app.js?v=23"></script>
+  <script src="app.js?v=24"></script>
   <!-- 应用样式 -->
-  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
-  <!-- 顶部标题栏与控制区 -->
+  <!-- 背景网格与光晕装饰层（纯装饰，不参与交互） -->
+  <div class="bg-decor" aria-hidden="true"></div>
+
+  <!-- 顶部标题栏与控制区：玻璃拟态吸顶仪表板 -->
   <header class="app-header">
-    <h1>War Thunder 飞行模型 3D 加速度分析</h1>
-    <div class="controls">
-      <label for="nation-select">国家：</label>
-      <select id="nation-select"></select>
-      <label for="aircraft-search">飞机：</label>
-      <div class="ac-combobox" id="aircraft-combobox">
-        <input type="text" id="aircraft-search" placeholder="输入代号搜索..." autocomplete="off" spellcheck="false">
-        <div id="aircraft-dropdown" class="ac-dropdown" role="listbox"></div>
+    <div class="header-inner">
+      <!-- 品牌区：标识 + 标题 -->
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" focusable="false">
+            <path class="brand-mark-wing" d="M8 38 L56 26 L56 34 L8 46 Z"></path>
+            <path class="brand-mark-body" d="M8 38 L14 30 L30 28 L56 26 L56 34 L30 36 L14 42 Z"></path>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <p class="brand-eyebrow">WT · Flight Model Analyzer</p>
+          <h1>War Thunder 飞行模型 3D 加速度分析</h1>
+          <p class="brand-sub">高度 × 马赫加速度网格 · 最优爬升速度程序 · 剩余功率（SEP）剖面</p>
+        </div>
       </div>
-      <label for="fuel-slider">燃油：</label>
-      <div class="fuel-control">
-        <input type="range" id="fuel-slider" min="30" max="100" value="50" step="1">
-        <input type="number" id="fuel-input" min="30" max="100" value="50" step="1">
-        <span class="fuel-unit">%</span>
+      <!-- 状态指示灯 -->
+      <div class="header-status">
+        <span id="status-bar" class="status" data-state="idle" role="status" aria-live="polite">
+          <i class="status-dot" aria-hidden="true"></i><span class="status-text">请选择飞机</span>
+        </span>
       </div>
-      <label for="payload-input">挂载质量：</label>
-      <div class="payload-control">
-        <input type="number" id="payload-input" min="0" max="20000" value="0" step="100">
-        <span class="fuel-unit">kg</span>
+    </div>
+
+    <!-- 参数控制区：国家 / 飞机 / 燃油 / 挂载质量 -->
+    <div class="controls" role="group" aria-label="分析参数">
+      <div class="control-field control-nation">
+        <label for="nation-select">国家</label>
+        <div class="select-wrap">
+          <select id="nation-select"></select>
+        </div>
       </div>
-      <span id="status-bar" class="status"></span>
+
+      <div class="control-field control-aircraft">
+        <label for="aircraft-search">飞机</label>
+        <div class="ac-combobox" id="aircraft-combobox">
+          <input type="text" id="aircraft-search" placeholder="输入代号搜索，如 f-16 / mig-21" autocomplete="off" spellcheck="false">
+          <div id="aircraft-dropdown" class="ac-dropdown" role="listbox"></div>
+        </div>
+      </div>
+
+      <div class="control-field control-fuel">
+        <label for="fuel-slider">燃油</label>
+        <div class="fuel-control">
+          <input type="range" id="fuel-slider" min="30" max="100" value="50" step="1" aria-label="燃油百分比">
+          <input type="number" id="fuel-input" min="30" max="100" value="50" step="1" aria-label="燃油百分比数值">
+          <span class="unit">%</span>
+        </div>
+      </div>
+
+      <div class="control-field control-payload">
+        <label for="payload-input">挂载质量</label>
+        <div class="payload-control">
+          <input type="number" id="payload-input" min="0" max="20000" value="0" step="100" aria-label="挂载质量千克">
+          <span class="unit">kg</span>
+        </div>
+      </div>
     </div>
   </header>
 
   <!-- 计算进度条 -->
-  <div id="compute-progress" class="compute-progress" style="display:none">
-    <label class="progress-label" id="progress-label">计算中...</label>
+  <div id="compute-progress" class="compute-progress" style="display:none" role="status" aria-live="polite">
+    <label class="progress-label" id="progress-label" for="progress-bar">计算中...</label>
     <progress id="progress-bar" max="1" value="0"></progress>
   </div>
 
-  <!-- 广告位 1：顶部横向横幅 -->
+  <!-- 广告位 1：顶部横向横幅（默认隐藏，见 style.css） -->
   <aside class="ad-container ad-top">
     <span class="ad-label">Advertisement</span>
     <!-- 替换为你的广告代码，例如 Google AdSense -->
     <div class="ad-slot" id="ad-slot-top"></div>
   </aside>
 
-  <!-- 元数据面板：由 app.js 动态填充飞机元数据卡片 -->
-  <section id="metadata-panel" class="metadata-panel">
+  <!-- 元数据面板：由 app.js 动态填充平台参数与性能包线卡片 -->
+  <section id="metadata-panel" class="metadata-panel" aria-label="飞机参数与性能包线">
     <!-- 元数据卡片，由 app.js 动态填充 -->
   </section>
 
   <!-- 图表区域：3D 加速度曲面主图 + 最佳爬升路线副图 -->
   <main class="plots">
-    <div class="plot-card plot-main">
-      <h2>3D 加速度曲面</h2>
+    <section class="plot-card plot-main">
+      <div class="card-head">
+        <div class="card-title-group">
+          <h2>3D 加速度曲面</h2>
+          <span class="card-sub" id="plot-sub-3d">选择飞机后显示加速度包线</span>
+        </div>
+        <span class="badge">高度 × 马赫</span>
+      </div>
       <div id="plot-3d" class="plot-area"></div>
-    </div>
+    </section>
 
-    <!-- 广告位 2：图表间横向横幅 -->
+    <!-- 广告位 2：图表间横向横幅（默认隐藏） -->
     <aside class="ad-container ad-mid">
       <span class="ad-label">Advertisement</span>
       <div class="ad-slot" id="ad-slot-mid"></div>
     </aside>
 
-    <div class="plot-card plot-climb">
-      <h2>最佳爬升路线（速度程序 &amp; 机头向上角度）</h2>
+    <section class="plot-card plot-climb">
+      <div class="card-head">
+        <div class="card-title-group">
+          <h2>最佳爬升路线</h2>
+          <span class="card-sub" id="plot-sub-climb">速度程序 · 机头向上角度 · 剩余功率</span>
+        </div>
+        <span class="badge badge-alt">SEP 速度程序</span>
+      </div>
       <div id="plot-climb" class="plot-area plot-area-climb"></div>
-    </div>
+    </section>
   </main>
 
   <!-- 页脚信息 -->
   <footer class="app-footer">
-    <p>数据来源：gszabi99/War-Thunder-Datamine · 计算基于 wt-fm-analysis 算法</p>
-    <p class="footer-disclaimer">数据由网络拆包计算获得，并不一定100%准确</p>
-    <p class="app-version">v0.5.0</p>
+    <div class="footer-inner">
+      <p class="footer-meta">
+        <span>数据来源：<a href="https://github.com/gszabi99/War-Thunder-Datamine" target="_blank" rel="noopener noreferrer">gszabi99/War-Thunder-Datamine</a></span>
+        <span class="footer-sep" aria-hidden="true">·</span>
+        <span>计算基于 wt-fm-analysis 算法</span>
+      </p>
+      <p class="footer-disclaimer">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        数据由网络拆包计算获得，并不一定 100% 准确
+      </p>
+      <p class="app-version">v0.5.0</p>
+    </div>
   </footer>
 </body>
 </html>
