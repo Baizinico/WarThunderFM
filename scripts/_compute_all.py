@@ -1,27 +1,33 @@
 """批量计算全部飞机的加速度数据。
 
-读取 data/raw/*.blkx，计算每架飞机的加速度网格与最优剖面，
+读取 data/raw/*.blkx，计算每架飞机的加速度网格、最优剖面与最佳爬升程序，
 保存到 data/computed/<aircraft>.json。
-已计算的自动跳过（断点续传）。失败的记录到错误日志。
+已计算的自动跳过（断点续传）；加 --force 则全部重算。
+
+产出与 analyze.py 的 compute 子命令保持一致（同样写入 climb_route）。
 """
+import argparse
 import json
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, ".")
-from lib.compute import compute_accel_grid, compute_optimal
+from lib.compute import compute_accel_grid, compute_climb_route, compute_optimal
 from lib.schema import build_record, save_json
 
 RAW_DIR = Path("data/raw")
 COMPUTED_DIR = Path("data/computed")
 COMPUTED_DIR.mkdir(parents=True, exist_ok=True)
 
+# 由 main() 按 --force 设置
+FORCE = False
+
 
 def compute_one(aircraft: str) -> tuple[str, bool, str]:
     """计算单架飞机。返回 (aircraft, success, message)。"""
     out_path = COMPUTED_DIR / f"{aircraft}.json"
-    if out_path.exists():
+    if out_path.exists() and not FORCE:
         return aircraft, True, "cached"
 
     fm_path = RAW_DIR / f"{aircraft}.blkx"
@@ -48,12 +54,13 @@ def compute_one(aircraft: str) -> tuple[str, bool, str]:
     try:
         samples, grid = compute_accel_grid(fm, mass_kg, afterburner=afterburner)
         optimal = compute_optimal(samples, grid)
+        climb_route = compute_climb_route(samples, grid)
         params = {
             "afterburner": afterburner,
             "fuel_pct": 0.5,
             "wt_fm_version": "datamine-master",
         }
-        record = build_record(aircraft, fm, samples, grid, optimal, params)
+        record = build_record(aircraft, fm, samples, grid, optimal, params, climb_route)
         save_json(record, out_path)
         return aircraft, True, f"ok ({len(samples)} samples)"
     except Exception as e:
@@ -61,12 +68,19 @@ def compute_one(aircraft: str) -> tuple[str, bool, str]:
 
 
 def main():
+    global FORCE
+    parser = argparse.ArgumentParser(description="批量计算全部飞机的加速度数据")
+    parser.add_argument("--force", action="store_true",
+                        help="重算全部机型（默认跳过已存在的 data/computed/*.json）")
+    args = parser.parse_args()
+    FORCE = args.force
+
     # 读取飞机列表
     aircraft_list = sorted(
         p.stem for p in RAW_DIR.glob("*.blkx")
     )
     total = len(aircraft_list)
-    print(f"共 {total} 架飞机待计算")
+    print(f"共 {total} 架飞机待计算" + ("（--force：全部重算）" if FORCE else ""))
     print(f"已计算: {sum(1 for a in aircraft_list if (COMPUTED_DIR / f'{a}.json').exists())}")
     print()
 

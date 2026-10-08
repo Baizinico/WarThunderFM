@@ -32,6 +32,7 @@ a_4e_early_iaf
 a_4e_late_iaf
 a_4h
 a_4n
+a_4ptm_malaysia
 a_5c
 a_6e_tram
 a_7d
@@ -72,6 +73,7 @@ arado-196a-3
 arado-234
 arado-234_hockey
 arado-234c-3
+arado_234b_2_mt
 ariete
 attaker_fb1
 av_8a
@@ -80,6 +82,7 @@ av_8b_plus
 av_8c
 av_8s
 avenger_mk1
+aw_159
 b-17e
 b-17e_late
 b-17g
@@ -157,6 +160,7 @@ bv-155b-1
 bv-238
 c-47
 c_3604
+ca_27_mk_32
 canberra_bimk6
 canberra_bmk2
 caudron_cr714
@@ -289,6 +293,8 @@ f9f-8
 f_100d
 f_100f
 f_101c
+f_102a_greece
+f_102a_late
 f_104a
 f_104c
 f_104g
@@ -333,6 +339,7 @@ f_16c_block_50
 f_16c_block_52_aesa
 f_16d_block_40_barak_2
 f_16i_sufa
+f_16xl
 f_2000a
 f_20a
 f_222_2
@@ -348,6 +355,7 @@ f_5e_fcu_thailand
 f_5t_thailand
 f_5th_thailand
 f_6c_pakistan
+f_86em_greece
 fa_18a
 fa_18a_hug_2_raaf
 fa_18c_early
@@ -419,6 +427,7 @@ gladiator_mk2
 gladiator_mk2_navy
 gladiator_mk2_tuck
 go229_v3
+h145m
 h6k4
 h8k2
 h8k3
@@ -438,6 +447,7 @@ hawk_200
 hawk_200_rda
 hawk_209_indonesia
 hawk_iii
+hawk_t1a
 he-111h-16_winter
 he-111h-2
 he-111h-6
@@ -547,6 +557,7 @@ j_11
 j_11a
 j_11b
 j_15t
+j_16
 j_7_mk2
 j_7d
 j_7e
@@ -619,6 +630,7 @@ ki_84_hei
 ki_84_ko
 ki_84_otsu
 ki_87
+ki_93_1_ko
 ki_94_2
 kitsuka
 kor_1
@@ -775,6 +787,7 @@ mig_29_9_13
 mig_29kr_9_41r
 mig_29m_9_15
 mig_29smt_9_19
+mig_35
 mig_3_series_1_15
 mig_3_series_1_15_bk_pod
 mig_3_series_34
@@ -968,6 +981,7 @@ saab_j29f
 saab_j32b
 saab_j35a
 saab_j35d
+saab_j35j
 saab_j35xs
 saab_ja37
 saab_jas39a
@@ -981,6 +995,7 @@ sagittario_2
 sb2c_1c
 sb2c_4
 sb2c_5
+sb2c_5_greece
 sb2u-2
 sb2u-3
 sb_25j_netherlands
@@ -992,6 +1007,7 @@ sbd-3
 sc_1
 scimitar_f1
 scout_ah_mk1
+se_203
 sea_fury_fb11
 sea_harrier_fa2
 sea_hawk_fga6

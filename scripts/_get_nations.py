@@ -7,9 +7,8 @@ import time
 from pathlib import Path
 from collections import Counter
 
+# 默认上下文：启用证书校验与主机名校验（不降级为 CERT_NONE）
 ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
 HEADERS = {"User-Agent": "WT", "Accept": "application/vnd.github+json"}
 
 

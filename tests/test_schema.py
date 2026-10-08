@@ -5,11 +5,15 @@ import math
 import pytest
 
 from lib.schema import (
+    ACCEL_RANGE,
     build_record,
     load_json,
     save_json,
     validate,
 )
+
+# 小于 ACCEL_RANGE 下限的值（随常量变化自动跟随，避免阈值调整后用例失效）
+ACCEL_BELOW_RANGE = ACCEL_RANGE[0] - 1.0
 from tests.fixtures import make_jet_fm
 
 
@@ -73,7 +77,7 @@ class TestValidate:
 
     def test_accel_out_of_range_invalid(self):
         record = make_record()
-        record["samples"] = [make_sample(accel=-30000.0)]
+        record["samples"] = [make_sample(accel=ACCEL_BELOW_RANGE)]
         ok, errors = validate(record)
         assert not ok
         assert any("accel_mps2" in e for e in errors)
@@ -166,7 +170,7 @@ class TestRoundTrip:
 
     def test_save_rejects_invalid(self, tmp_path):
         record = make_record()
-        record["samples"] = [make_sample(accel=-50000.0)]
+        record["samples"] = [make_sample(accel=ACCEL_BELOW_RANGE)]
         out = tmp_path / "bad.json"
         with pytest.raises(ValueError):
             save_json(record, out)

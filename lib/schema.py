@@ -82,18 +82,21 @@ SEP_MPS_RANGE: tuple[float, float] = (-100.0, 1000.0)
 CLIMB_ANGLE_RANGE: tuple[float, float] = (-90.0, 90.0)
 
 # 数值范围常量（闭区间）
-# ACCEL_RANGE 拓宽至 -20000：超轻型无人机（如 uav_inf_recon_drone, EmptyMass=1kg）在
-# 超声速+低高度时减速度可达 -8687 m/s²（数学正确值——无人机无法在高马赫数飞行）。
+# ACCEL_RANGE 下限拓宽至 -1e5：超轻型无人机（如 uav_inf_recon_drone, EmptyMass=1kg）在
+# 超声速+低高度时减速度可达 -8687 m/s²（数学正确值——无人机无法在高马赫数飞行）；
+# 螺旋桨机构在包线外（低空 + 高马赫）的阻力发散曲线外推后减速度可达 -33070 m/s²
+# （Firefly Mk I）。1e5 提供约 3 倍余量。
 # 上限 500 m/s² 对应超高 TWR 装备。
-# DRAG/NET_FORCE 拓宽至 1e8：大型飞行器（齐柏林、BV-238、B-52H）在包线外的阻力
-# 可达 94M N。1e8 (100M N) 提供充足余量。
+# DRAG/NET_FORCE 拓宽至 1e9：大型飞行器（齐柏林、BV-238、B-52H）在包线外的阻力
+# 可达 94M N；螺旋桨机构按马赫发散曲线外推时峰值约 165M N（Firefly Mk I）。
+# 1e9 (1000M N) 提供约 6 倍余量。
 MACH_RANGE: tuple[float, float] = (0.0, 5.0)
 ALTITUDE_RANGE: tuple[float, float] = (-1000.0, 50000.0)
-ACCEL_RANGE: tuple[float, float] = (-20000.0, 500.0)
+ACCEL_RANGE: tuple[float, float] = (-1.0e5, 500.0)
 TAS_MPS_RANGE: tuple[float, float] = (0.0, 3000.0)
 THRUST_N_RANGE: tuple[float, float] = (0.0, 1.0e8)
-DRAG_N_RANGE: tuple[float, float] = (0.0, 1.0e8)
-NET_FORCE_N_RANGE: tuple[float, float] = (-1.0e8, 1.0e8)
+DRAG_N_RANGE: tuple[float, float] = (0.0, 1.0e9)
+NET_FORCE_N_RANGE: tuple[float, float] = (-1.0e9, 1.0e9)
 MASS_KG_RANGE: tuple[float, float] = (0.0, 1.0e6)
 TAS_KMH_RANGE: tuple[float, float] = (0.0, 10000.0)
 

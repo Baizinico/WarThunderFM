@@ -171,6 +171,11 @@
       "nation": "israel"
     },
     {
+      "name": "a_4ptm_malaysia",
+      "path": "data/raw/a_4ptm_malaysia.blkx",
+      "nation": "japan"
+    },
+    {
       "name": "a_5c",
       "path": "data/raw/a_5c.blkx",
       "nation": "china"
@@ -333,7 +338,7 @@
     {
       "name": "am-1_mauler",
       "path": "data/raw/am-1_mauler.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "amx_a_1a_brazil",
@@ -363,11 +368,16 @@
     {
       "name": "arado-234_hockey",
       "path": "data/raw/arado-234_hockey.blkx",
-      "nation": "other"
+      "nation": "germany"
     },
     {
       "name": "arado-234c-3",
       "path": "data/raw/arado-234c-3.blkx",
+      "nation": "germany"
+    },
+    {
+      "name": "arado_234b_2_mt",
+      "path": "data/raw/arado_234b_2_mt.blkx",
       "nation": "germany"
     },
     {
@@ -403,11 +413,16 @@
     {
       "name": "av_8s",
       "path": "data/raw/av_8s.blkx",
-      "nation": "other"
+      "nation": "britain"
     },
     {
       "name": "avenger_mk1",
       "path": "data/raw/avenger_mk1.blkx",
+      "nation": "britain"
+    },
+    {
+      "name": "aw_159",
+      "path": "data/raw/aw_159.blkx",
       "nation": "britain"
     },
     {
@@ -788,12 +803,17 @@
     {
       "name": "c-47",
       "path": "data/raw/c-47.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "c_3604",
       "path": "data/raw/c_3604.blkx",
       "nation": "germany"
+    },
+    {
+      "name": "ca_27_mk_32",
+      "path": "data/raw/ca_27_mk_32.blkx",
+      "nation": "britain"
     },
     {
       "name": "canberra_bimk6",
@@ -903,7 +923,7 @@
     {
       "name": "db_3a",
       "path": "data/raw/db_3a.blkx",
-      "nation": "other"
+      "nation": "ussr"
     },
     {
       "name": "db_3a_china",
@@ -928,7 +948,7 @@
     {
       "name": "dh_110",
       "path": "data/raw/dh_110.blkx",
-      "nation": "other"
+      "nation": "britain"
     },
     {
       "name": "do_17e_1",
@@ -1268,7 +1288,7 @@
     {
       "name": "f13t_2s",
       "path": "data/raw/f13t_2s.blkx",
-      "nation": "other"
+      "nation": "germany"
     },
     {
       "name": "f1m2",
@@ -1443,12 +1463,12 @@
     {
       "name": "f_100d",
       "path": "data/raw/f_100d.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_100f",
       "path": "data/raw/f_100f.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_101c",
@@ -1456,49 +1476,59 @@
       "nation": "usa"
     },
     {
+      "name": "f_102a_greece",
+      "path": "data/raw/f_102a_greece.blkx",
+      "nation": "israel"
+    },
+    {
+      "name": "f_102a_late",
+      "path": "data/raw/f_102a_late.blkx",
+      "nation": "usa"
+    },
+    {
       "name": "f_104a",
       "path": "data/raw/f_104a.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_104c",
       "path": "data/raw/f_104c.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_104g",
       "path": "data/raw/f_104g.blkx",
-      "nation": "other"
+      "nation": "germany"
     },
     {
       "name": "f_104g_italy",
       "path": "data/raw/f_104g_italy.blkx",
-      "nation": "other"
+      "nation": "germany"
     },
     {
       "name": "f_104j",
       "path": "data/raw/f_104j.blkx",
-      "nation": "other"
+      "nation": "japan"
     },
     {
       "name": "f_104s",
       "path": "data/raw/f_104s.blkx",
-      "nation": "other"
+      "nation": "italy"
     },
     {
       "name": "f_104s_asa",
       "path": "data/raw/f_104s_asa.blkx",
-      "nation": "other"
+      "nation": "italy"
     },
     {
       "name": "f_104s_cb",
       "path": "data/raw/f_104s_cb.blkx",
-      "nation": "other"
+      "nation": "italy"
     },
     {
       "name": "f_105d",
       "path": "data/raw/f_105d.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_106a_1972",
@@ -1513,7 +1543,7 @@
     {
       "name": "f_111c",
       "path": "data/raw/f_111c.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_111f",
@@ -1593,7 +1623,7 @@
     {
       "name": "f_16a_block_10_mod",
       "path": "data/raw/f_16a_block_10_mod.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_16a_block_10_norway",
@@ -1676,9 +1706,14 @@
       "nation": "israel"
     },
     {
+      "name": "f_16xl",
+      "path": "data/raw/f_16xl.blkx",
+      "nation": "usa"
+    },
+    {
       "name": "f_2000a",
       "path": "data/raw/f_2000a.blkx",
-      "nation": "other"
+      "nation": "italy"
     },
     {
       "name": "f_20a",
@@ -1708,47 +1743,52 @@
     {
       "name": "f_5a",
       "path": "data/raw/f_5a.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_5ag",
       "path": "data/raw/f_5ag.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_5c_turkey",
       "path": "data/raw/f_5c_turkey.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_5e",
       "path": "data/raw/f_5e.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_5e_aidc",
       "path": "data/raw/f_5e_aidc.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_5e_fcu_thailand",
       "path": "data/raw/f_5e_fcu_thailand.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_5t_thailand",
       "path": "data/raw/f_5t_thailand.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_5th_thailand",
       "path": "data/raw/f_5th_thailand.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "f_6c_pakistan",
       "path": "data/raw/f_6c_pakistan.blkx",
       "nation": "china"
+    },
+    {
+      "name": "f_86em_greece",
+      "path": "data/raw/f_86em_greece.blkx",
+      "nation": "israel"
     },
     {
       "name": "fa_18a",
@@ -1808,7 +1848,7 @@
     {
       "name": "fau-1",
       "path": "data/raw/fau-1.blkx",
-      "nation": "other"
+      "nation": "britain"
     },
     {
       "name": "fc_20_bis",
@@ -2106,6 +2146,11 @@
       "nation": "germany"
     },
     {
+      "name": "h145m",
+      "path": "data/raw/h145m.blkx",
+      "nation": "germany"
+    },
+    {
       "name": "h6k4",
       "path": "data/raw/h6k4.blkx",
       "nation": "japan"
@@ -2199,6 +2244,11 @@
       "name": "hawk_iii",
       "path": "data/raw/hawk_iii.blkx",
       "nation": "china"
+    },
+    {
+      "name": "hawk_t1a",
+      "path": "data/raw/hawk_t1a.blkx",
+      "nation": "britain"
     },
     {
       "name": "he-111h-16_winter",
@@ -2328,7 +2378,7 @@
     {
       "name": "hp52_hampden",
       "path": "data/raw/hp52_hampden.blkx",
-      "nation": "other"
+      "nation": "britain"
     },
     {
       "name": "hp52_hampden_mk1_late",
@@ -2558,7 +2608,7 @@
     {
       "name": "iar-81c",
       "path": "data/raw/iar-81c.blkx",
-      "nation": "other"
+      "nation": "italy"
     },
     {
       "name": "iar_316b",
@@ -2648,7 +2698,7 @@
     {
       "name": "itp-m1",
       "path": "data/raw/itp-m1.blkx",
-      "nation": "other"
+      "nation": "ussr"
     },
     {
       "name": "j1n1_mod11_early",
@@ -2743,6 +2793,11 @@
     {
       "name": "j_15t",
       "path": "data/raw/j_15t.blkx",
+      "nation": "china"
+    },
+    {
+      "name": "j_16",
+      "path": "data/raw/j_16.blkx",
       "nation": "china"
     },
     {
@@ -3106,6 +3161,11 @@
       "nation": "japan"
     },
     {
+      "name": "ki_93_1_ko",
+      "path": "data/raw/ki_93_1_ko.blkx",
+      "nation": "japan"
+    },
+    {
       "name": "ki_94_2",
       "path": "data/raw/ki_94_2.blkx",
       "nation": "japan"
@@ -3278,12 +3338,12 @@
     {
       "name": "li-2",
       "path": "data/raw/li-2.blkx",
-      "nation": "other"
+      "nation": "ussr"
     },
     {
       "name": "li-2_1938",
       "path": "data/raw/li-2_1938.blkx",
-      "nation": "other"
+      "nation": "ussr"
     },
     {
       "name": "lightning_f6",
@@ -3323,7 +3383,7 @@
     {
       "name": "maryland_mk1",
       "path": "data/raw/maryland_mk1.blkx",
-      "nation": "other"
+      "nation": "britain"
     },
     {
       "name": "mb_151c1",
@@ -3886,6 +3946,11 @@
       "nation": "ussr"
     },
     {
+      "name": "mig_35",
+      "path": "data/raw/mig_35.blkx",
+      "nation": "ussr"
+    },
+    {
       "name": "mig_3_series_1_15",
       "path": "data/raw/mig_3_series_1_15.blkx",
       "nation": "ussr"
@@ -4033,7 +4098,7 @@
     {
       "name": "ms_405",
       "path": "data/raw/ms_405.blkx",
-      "nation": "other"
+      "nation": "france"
     },
     {
       "name": "ms_406c1",
@@ -4073,7 +4138,7 @@
     {
       "name": "night_fighter_mk_2",
       "path": "data/raw/night_fighter_mk_2.blkx",
-      "nation": "other"
+      "nation": "britain"
     },
     {
       "name": "nimrod_mk1",
@@ -4408,7 +4473,7 @@
     {
       "name": "p_43a_1",
       "path": "data/raw/p_43a_1.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "p_51b_7_sweden",
@@ -4418,12 +4483,12 @@
     {
       "name": "p_59a",
       "path": "data/raw/p_59a.blkx",
-      "nation": "other"
+      "nation": "usa"
     },
     {
       "name": "pandora_mk_1",
       "path": "data/raw/pandora_mk_1.blkx",
-      "nation": "other"
+      "nation": "britain"
     },
     {
       "name": "pb4y-2",
@@ -4851,6 +4916,11 @@
       "nation": "other"
     },
     {
+      "name": "saab_j35j",
+      "path": "data/raw/saab_j35j.blkx",
+      "nation": "other"
+    },
+    {
       "name": "saab_j35xs",
       "path": "data/raw/saab_j35xs.blkx",
       "nation": "other"
@@ -4916,6 +4986,11 @@
       "nation": "usa"
     },
     {
+      "name": "sb2c_5_greece",
+      "path": "data/raw/sb2c_5_greece.blkx",
+      "nation": "israel"
+    },
+    {
       "name": "sb2u-2",
       "path": "data/raw/sb2u-2.blkx",
       "nation": "usa"
@@ -4969,6 +5044,11 @@
       "name": "scout_ah_mk1",
       "path": "data/raw/scout_ah_mk1.blkx",
       "nation": "britain"
+    },
+    {
+      "name": "se_203",
+      "path": "data/raw/se_203.blkx",
+      "nation": "france"
     },
     {
       "name": "sea_fury_fb11",
@@ -6055,52 +6135,52 @@
     {
       "code": "usa",
       "label": "美国",
-      "count": 205
+      "count": 226
     },
     {
       "code": "ussr",
       "label": "苏联",
-      "count": 210
+      "count": 215
     },
     {
       "code": "germany",
       "label": "德国",
-      "count": 166
+      "count": 172
     },
     {
       "code": "china",
       "label": "中国",
-      "count": 56
+      "count": 57
     },
     {
       "code": "france",
       "label": "法国",
-      "count": 100
+      "count": 102
     },
     {
       "code": "italy",
       "label": "意大利",
-      "count": 71
+      "count": 76
     },
     {
       "code": "britain",
       "label": "英国",
-      "count": 161
+      "count": 171
     },
     {
       "code": "japan",
       "label": "日本",
-      "count": 107
+      "count": 110
     },
     {
       "code": "israel",
       "label": "以色列",
-      "count": 29
+      "count": 32
     },
     {
       "code": "other",
       "label": "其他",
-      "count": 105
+      "count": 65
     }
   ]
 }

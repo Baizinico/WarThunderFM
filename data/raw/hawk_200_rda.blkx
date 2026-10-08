@@ -76,7 +76,7 @@
   "minChuteSpeed": 35.0,
   "chuteRipSpeed": 315.0,
   "BuoyancySpeed": 0.2,
-  "Length": 11.3,
+  "Length": 11.35,
   "Crew": 1,
   "FlapsAngle": 60.0,
   "VSlats": [
@@ -105,9 +105,9 @@
   "AllowModsToChangeLongidutialBalance": false,
   "ConvertAoa": false,
   "ConvertAoaAI": false,
-  "ArcadeRollCorrectionMultiplier": 20.0,
+  "ArcadeRollCorrectionMultiplier": 25.0,
   "RollLeveling": false,
-  "ArcadeMaxRollCoeff": 1.2,
+  "ArcadeMaxRollCoeff": 0.0,
   "ArcadeYawModificators": [
     2.0,
     2.0
@@ -255,7 +255,7 @@
       "Slats": 0.0
     },
     "WingPlane": {
-      "Span": 9.4,
+      "Span": 9.94,
       "SweptAngle": 26.0,
       "TaperRatio": 3.4,
       "Angle": 0.0,
@@ -303,7 +303,7 @@
       },
       "FlapsPolar0": {
         "Flaps": 0.0,
-        "OswaldsEfficiencyNumber": 0.74,
+        "OswaldsEfficiencyNumber": 0.85,
         "lineClCoeff": 0.064,
         "AfterCritParabAngle": 1.5,
         "AfterCritDeclineCoeff": 0.05,
