@@ -29,24 +29,25 @@ let compareToken = 0;           // 对比渲染竞态令牌
 let lastComparison = null;      // 最近一次构建的对比数据（供模式切换时重绘）
 
 // 主题色（与 style.css 中的 CSS 变量保持一致）
-const COLOR_ACCENT = '#ff8b4d';   // 橙色强调（高加速度）
-const COLOR_BLUE = '#4ec5f1';     // 冷色低值（低/负加速度）
-const COLOR_CREAM = '#f7ece1';    // 中性暖白（零加速度）
-const COLOR_GREEN = '#8fd07a';    // 爬升路线绿
-const COLOR_TEXT = '#eaf2fb';     // 主文字
-const COLOR_TEXT_DIM = '#9fb0c3'; // 次要文字
-const COLOR_GRID = 'rgba(148,170,196,0.16)';   // 网格线
-const COLOR_AXIS_BG = 'rgba(8,12,17,0.55)';    // 坐标轴背景
-const FONT_UI = "'Inter', system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif";
-const FONT_MONO = "'JetBrains Mono', ui-monospace, Consolas, monospace";
+const COLOR_ACCENT = '#e0a04a';   // 琥珀强调（高加速度 / 最优值）
+const COLOR_CREAM = '#efe9de';    // 中性暖白（零加速度）
+const COLOR_ROUTE = '#6fae9b';    // 爬升路线（图表里的第二序列）
+const COLOR_TEXT = '#efe9de';     // 主文字
+const COLOR_TEXT_DIM = '#aaa398'; // 次要文字
+const COLOR_GRID = 'rgba(239,233,222,0.08)';   // 网格线
+const COLOR_AXIS_BG = 'rgba(22,21,19,0.6)';    // 坐标轴背景
+const COLOR_SURFACE = '#1c1a18';               // 卡片表面（悬停提示底色）
+const COLOR_BG = '#161513';                    // 页面底色（标记描边）
+const FONT_UI = "'IBM Plex Sans', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif";
+const FONT_MONO = "'IBM Plex Mono', ui-monospace, Menlo, monospace";
 // 色阶：仅显示加速度 ≥ 0 的区域
-//   暖白(零加速) → 浅橙 → 橙(中等加速) → 深橙红(强加速)
+//   暖白(零加速) → 浅琥珀 → 琥珀(中等加速) → 赭红(强加速)
 // 负加速度区域通过 z=null 过滤，不渲染曲面
 const COLORSCALE = [
   [0.00, COLOR_CREAM],
-  [0.35, '#f3ab7c'],
+  [0.35, '#e6b877'],
   [0.65, COLOR_ACCENT],
-  [1.00, '#c2461f']
+  [1.00, '#a8552a']
 ];
 // 色阶映射范围：0 m/s² 到 6 m/s²（典型最大加速度）
 const COLOR_MIN = 0;
@@ -377,11 +378,11 @@ const META_ICONS = {
 };
 
 /** 生成单个元数据卡片 HTML */
-function metaCard({ label, value, sub, icon, tone, className }) {
+function metaCard({ label, value, sub, icon, className }) {
   const iconSvg = icon && META_ICONS[icon]
     ? `<svg class="meta-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${META_ICONS[icon]}</svg>`
     : '';
-  return `<div class="meta-item${className ? ' ' + className : ''}"${tone ? ` style="--tone:${tone}"` : ''}>` +
+  return `<div class="meta-item${className ? ' ' + className : ''}">` +
     `<div class="meta-label">${iconSvg}${label}</div>` +
     `<div class="meta-value">${value}</div>` +
     (sub ? `<div class="meta-sub">${sub}</div>` : '') +
@@ -439,29 +440,27 @@ function renderMetadata(metadata, nation, data) {
 
   const platformCards = [
     identity,
-    metaCard({ label: '空重', value: kg(metadata.empty_mass_kg), sub: '机体 + 固定设备', icon: 'mass', tone: '#9fb0c3' }),
-    metaCard({ label: '燃油质量', value: kg(metadata.fuel_mass_kg), sub: `${Math.round(currentFuelPct * 100)}% 内油`, icon: 'fuel', tone: '#4ec5f1' }),
-    metaCard({ label: '挂载质量', value: kg(currentPayloadKg), sub: '外挂载荷', icon: 'payload', tone: '#ffab76' }),
-    metaCard({ label: '飞行质量', value: kg(metadata.flight_mass_kg), sub: '含燃油与挂载', icon: 'gauge', tone: '#ff8b4d' }),
+    metaCard({ label: '空重', value: kg(metadata.empty_mass_kg), sub: '机体 + 固定设备', icon: 'mass' }),
+    metaCard({ label: '燃油质量', value: kg(metadata.fuel_mass_kg), sub: `${Math.round(currentFuelPct * 100)}% 内油`, icon: 'fuel' }),
+    metaCard({ label: '挂载质量', value: kg(currentPayloadKg), sub: '外挂载荷', icon: 'payload' }),
+    metaCard({ label: '飞行质量', value: kg(metadata.flight_mass_kg), sub: '含燃油与挂载', icon: 'gauge' }),
     metaCard({
       label: '加力推力',
       value: metadata.thrust_max0_kgf ? `${fmtNum(metadata.thrust_max0_kgf)} kgf` : '—',
       sub: metadata.afterburner === false ? '军用推力' : '全加力静推力',
-      icon: 'thrust',
-      tone: '#ff8b4d'
+      icon: 'thrust'
     })
   ].join('');
 
   const envelopeCards = [
-    metaCard({ label: '最大加速度', value: maxAccel == null ? '—' : `${fmt2(maxAccel)} m/s²`, sub: '网格内峰值', icon: 'gauge', tone: '#ff8b4d' }),
-    metaCard({ label: '最大爬升率', value: maxSep == null ? '—' : `${fmt1(maxSep)} m/s`, sub: 'SEP 峰值', icon: 'climb', tone: '#8fd07a' }),
-    metaCard({ label: '实用升限', value: ceiling == null ? '—' : `${fmtNum(ceiling)} m`, sub: 'SEP > 0 的最高层', icon: 'ceiling', tone: '#4ec5f1' }),
+    metaCard({ label: '最大加速度', value: maxAccel == null ? '—' : `${fmt2(maxAccel)} m/s²`, sub: '网格内峰值', icon: 'gauge' }),
+    metaCard({ label: '最大爬升率', value: maxSep == null ? '—' : `${fmt1(maxSep)} m/s`, sub: 'SEP 峰值', icon: 'climb' }),
+    metaCard({ label: '实用升限', value: ceiling == null ? '—' : `${fmtNum(ceiling)} m`, sub: 'SEP > 0 的最高层', icon: 'ceiling' }),
     metaCard({
       label: '极速',
       value: topMach == null ? '—' : `Mach ${fmt2(topMach)}`,
       sub: topTas == null ? '平飞可加速上限' : `TAS ${fmtNum(Math.round(topTas))} km/h`,
-      icon: 'speed',
-      tone: '#ffab76'
+      icon: 'speed'
     })
   ].join('');
 
@@ -626,7 +625,7 @@ async function render3DSurface(samples, grid, climbRoute) {
       z: {
         show: true,
         usecolormap: true,
-        highlightcolor: '#ffffff',
+        highlightcolor: '#f0b968',
         project: { z: true }
       }
     },
@@ -662,15 +661,15 @@ async function render3DSurface(samples, grid, climbRoute) {
       z: cZ,
       customdata: cCustom,
       line: {
-        color: COLOR_GREEN,
+        color: COLOR_ROUTE,
         width: 6,
         dash: 'solid'
       },
       marker: {
         size: 6,
-        color: COLOR_GREEN,
+        color: COLOR_ROUTE,
         symbol: 'circle',
-        line: { color: '#faf9f5', width: 1 }
+        line: { color: '#161513', width: 1 }
       },
       name: '最佳爬升路线',
       hovertemplate:
@@ -694,8 +693,8 @@ async function render3DSurface(samples, grid, climbRoute) {
       size: 12
     },
     hoverlabel: {
-      bgcolor: 'rgba(8,12,17,0.94)',
-      bordercolor: 'rgba(255,139,77,0.45)',
+      bgcolor: 'rgba(28,26,24,0.98)',
+      bordercolor: 'rgba(224,160,74,0.5)',
       font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 }
     },
     scene: {
@@ -704,7 +703,7 @@ async function render3DSurface(samples, grid, climbRoute) {
         title: { text: '马赫数', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
         backgroundcolor: COLOR_AXIS_BG,
         gridcolor: COLOR_GRID,
-        zerolinecolor: 'rgba(148,170,196,0.4)',
+        zerolinecolor: 'rgba(239,233,222,0.24)',
         tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
         showbackground: true
       },
@@ -712,7 +711,7 @@ async function render3DSurface(samples, grid, climbRoute) {
         title: { text: '高度 (m)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
         backgroundcolor: COLOR_AXIS_BG,
         gridcolor: COLOR_GRID,
-        zerolinecolor: 'rgba(148,170,196,0.4)',
+        zerolinecolor: 'rgba(239,233,222,0.24)',
         tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
         showbackground: true
       },
@@ -720,7 +719,7 @@ async function render3DSurface(samples, grid, climbRoute) {
         title: { text: '加速度 (m/s²)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
         backgroundcolor: COLOR_AXIS_BG,
         gridcolor: COLOR_GRID,
-        zerolinecolor: 'rgba(148,170,196,0.4)',
+        zerolinecolor: 'rgba(239,233,222,0.24)',
         tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
         showbackground: true,
         rangemode: 'nonnegative'
@@ -842,8 +841,8 @@ async function renderClimbRouteChart(climbRoute) {
     x: alts,
     y: machs,
     name: '最佳爬升马赫数',
-    line: { color: COLOR_GREEN, width: 3, dash: 'solid' },
-    marker: { size: 8, color: COLOR_GREEN, line: { color: '#faf9f5', width: 1 } },
+    line: { color: COLOR_ROUTE, width: 3, dash: 'solid' },
+    marker: { size: 8, color: COLOR_ROUTE, line: { color: '#161513', width: 1 } },
     hovertemplate:
       '<b>高度 %{x} m</b><br>' +
       '马赫数: <b>%{y:.3f}</b><br>' +
@@ -861,7 +860,7 @@ async function renderClimbRouteChart(climbRoute) {
     name: '机头向上角度',
     yaxis: 'y2',
     line: { color: COLOR_ACCENT, width: 2, dash: 'dash' },
-    marker: { size: 7, color: COLOR_ACCENT, symbol: 'square', line: { color: '#faf9f5', width: 1 } },
+    marker: { size: 7, color: COLOR_ACCENT, symbol: 'square', line: { color: '#161513', width: 1 } },
     hovertemplate:
       '<b>高度 %{x} m</b><br>' +
       '机头向上: <b>%{y:.1f}°</b><extra></extra>'
@@ -879,8 +878,8 @@ async function renderClimbRouteChart(climbRoute) {
     },
     hovermode: 'x unified',
     hoverlabel: {
-      bgcolor: 'rgba(8,12,17,0.94)',
-      bordercolor: 'rgba(255,139,77,0.4)',
+      bgcolor: 'rgba(28,26,24,0.98)',
+      bordercolor: 'rgba(224,160,74,0.5)',
       font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 }
     },
     showlegend: true,
@@ -896,24 +895,24 @@ async function renderClimbRouteChart(climbRoute) {
     xaxis: {
       title: { text: '高度 (m)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
       gridcolor: COLOR_GRID,
-      zerolinecolor: 'rgba(148,170,196,0.4)',
+      zerolinecolor: 'rgba(239,233,222,0.24)',
       tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
       showgrid: true,
       showline: true,
-      linecolor: 'rgba(148,170,196,0.22)',
+      linecolor: 'rgba(239,233,222,0.10)',
       ticks: 'outside',
-      tickcolor: 'rgba(148,170,196,0.22)'
+      tickcolor: 'rgba(239,233,222,0.10)'
     },
     yaxis: {
-      title: { text: '马赫数', font: { family: FONT_UI, size: 13, color: COLOR_GREEN } },
+      title: { text: '马赫数', font: { family: FONT_UI, size: 13, color: COLOR_ROUTE } },
       gridcolor: COLOR_GRID,
-      zerolinecolor: 'rgba(148,170,196,0.4)',
-      tickfont: { family: FONT_MONO, color: COLOR_GREEN, size: 11 },
+      zerolinecolor: 'rgba(239,233,222,0.24)',
+      tickfont: { family: FONT_MONO, color: COLOR_ROUTE, size: 11 },
       showgrid: true,
       showline: true,
-      linecolor: 'rgba(143,208,122,0.35)',
+      linecolor: 'rgba(111,174,155,0.45)',
       ticks: 'outside',
-      tickcolor: 'rgba(143,208,122,0.35)'
+      tickcolor: 'rgba(111,174,155,0.45)'
     },
     yaxis2: {
       title: { text: '机头向上角度 (°)', font: { family: FONT_UI, size: 13, color: COLOR_ACCENT } },
@@ -923,9 +922,9 @@ async function renderClimbRouteChart(climbRoute) {
       tickfont: { family: FONT_MONO, color: COLOR_ACCENT, size: 11 },
       showgrid: false,
       showline: true,
-      linecolor: 'rgba(255,139,77,0.35)',
+      linecolor: 'rgba(224,160,74,0.45)',
       ticks: 'outside',
-      tickcolor: 'rgba(255,139,77,0.35)'
+      tickcolor: 'rgba(224,160,74,0.45)'
     }
   };
   const config = {
@@ -941,6 +940,7 @@ async function renderClimbRouteChart(climbRoute) {
   // 与 3D 渲染共用渲染队列，避免并发 WebGL/Canvas 操作冲突
   renderQueue = renderQueue.then(() => {
     try {
+      clearPlaceholder(el);
       Plotly.newPlot(el, [traceMach, traceAngle], layout, config);
     } catch (err) {
       console.error('爬升路线图表渲染失败:', err);
@@ -970,11 +970,11 @@ function clearPlot() {
     if (window.Plotly) { try { Plotly.purge(plotEl); } catch (e) { /* 忽略 */ } }
     plotEl.innerHTML = '<div class="plot-placeholder">请在上方搜索并选择一架飞机<br><span class="plot-placeholder-sub">（切换国家后需重新选择飞机）</span></div>';
   }
-  // 清空爬升路线图表（不留占位文字，渲染时根据数据决定显示内容）
+  // 清空爬升路线图表（占位提示与 3D 图一致，避免留下一块空白面板）
   const climbEl = document.getElementById('plot-climb');
   if (climbEl) {
     if (window.Plotly) { try { Plotly.purge(climbEl); } catch (e) { /* 忽略 */ } }
-    climbEl.innerHTML = '';
+    climbEl.innerHTML = '<div class="plot-placeholder">选择飞机后显示爬升路线</div>';
   }
   // 清空元数据面板
   const metaPanel = document.getElementById('metadata-panel');
@@ -1157,7 +1157,15 @@ function initFuelSlider() {
 //       buildComparison 构建对比数据 → 渲染指标表 / 曲线叠加 / 雷达图。
 
 // 队列配色（橙 / 青 / 绿 / 紫），与图表线条一一对应
-const COMPARE_COLORS = ['#ff8b4d', '#4ec5f1', '#8fd07a', '#c9a0ff'];
+const COMPARE_COLORS = ['#e0a04a', '#8a93b8', '#6fae9b', '#c4705c'];
+
+/** 给十六进制颜色加透明度，用于图表填充 */
+function withAlpha(hex, alpha) {
+  const raw = hex.replace('#', '');
+  const full = raw.length === 3 ? raw.split('').map(c => c + c).join('') : raw;
+  const n = parseInt(full, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
 
 /** HTML 转义（机型名来自文件名，仍转义以防注入） */
 function escapeHtml(text) {
@@ -1186,6 +1194,11 @@ function showComparePlaceholder(el, msg, sub) {
   if (window.Plotly) { try { Plotly.purge(el); } catch (e) { /* 忽略 */ } }
   el.innerHTML = `<div class="plot-placeholder">${escapeHtml(msg)}` +
     (sub ? `<br><span class="plot-placeholder-sub">${escapeHtml(sub)}</span>` : '') + `</div>`;
+}
+
+/** 绘图前清掉占位提示，避免占位文字叠在图上 */
+function clearPlaceholder(el) {
+  if (el && el.querySelector('.plot-placeholder')) el.innerHTML = '';
 }
 
 /** 初始化对比控件（按钮 / 曲线模式 / 剖面高度） */
@@ -1501,13 +1514,13 @@ function compareAxis(title, color) {
   return {
     title: { text: title, font: { family: FONT_UI, size: 13, color: color || COLOR_TEXT } },
     gridcolor: COLOR_GRID,
-    zerolinecolor: 'rgba(148,170,196,0.4)',
+    zerolinecolor: 'rgba(239,233,222,0.24)',
     tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
     showgrid: true,
     showline: true,
-    linecolor: 'rgba(148,170,196,0.22)',
+    linecolor: 'rgba(239,233,222,0.10)',
     ticks: 'outside',
-    tickcolor: 'rgba(148,170,196,0.22)',
+    tickcolor: 'rgba(239,233,222,0.10)',
   };
 }
 
@@ -1572,7 +1585,7 @@ async function renderCompareOverlay(cmp) {
     // 零加速度参考线：线右侧可加速
     shapes.push({
       type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 0,
-      line: { color: 'rgba(148,170,196,0.45)', width: 1, dash: 'dot' },
+      line: { color: 'rgba(239,233,222,0.18)', width: 1, dash: 'dot' },
     });
   } else {
     const isSep = compareMode === 'sep';
@@ -1590,7 +1603,7 @@ async function renderCompareOverlay(cmp) {
         y: isSep ? r.sep_mps : r.mach,
         name: r.name.toUpperCase(),
         line: { color: color, width: 2.4 },
-        marker: { size: 6, color: color, line: { color: '#0b1017', width: 1 } },
+        marker: { size: 6, color: color, line: { color: '#161513', width: 1 } },
         hovertemplate: `<b>${escapeHtml(r.name.toUpperCase())}</b><br>高度 %{x:.0f} m<br>` +
           (isSep ? 'SEP <b>%{y:.1f} m/s</b>' : '马赫 <b>%{y:.3f}</b>') + '<extra></extra>',
       });
@@ -1614,8 +1627,8 @@ async function renderCompareOverlay(cmp) {
     font: { family: FONT_UI, color: COLOR_TEXT, size: 12 },
     hovermode: 'closest',
     hoverlabel: {
-      bgcolor: 'rgba(8,12,17,0.94)',
-      bordercolor: 'rgba(255,139,77,0.4)',
+      bgcolor: 'rgba(28,26,24,0.98)',
+      bordercolor: 'rgba(224,160,74,0.5)',
       font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 },
     },
     showlegend: true,
@@ -1637,6 +1650,7 @@ async function renderCompareOverlay(cmp) {
   // 与主图共用渲染队列，避免并发 Plotly 操作互相干扰
   renderQueue = renderQueue.then(() => {
     try {
+      clearPlaceholder(el);
       return Plotly.newPlot(el, traces, layout, config).catch(err => {
         console.error('对比曲线渲染失败:', err);
       });
@@ -1679,9 +1693,9 @@ async function renderCompareRadar(cmp) {
       r: r,
       theta: theta,
       fill: 'toself',
+      fillcolor: withAlpha(color, 0.1),
       name: e.name.toUpperCase(),
       line: { color: color, width: 2 },
-      opacity: 0.5,
       hovertemplate: `<b>${escapeHtml(e.name.toUpperCase())}</b><br>` +
         '%{theta}<br>相对得分 <b>%{r:.0f}/100</b><extra></extra>',
     };
@@ -1694,8 +1708,8 @@ async function renderCompareRadar(cmp) {
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: FONT_UI, color: COLOR_TEXT, size: 12 },
     hoverlabel: {
-      bgcolor: 'rgba(8,12,17,0.94)',
-      bordercolor: 'rgba(78,197,241,0.4)',
+      bgcolor: 'rgba(28,26,24,0.98)',
+      bordercolor: 'rgba(224,160,74,0.5)',
       font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 },
     },
     showlegend: true,
@@ -1705,14 +1719,14 @@ async function renderCompareRadar(cmp) {
       radialaxis: {
         range: [0, 100],
         gridcolor: COLOR_GRID,
-        linecolor: 'rgba(148,170,196,0.22)',
+        linecolor: 'rgba(239,233,222,0.10)',
         tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 10 },
         tickvals: [20, 40, 60, 80, 100],
         angle: 90,
       },
       angularaxis: {
         gridcolor: COLOR_GRID,
-        linecolor: 'rgba(148,170,196,0.22)',
+        linecolor: 'rgba(239,233,222,0.10)',
         tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 10 },
       },
     },
@@ -1729,6 +1743,7 @@ async function renderCompareRadar(cmp) {
   };
   renderQueue = renderQueue.then(() => {
     try {
+      clearPlaceholder(el);
       return Plotly.newPlot(el, traces, layout, config).catch(err => {
         console.error('对比雷达图渲染失败:', err);
       });
