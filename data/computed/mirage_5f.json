@@ -6,7 +6,7 @@
     "flight_mass_kg": 9700.0,
     "afterburner": true,
     "thrust_max0_kgf": 4210.0,
-    "computed_at": "2026-10-08T11:46:03.546066+08:00",
+    "computed_at": "2026-11-12T09:49:00.434237+08:00",
     "wt_fm_version": "datamine-master"
   },
   "grid": {

@@ -134,6 +134,9 @@ NAME_PREFIX_MAP = {
     # ca_27_mk32_raaf / ca_27_mk32_malaysia 拼写不一致，无法精确匹配；
     # 游戏数据中 RAAF 型为 country_britain（该 fm 对应基础型），故归入英国。
     "ca_27": "britain",
+    # AW.249：fm 名为 aw_249，wpcost 中对应 aw_249_pre_serie（意大利）。
+    # 注意与同厂的 aw_159（英国）国家不同，必须精确匹配。
+    "aw_249": "italy",
     "db_": "ussr", "dh_": "britain", "dummy": "other", "f13": "germany",
     "f_100": "usa", "f_104g": "germany", "f_104j": "japan", "f_104s": "italy",
     "f_104a": "usa", "f_104c": "usa", "f_105": "usa", "f_111": "usa",

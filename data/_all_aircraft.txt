@@ -83,6 +83,7 @@ av_8c
 av_8s
 avenger_mk1
 aw_159
+aw_249
 b-17e
 b-17e_late
 b-17g
@@ -318,7 +319,9 @@ f_15c_baz_msip
 f_15c_golden_eagle
 f_15c_msip2
 f_15e
+f_15ex
 f_15i_raam
+f_15ia
 f_15j
 f_15j_kai
 f_16a_block_10
@@ -393,6 +396,7 @@ fokker_d23
 fokker_d7
 fokker_g1a
 fr_1_fireball
+fulmar_mk2
 fury_mk1
 fury_mk2
 fw-190a-1
@@ -586,6 +590,7 @@ ju-87r-2
 ju-88a-1
 ju-88a-4
 ju-88c-6
+ju_88g_1_mistel
 ka_29
 ka_50
 ka_52
@@ -930,6 +935,7 @@ pv_2d
 pyorremyrsky
 q_5_early
 q_5a
+q_5d
 q_5l
 quing_6
 r2y2_kai
@@ -984,6 +990,7 @@ saab_j35d
 saab_j35j
 saab_j35xs
 saab_ja37
+saab_jas39_pre_serie
 saab_jas39a
 saab_jas39c
 saab_jas39d
@@ -1068,6 +1075,7 @@ su-7bkl
 su-7bmk
 su-8
 su-9
+su_15tm
 su_17m2
 su_17m4
 su_22m3

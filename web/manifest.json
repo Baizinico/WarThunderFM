@@ -426,6 +426,11 @@
       "nation": "britain"
     },
     {
+      "name": "aw_249",
+      "path": "data/raw/aw_249.blkx",
+      "nation": "italy"
+    },
+    {
       "name": "b-17e",
       "path": "data/raw/b-17e.blkx",
       "nation": "usa"
@@ -1601,8 +1606,18 @@
       "nation": "usa"
     },
     {
+      "name": "f_15ex",
+      "path": "data/raw/f_15ex.blkx",
+      "nation": "usa"
+    },
+    {
       "name": "f_15i_raam",
       "path": "data/raw/f_15i_raam.blkx",
+      "nation": "israel"
+    },
+    {
+      "name": "f_15ia",
+      "path": "data/raw/f_15ia.blkx",
       "nation": "israel"
     },
     {
@@ -1974,6 +1989,11 @@
       "name": "fr_1_fireball",
       "path": "data/raw/fr_1_fireball.blkx",
       "nation": "usa"
+    },
+    {
+      "name": "fulmar_mk2",
+      "path": "data/raw/fulmar_mk2.blkx",
+      "nation": "britain"
     },
     {
       "name": "fury_mk1",
@@ -2938,6 +2958,11 @@
     {
       "name": "ju-88c-6",
       "path": "data/raw/ju-88c-6.blkx",
+      "nation": "germany"
+    },
+    {
+      "name": "ju_88g_1_mistel",
+      "path": "data/raw/ju_88g_1_mistel.blkx",
       "nation": "germany"
     },
     {
@@ -4661,6 +4686,11 @@
       "nation": "china"
     },
     {
+      "name": "q_5d",
+      "path": "data/raw/q_5d.blkx",
+      "nation": "china"
+    },
+    {
       "name": "q_5l",
       "path": "data/raw/q_5l.blkx",
       "nation": "china"
@@ -4928,6 +4958,11 @@
     {
       "name": "saab_ja37",
       "path": "data/raw/saab_ja37.blkx",
+      "nation": "other"
+    },
+    {
+      "name": "saab_jas39_pre_serie",
+      "path": "data/raw/saab_jas39_pre_serie.blkx",
       "nation": "other"
     },
     {
@@ -5348,6 +5383,11 @@
     {
       "name": "su-9",
       "path": "data/raw/su-9.blkx",
+      "nation": "ussr"
+    },
+    {
+      "name": "su_15tm",
+      "path": "data/raw/su_15tm.blkx",
       "nation": "ussr"
     },
     {
@@ -6135,22 +6175,22 @@
     {
       "code": "usa",
       "label": "美国",
-      "count": 226
+      "count": 227
     },
     {
       "code": "ussr",
       "label": "苏联",
-      "count": 215
+      "count": 216
     },
     {
       "code": "germany",
       "label": "德国",
-      "count": 172
+      "count": 173
     },
     {
       "code": "china",
       "label": "中国",
-      "count": 57
+      "count": 58
     },
     {
       "code": "france",
@@ -6160,12 +6200,12 @@
     {
       "code": "italy",
       "label": "意大利",
-      "count": 76
+      "count": 77
     },
     {
       "code": "britain",
       "label": "英国",
-      "count": 171
+      "count": 172
     },
     {
       "code": "japan",
@@ -6175,12 +6215,12 @@
     {
       "code": "israel",
       "label": "以色列",
-      "count": 32
+      "count": 33
     },
     {
       "code": "other",
       "label": "其他",
-      "count": 65
+      "count": 66
     }
   ]
 }
