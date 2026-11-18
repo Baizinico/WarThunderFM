@@ -22,7 +22,9 @@ cp "$ROOT_DIR/web/"* "$DIST_DIR/web/"
 for asset in compute.js compare.js app.js style.css; do
   if [ -f "$ROOT_DIR/web/$asset" ]; then
     hash=$(md5sum "$ROOT_DIR/web/$asset" | cut -d' ' -f1 | cut -c1-10)
-    sed -i "s/$asset?v=[0-9]*/$asset?v=$hash/g" "$DIST_DIR/web/index.html"
+    # BSD/macOS sed 的 -i 必须带备份后缀（GNU sed 也兼容 -i.bak），故用 .bak 再删除
+    sed -i.bak "s/$asset?v=[0-9]*/$asset?v=$hash/g" "$DIST_DIR/web/index.html"
+    rm -f "$DIST_DIR/web/index.html.bak"
     echo "==> cache-busting: $asset?v=$hash"
   fi
 done
@@ -30,7 +32,8 @@ done
 # manifest.json 由 update_manifest 生成，构建时同样注入内容 hash（app.js 中引用）
 if [ -f "$DIST_DIR/web/manifest.json" ]; then
   mhash=$(md5sum "$DIST_DIR/web/manifest.json" | cut -d' ' -f1 | cut -c1-10)
-  sed -i "s/manifest.json?v=[0-9a-zA-Z]*/manifest.json?v=$mhash/" "$DIST_DIR/web/app.js"
+  sed -i.bak "s/manifest.json?v=[0-9a-zA-Z]*/manifest.json?v=$mhash/" "$DIST_DIR/web/app.js"
+  rm -f "$DIST_DIR/web/app.js.bak"
   echo "==> cache-busting: manifest.json?v=$mhash"
 fi
 

@@ -20,7 +20,7 @@
   <!-- 应用逻辑 -->
   <script src="app.js?v=27"></script>
   <!-- 应用样式 -->
-  <link rel="stylesheet" href="style.css?v=23">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
   <!-- 顶部标题栏与控制区 -->
@@ -117,58 +117,61 @@
     <div class="ad-slot" id="ad-slot-top"></div>
   </aside>
 
-  <!-- 元数据面板：由 app.js 动态填充平台参数与性能包线卡片 -->
-  <section id="metadata-panel" class="metadata-panel" aria-label="飞机参数与性能包线">
-    <!-- 元数据卡片，由 app.js 动态填充 -->
-  </section>
-
-  <!-- 图表区域：3D 加速度曲面主图 + 最佳爬升路线副图 -->
-  <main class="plots">
-    <section class="plot-card plot-main">
-      <div class="card-head">
-        <div class="card-title-group">
-          <h2>3D 加速度曲面</h2>
-          <span class="card-sub" id="plot-sub-3d">选择飞机后显示加速度包线</span>
-        </div>
-      </div>
-      <div id="plot-3d" class="plot-area"></div>
-    </section>
-
-    <!-- 广告位 2：图表间横向横幅（默认隐藏） -->
-    <aside class="ad-container ad-mid">
-      <span class="ad-label">Advertisement</span>
-      <div class="ad-slot" id="ad-slot-mid"></div>
-    </aside>
-
-    <section class="plot-card plot-climb">
-      <div class="card-head">
-        <div class="card-title-group">
-          <h2>最佳爬升路线</h2>
-          <span class="card-sub" id="plot-sub-climb">速度程序 · 机头向上角度 · 剩余功率</span>
-        </div>
-      </div>
-      <div id="plot-climb" class="plot-area plot-area-climb"></div>
-    </section>
-
-    <!-- 多机对比区：至少两架飞机加入队列后才显示 -->
-    <section id="compare-section" class="compare-section" aria-label="多机对比" hidden>
-      <div class="compare-head">
-        <h2>多机对比</h2>
-        <span class="card-sub" id="compare-sub"></span>
-      </div>
-
-      <!-- 关键指标对比表 -->
-      <div class="plot-card">
+  <!-- 仪表台：左列图表 + 右列参数/性能仪表栏（窄屏堆叠为单列，图表在前） -->
+  <div class="dashboard">
+    <!-- 图表区域：3D 加速度曲面主图 + 最佳爬升路线副图 -->
+    <main class="plots">
+      <section class="plot-card plot-main">
         <div class="card-head">
           <div class="card-title-group">
-            <h2>关键指标对比</h2>
-            <span class="card-sub">同参数下的静态指标，每行最优值标出，窄屏可横向滑动</span>
+            <h2>3D 加速度曲面</h2>
+            <span class="card-sub" id="plot-sub-3d">选择飞机后显示加速度包线</span>
           </div>
         </div>
-        <div id="compare-table" class="compare-table-wrap"></div>
-      </div>
+        <div id="plot-3d" class="plot-area"></div>
+      </section>
 
-      <!-- 曲线叠加 -->
+      <!-- 广告位 2：图表间横向横幅（默认隐藏） -->
+      <aside class="ad-container ad-mid">
+        <span class="ad-label">Advertisement</span>
+        <div class="ad-slot" id="ad-slot-mid"></div>
+      </aside>
+
+      <section class="plot-card plot-climb">
+        <div class="card-head">
+          <div class="card-title-group">
+            <h2>最佳爬升路线</h2>
+            <span class="card-sub" id="plot-sub-climb">速度程序 · 机头向上角度 · 剩余功率</span>
+          </div>
+        </div>
+        <div id="plot-climb" class="plot-area plot-area-climb"></div>
+      </section>
+    </main>
+
+    <!-- 参数 / 性能包线 rail：由 app.js 动态填充；空态时整页收缩为单列 -->
+    <aside id="metadata-panel" class="metadata-panel" aria-label="飞机参数与性能包线"></aside>
+  </div>
+
+  <!-- 多机对比区：至少两架飞机加入队列后才显示 -->
+  <section id="compare-section" class="compare-section" aria-label="多机对比" hidden>
+    <div class="compare-head">
+      <h2>多机对比</h2>
+      <span class="card-sub" id="compare-sub"></span>
+    </div>
+
+    <!-- 关键指标对比表：整行宽度，窄屏在卡片内横向滑动 -->
+    <div class="plot-card compare-table-card">
+      <div class="card-head">
+        <div class="card-title-group">
+          <h2>关键指标对比</h2>
+          <span class="card-sub">同参数下的静态指标，每行最优值标出，窄屏可横向滑动</span>
+        </div>
+      </div>
+      <div id="compare-table" class="compare-table-wrap"></div>
+    </div>
+
+    <!-- 曲线叠加 + 雷达：桌面并排两列，窄屏单列 -->
+    <div class="compare-charts">
       <div class="plot-card">
         <div class="card-head">
           <div class="card-title-group">
@@ -189,7 +192,6 @@
         <div id="plot-compare" class="plot-area plot-area-climb"></div>
       </div>
 
-      <!-- 归一化雷达图 -->
       <div class="plot-card">
         <div class="card-head">
           <div class="card-title-group">
@@ -199,8 +201,8 @@
         </div>
         <div id="plot-radar" class="plot-area plot-area-radar"></div>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
 
   <!-- 页脚信息 -->
   <footer class="app-footer">

@@ -53,6 +53,238 @@ const COLORSCALE = [
 const COLOR_MIN = 0;
 const COLOR_MAX = 6;
 
+// ===== 0.6 响应式图表布局（Plotly 边距 / 字号 / 图例 / 3D 相机） =====
+// 视口断点：w ≤ 600 手机窄屏；600 < w ≤ 900 平板收紧；其余保持桌面原值。
+// 3D 相机另有 768 断点，与既有窄屏相机逻辑保持一致。
+const PLOT_BP_NARROW = 600;
+const PLOT_BP_MEDIUM = 900;
+const PLOT_BP_3D_CAMERA = 768;
+
+/** 当前视口宽度（非浏览器环境兜底为桌面宽度） */
+function plotViewportWidth() {
+  return typeof window !== 'undefined' && window.innerWidth ? window.innerWidth : 1024;
+}
+
+/**
+ * 各图 Plotly margin：桌面维持原值，平板适度收紧，手机窄屏留足轴标题空间。
+ * @param {'3d'|'climb'|'compare'|'radar'} kind
+ */
+function plotMargins(kind) {
+  const w = plotViewportWidth();
+  if (w <= PLOT_BP_NARROW) {
+    if (kind === '3d') return { l: 0, r: 24, b: 0, t: 0 };   // 右侧留 24px 给色标标题
+    // 窄屏雷达：极坐标半径受高度限制，对称 margin 无法右移圆心，
+    // 故左侧多留 12px 让 180° 角度标签（“实用升限 (m)”）不被 SVG 左缘裁切。
+    if (kind === 'radar') return { l: 40, r: 16, t: 44, b: 18 };
+    return { l: 44, r: 38, t: 40, b: 38 };                   // climb / compare
+  }
+  if (w <= PLOT_BP_MEDIUM) {
+    if (kind === '3d') return { l: 0, r: 0, b: 0, t: 8 };
+    if (kind === 'radar') return { l: 38, r: 38, t: 50, b: 26 };
+    if (kind === 'climb') return { l: 54, r: 54, t: 44, b: 44 };
+    return { l: 54, r: 26, t: 44, b: 44 };
+  }
+  if (kind === '3d') return { l: 0, r: 0, b: 0, t: 8 };
+  if (kind === 'radar') return { l: 46, r: 46, t: 56, b: 32 };
+  if (kind === 'climb') return { l: 62, r: 62, t: 46, b: 48 };
+  return { l: 64, r: 30, t: 46, b: 48 };
+}
+
+/** 各断点下的字号：tick / title / legend */
+function plotFontSizes() {
+  const w = plotViewportWidth();
+  if (w <= PLOT_BP_NARROW) return { tick: 10, title: 11, legend: 10 };
+  if (w <= PLOT_BP_MEDIUM) return { tick: 10, title: 12, legend: 10 };
+  return { tick: 11, title: 13, legend: 11 };
+}
+
+/** 横向置顶图例（爬升 / 叠加 / 雷达共用），窄屏缩小字号并略微下移避免顶边裁切 */
+function plotLegend() {
+  return {
+    orientation: 'h',
+    x: 0,
+    y: plotViewportWidth() <= PLOT_BP_NARROW ? 1.15 : 1.16,
+    xanchor: 'left',
+    yanchor: 'top',
+    bgcolor: 'rgba(0,0,0,0)',
+    font: { family: FONT_MONO, size: plotFontSizes().legend, color: COLOR_TEXT_DIM }
+  };
+}
+
+/** 3D 色标：窄屏收窄，避免 m/s² 标题被右缘裁切 */
+function plotColorbar() {
+  const narrow = plotViewportWidth() <= PLOT_BP_NARROW;
+  const size = narrow ? 9 : 11;
+  return {
+    thickness: narrow ? 8 : 12,
+    len: narrow ? 0.62 : 0.72,
+    outlinewidth: 0,
+    tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size },
+    title: { text: 'm/s²', side: 'right', font: { family: FONT_MONO, color: COLOR_TEXT_DIM, size } }
+  };
+}
+
+/** 3D 相机：<768 拉远并降低俯角，避免场景被窄容器裁切；
+ *  容器再窄时画布同步变小，按档位继续拉远，避免轴标题被 WebGL 画布边缘裁切 */
+function build3dCamera(width) {
+  const w = typeof width === 'number' ? width : plotViewportWidth();
+  if (w >= PLOT_BP_3D_CAMERA) return { eye: { x: 1.5, y: -1.42, z: 0.8 } };
+  const k = w >= 370 ? 1 : (w >= 330 ? 1.12 : (w >= 300 ? 1.28 : 1.4));
+  return { eye: { x: 1.95 * k, y: -1.85 * k, z: 1.05 * k } };
+}
+
+/** 3D 盒子长宽比：容器很窄（≤420px）时收窄 x 方向，给 y 轴标题「高度 (m)」留出右侧空间 */
+function build3dAspect(width) {
+  const w = typeof width === 'number' ? width : plotViewportWidth();
+  return { x: w <= 420 ? 1.15 : 1.35, y: 1, z: 0.78 };
+}
+
+/** 3D 布局的响应式片段（初始渲染与 resize 共用）：margin + 相机 + 盒子比例 + 轴字号 */
+function build3dLayout(width) {
+  const f = plotFontSizes();
+  return {
+    margin: plotMargins('3d'),
+    aspectratio: build3dAspect(width),
+    scene: {
+      camera: build3dCamera(width),
+      xaxis: { title: { font: { size: f.title } }, tickfont: { size: f.tick } },
+      yaxis: { title: { font: { size: f.title } }, tickfont: { size: f.tick } },
+      zaxis: { title: { font: { size: f.title } }, tickfont: { size: f.tick } }
+    }
+  };
+}
+
+/** 3D relayout 补丁：Plotly.relayout 用扁平点号键，不能直接传嵌套对象 */
+function build3dRelayout(width) {
+  const v = build3dLayout(width);
+  const eye = v.scene.camera.eye;
+  return {
+    margin: v.margin,
+    'scene.aspectratio.x': v.aspectratio.x,
+    'scene.aspectratio.y': v.aspectratio.y,
+    'scene.aspectratio.z': v.aspectratio.z,
+    'scene.camera.eye.x': eye.x,
+    'scene.camera.eye.y': eye.y,
+    'scene.camera.eye.z': eye.z,
+    'scene.xaxis.title.font.size': v.scene.xaxis.title.font.size,
+    'scene.yaxis.title.font.size': v.scene.yaxis.title.font.size,
+    'scene.zaxis.title.font.size': v.scene.zaxis.title.font.size,
+    'scene.xaxis.tickfont.size': v.scene.xaxis.tickfont.size,
+    'scene.yaxis.tickfont.size': v.scene.yaxis.tickfont.size,
+    'scene.zaxis.tickfont.size': v.scene.zaxis.tickfont.size
+  };
+}
+
+/** 2D 图 relayout 补丁：边距 + 字号 + 图例；雷达另含极轴刻度策略 */
+function build2dRelayout(kind) {
+  const f = plotFontSizes();
+  const narrow = plotViewportWidth() <= PLOT_BP_NARROW;
+  const patch = {
+    margin: plotMargins(kind),
+    'legend.font.size': f.legend,
+    'legend.y': narrow ? 1.15 : 1.16
+  };
+  if (kind === 'radar') {
+    // 窄屏极轴绘图区小：刻度字号降到 9，并减少径向刻度数量避免堆叠
+    // 径向刻度桌面固定 10（与 renderCompareRadar 初始渲染保持一致），避免 resize 后字号跳变
+    patch['polar.radialaxis.tickfont.size'] = narrow ? 9 : 10;
+    patch['polar.angularaxis.tickfont.size'] = narrow ? 9 : f.tick;
+    patch['polar.radialaxis.tickvals'] = narrow ? [50, 100] : [20, 40, 60, 80, 100];
+    return patch;
+  }
+  patch['xaxis.title.font.size'] = f.title;
+  patch['yaxis.title.font.size'] = f.title;
+  patch['xaxis.tickfont.size'] = f.tick;
+  patch['yaxis.tickfont.size'] = f.tick;
+  if (kind === 'climb') {
+    patch['yaxis2.title.font.size'] = f.title;
+    patch['yaxis2.tickfont.size'] = f.tick;
+  }
+  return patch;
+}
+
+// ===== 0.7 Plotly 自适应 resize（防抖 150ms） =====
+let plotResizeTimer = null;
+let last3dNarrow = null;  // 上次 3D 相机所处断点：只在跨越 768 时重建相机
+let last3dCamSig = null;  // 上次应用的相机档位签名：窄屏拉远档位变化时也要重建
+
+/** 已渲染的 Plotly 图（未渲染 / 占位态直接跳过） */
+function isPlotRendered(el) {
+  return !!(el && window.Plotly && el.data);
+}
+
+/** Plotly 异步调用失败只告警，不抛出（避免 resize 中断或控制台报错） */
+function ignorePlotlyFailure(p) {
+  if (p && typeof p.catch === 'function') {
+    p.catch(err => console.warn('Plotly 自适应布局更新失败:', err));
+  }
+}
+
+/** 同步所有已渲染图表的边距 / 字号 / 相机，并让画布跟随容器尺寸 */
+function syncPlotLayouts() {
+  if (typeof window === 'undefined' || !window.Plotly) return;
+  const w = plotViewportWidth();
+  const narrow3d = w < PLOT_BP_3D_CAMERA;
+  const camSig = JSON.stringify(build3dCamera(w));
+  // 相机在跨越 768 断点或窄屏拉远档位变化时重建，其余情况只更新边距，避免视角抖动
+  const cameraChanged = last3dNarrow === null || last3dNarrow !== narrow3d || last3dCamSig !== camSig;
+  last3dNarrow = narrow3d;
+  last3dCamSig = camSig;
+  const specs = [
+    ['plot-3d', '3d'],
+    ['plot-climb', 'climb'],
+    ['plot-compare', 'compare'],
+    ['plot-radar', 'radar']
+  ];
+  specs.forEach(([id, kind]) => {
+    const el = document.getElementById(id);
+    if (!isPlotRendered(el)) return;
+    try {
+      if (kind === '3d') {
+        const patch = build3dRelayout(w);
+        // 相机仅在断点/档位变化时重建；其余情况只同步边距 / 盒子比例 / 字号，避免视角抖动
+        if (!cameraChanged) {
+          delete patch['scene.camera.eye.x'];
+          delete patch['scene.camera.eye.y'];
+          delete patch['scene.camera.eye.z'];
+        }
+        ignorePlotlyFailure(Plotly.relayout(el, patch));
+        const cb = plotColorbar();
+        ignorePlotlyFailure(Plotly.restyle(el, {
+          'colorbar.thickness': cb.thickness,
+          'colorbar.len': cb.len,
+          'colorbar.tickfont.size': cb.tickfont.size,
+          'colorbar.title.font.size': cb.title.font.size
+        }, [0]));
+      } else {
+        ignorePlotlyFailure(Plotly.relayout(el, build2dRelayout(kind)));
+      }
+      Plotly.Plots.resize(el);
+    } catch (err) {
+      console.warn('图表自适应布局失败:', id, err);
+    }
+  });
+}
+
+/** 防抖 150ms；与渲染队列串行，避免在 Plotly.newPlot 过程中 relayout */
+function schedulePlotResize() {
+  if (plotResizeTimer) clearTimeout(plotResizeTimer);
+  plotResizeTimer = setTimeout(() => {
+    plotResizeTimer = null;
+    // 先吞掉队列中可能残留的失败，保证 resize 不会被历史渲染错误阻塞
+    renderQueue = renderQueue.catch(() => {}).then(() => {
+      syncPlotLayouts();
+    }).catch(err => console.warn('图表 resize 队列失败:', err));
+  }, 150);
+}
+
+/** 注册窗口 resize 监听（与燃油滑条的 resize 监听并列，互不影响） */
+function initPlotResize() {
+  last3dNarrow = plotViewportWidth() < PLOT_BP_3D_CAMERA;
+  last3dCamSig = JSON.stringify(build3dCamera());
+  window.addEventListener('resize', schedulePlotResize);
+}
+
 // ===== 1. 状态栏更新 =====
 /**
  * 更新顶部状态指示灯。
@@ -629,13 +861,8 @@ async function render3DSurface(samples, grid, climbRoute) {
         project: { z: true }
       }
     },
-    colorbar: {
-      thickness: 12,
-      len: 0.72,
-      outlinewidth: 0,
-      tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
-      title: { text: 'm/s²', side: 'right', font: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 } }
-    },
+    // 色标随视口收窄（窄屏 thickness 8 / len 0.62），避免 m/s² 标题被右缘裁切
+    colorbar: plotColorbar(),
     hovertemplate:
       '<b>高度 %{y} m · 马赫 %{x}</b><br>' +
       '加速度: <b>%{z:.2f} m/s²</b><extra></extra>'
@@ -680,11 +907,11 @@ async function render3DSurface(samples, grid, climbRoute) {
         '机头向上: <b>%{customdata[1]:.1f}°</b><extra></extra>'
     });
   }
-  // 窄屏（手机）时相机拉远并降低俯角，避免 3D 场景被容器裁切
-  const narrowView = typeof window !== 'undefined' && window.innerWidth < 768;
+  // 响应式 3D 布局：边距 / 相机 / 轴字号随视口变化；resize 时复用 build3dRelayout
+  const view3d = build3dLayout();
   const layout = {
     autosize: true,
-    margin: { l: 0, r: 0, b: 0, t: 8 },
+    margin: view3d.margin,
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: {
@@ -700,41 +927,40 @@ async function render3DSurface(samples, grid, climbRoute) {
     scene: {
       bgcolor: 'rgba(0,0,0,0)',
       xaxis: {
-        title: { text: '马赫数', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
+        title: { text: '马赫数', font: { family: FONT_UI, size: view3d.scene.xaxis.title.font.size, color: COLOR_TEXT } },
         backgroundcolor: COLOR_AXIS_BG,
         gridcolor: COLOR_GRID,
         zerolinecolor: 'rgba(239,233,222,0.24)',
-        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: view3d.scene.xaxis.tickfont.size },
         showbackground: true
       },
       yaxis: {
-        title: { text: '高度 (m)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
+        title: { text: '高度 (m)', font: { family: FONT_UI, size: view3d.scene.yaxis.title.font.size, color: COLOR_TEXT } },
         backgroundcolor: COLOR_AXIS_BG,
         gridcolor: COLOR_GRID,
         zerolinecolor: 'rgba(239,233,222,0.24)',
-        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: view3d.scene.yaxis.tickfont.size },
         showbackground: true
       },
       zaxis: {
-        title: { text: '加速度 (m/s²)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
+        title: { text: '加速度 (m/s²)', font: { family: FONT_UI, size: view3d.scene.zaxis.title.font.size, color: COLOR_TEXT } },
         backgroundcolor: COLOR_AXIS_BG,
         gridcolor: COLOR_GRID,
         zerolinecolor: 'rgba(239,233,222,0.24)',
-        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: view3d.scene.zaxis.tickfont.size },
         showbackground: true,
         rangemode: 'nonnegative'
       },
-      camera: {
-        eye: narrowView
-          ? { x: 1.95, y: -1.85, z: 1.05 }
-          : { x: 1.5, y: -1.42, z: 0.8 }
-      },
-      aspectratio: { x: 1.35, y: 1, z: 0.78 }
+      camera: view3d.scene.camera,
+      aspectratio: view3d.aspectratio
     }
   };
   const config = {
     responsive: true,
     displaylogo: false,
+    // 窄屏/触摸端隐藏工具栏，避免遮挡图表；关闭滚轮缩放，防止图表吞掉页面滚动
+    displayModeBar: plotViewportWidth() > PLOT_BP_NARROW ? 'hover' : false,
+    scrollZoom: false,
     toImageButtonOptions: {
       format: 'png',
       filename: `wt-accel-3d_${currentAircraftName || 'aircraft'}`,
@@ -794,7 +1020,12 @@ function performRender(traces, layout, config) {
     // 在新的宏任务中渲染，确保 DOM 替换已应用
     requestAnimationFrame(() => {
       try {
-        Plotly.newPlot('plot-3d', traces, layout, config).then(resolve).catch((err) => {
+        Plotly.newPlot('plot-3d', traces, layout, config).then(() => {
+          // 记录本次渲染实际使用的相机档位，避免随后 resize 误判为“档位未变”而跳过相机更新
+          last3dNarrow = plotViewportWidth() < PLOT_BP_3D_CAMERA;
+          last3dCamSig = JSON.stringify(build3dCamera());
+          resolve();
+        }).catch((err) => {
           console.error('3D 曲面渲染失败:', err);
           resolve();
         });
@@ -866,9 +1097,11 @@ async function renderClimbRouteChart(climbRoute) {
       '机头向上: <b>%{y:.1f}°</b><extra></extra>'
   };
 
+  // 响应式布局：窄屏收紧边距 / 缩小字号，避免双 y 轴标题被挤压
+  const plotFont = plotFontSizes();
   const layout = {
     autosize: true,
-    margin: { l: 62, r: 62, t: 46, b: 48 },
+    margin: plotMargins('climb'),
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: {
@@ -883,20 +1116,12 @@ async function renderClimbRouteChart(climbRoute) {
       font: { family: FONT_MONO, color: COLOR_TEXT, size: 12 }
     },
     showlegend: true,
-    legend: {
-      orientation: 'h',
-      x: 0,
-      y: 1.16,
-      xanchor: 'left',
-      yanchor: 'top',
-      bgcolor: 'rgba(0,0,0,0)',
-      font: { family: FONT_MONO, size: 11, color: COLOR_TEXT_DIM }
-    },
+    legend: plotLegend(),
     xaxis: {
-      title: { text: '高度 (m)', font: { family: FONT_UI, size: 13, color: COLOR_TEXT } },
+      title: { text: '高度 (m)', font: { family: FONT_UI, size: plotFont.title, color: COLOR_TEXT } },
       gridcolor: COLOR_GRID,
       zerolinecolor: 'rgba(239,233,222,0.24)',
-      tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
+      tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: plotFont.tick },
       showgrid: true,
       showline: true,
       linecolor: 'rgba(239,233,222,0.10)',
@@ -904,10 +1129,10 @@ async function renderClimbRouteChart(climbRoute) {
       tickcolor: 'rgba(239,233,222,0.10)'
     },
     yaxis: {
-      title: { text: '马赫数', font: { family: FONT_UI, size: 13, color: COLOR_ROUTE } },
+      title: { text: '马赫数', font: { family: FONT_UI, size: plotFont.title, color: COLOR_ROUTE } },
       gridcolor: COLOR_GRID,
       zerolinecolor: 'rgba(239,233,222,0.24)',
-      tickfont: { family: FONT_MONO, color: COLOR_ROUTE, size: 11 },
+      tickfont: { family: FONT_MONO, color: COLOR_ROUTE, size: plotFont.tick },
       showgrid: true,
       showline: true,
       linecolor: 'rgba(111,174,155,0.45)',
@@ -915,11 +1140,11 @@ async function renderClimbRouteChart(climbRoute) {
       tickcolor: 'rgba(111,174,155,0.45)'
     },
     yaxis2: {
-      title: { text: '机头向上角度 (°)', font: { family: FONT_UI, size: 13, color: COLOR_ACCENT } },
+      title: { text: '机头向上角度 (°)', font: { family: FONT_UI, size: plotFont.title, color: COLOR_ACCENT } },
       overlaying: 'y',
       side: 'right',
       gridcolor: 'rgba(0,0,0,0)',
-      tickfont: { family: FONT_MONO, color: COLOR_ACCENT, size: 11 },
+      tickfont: { family: FONT_MONO, color: COLOR_ACCENT, size: plotFont.tick },
       showgrid: false,
       showline: true,
       linecolor: 'rgba(224,160,74,0.45)',
@@ -930,6 +1155,9 @@ async function renderClimbRouteChart(climbRoute) {
   const config = {
     responsive: true,
     displaylogo: false,
+    // 窄屏/触摸端隐藏工具栏，避免遮挡图表；关闭滚轮缩放，防止图表吞掉页面滚动
+    displayModeBar: plotViewportWidth() > PLOT_BP_NARROW ? 'hover' : false,
+    scrollZoom: false,
     toImageButtonOptions: {
       format: 'png',
       filename: `wt-climb-route_${currentAircraftName || 'aircraft'}`,
@@ -1093,8 +1321,28 @@ function initFuelSlider() {
   if (!slider || !fuelInput) return;
 
   // 同步滑动条已填充轨道宽度（CSS 变量 --fill，见 style.css）
-  const syncFill = pct => slider.style.setProperty('--fill', `${pct}%`);
-  syncFill(parseInt(slider.value, 10) || 50);
+  // 注意：滑动条范围是 [min, max]（30-100），而 --fill 是相对整条轨道的宽度，
+  // 必须按比例换算并对齐手柄中心（两侧各留半个手柄宽度），否则填充会超前于手柄。
+  const THUMB_SIZE = 14;  // 与 style.css 中手柄尺寸一致
+  const syncFill = pct => {
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    const ratio = max > min ? Math.min(1, Math.max(0, (pct - min) / (max - min))) : 0;
+    const trackW = slider.clientWidth;
+    const fill = trackW > 0
+      ? `${THUMB_SIZE / 2 + (trackW - THUMB_SIZE) * ratio}px`
+      : `${ratio * 100}%`;  // 布局完成前退化为百分比（仅在极端情况下使用）
+    slider.style.setProperty('--fill', fill);
+  };
+  const readSliderPct = () => parseInt(slider.value, 10) || 50;
+  // 以控件当前值为准初始化状态：刷新页面时浏览器可能恢复上次的滑动条值，
+  // 若仍沿用全局默认值，滑动条显示会与计算所用参数不一致。
+  const initialPct = readSliderPct();
+  currentFuelPct = initialPct / 100;
+  fuelInput.value = initialPct;
+  syncFill(initialPct);
+  // 响应式布局会改变滑动条宽度，需重新对齐填充
+  window.addEventListener('resize', () => syncFill(readSliderPct()));
 
   // 滑动条输入时同步数字框
   slider.addEventListener('input', () => {
@@ -1509,13 +1757,14 @@ function populateCompareAltitude(cmp) {
     `${Number(a).toLocaleString('zh-CN')} m</option>`).join('');
 }
 
-// 对比图表通用布局片段（与主图保持同一视觉语言）
+// 对比图表通用布局片段（与主图保持同一视觉语言，字号随视口自适应）
 function compareAxis(title, color) {
+  const f = plotFontSizes();
   return {
-    title: { text: title, font: { family: FONT_UI, size: 13, color: color || COLOR_TEXT } },
+    title: { text: title, font: { family: FONT_UI, size: f.title, color: color || COLOR_TEXT } },
     gridcolor: COLOR_GRID,
     zerolinecolor: 'rgba(239,233,222,0.24)',
-    tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 11 },
+    tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: f.tick },
     showgrid: true,
     showline: true,
     linecolor: 'rgba(239,233,222,0.10)',
@@ -1525,15 +1774,8 @@ function compareAxis(title, color) {
 }
 
 function compareLegend() {
-  return {
-    orientation: 'h',
-    x: 0,
-    y: 1.16,
-    xanchor: 'left',
-    yanchor: 'top',
-    bgcolor: 'rgba(0,0,0,0)',
-    font: { family: FONT_MONO, size: 11, color: COLOR_TEXT_DIM },
-  };
+  // 与主图共用响应式图例参数（窄屏字号 10、y 1.15）
+  return plotLegend();
 }
 
 /**
@@ -1621,7 +1863,7 @@ async function renderCompareOverlay(cmp) {
 
   const layout = {
     autosize: true,
-    margin: { l: 64, r: 30, t: 46, b: 48 },
+    margin: plotMargins('compare'),
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: FONT_UI, color: COLOR_TEXT, size: 12 },
@@ -1640,6 +1882,9 @@ async function renderCompareOverlay(cmp) {
   const config = {
     responsive: true,
     displaylogo: false,
+    // 窄屏/触摸端隐藏工具栏，避免遮挡图表；关闭滚轮缩放，防止图表吞掉页面滚动
+    displayModeBar: plotViewportWidth() > PLOT_BP_NARROW ? 'hover' : false,
+    scrollZoom: false,
     toImageButtonOptions: {
       format: 'png',
       filename: `wt-compare_${fileTag}`,
@@ -1701,9 +1946,11 @@ async function renderCompareRadar(cmp) {
     };
   });
 
+  const plotFont = plotFontSizes();
+  const narrowRadar = plotViewportWidth() <= PLOT_BP_NARROW;
   const layout = {
     autosize: true,
-    margin: { l: 46, r: 46, t: 56, b: 32 },
+    margin: plotMargins('radar'),
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: FONT_UI, color: COLOR_TEXT, size: 12 },
@@ -1720,20 +1967,25 @@ async function renderCompareRadar(cmp) {
         range: [0, 100],
         gridcolor: COLOR_GRID,
         linecolor: 'rgba(239,233,222,0.10)',
-        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 10 },
-        tickvals: [20, 40, 60, 80, 100],
+        // 窄屏极轴绘图区小：字号降到 9，并减少径向刻度数量避免中心堆叠
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: narrowRadar ? 9 : 10 },
+        tickvals: narrowRadar ? [50, 100] : [20, 40, 60, 80, 100],
         angle: 90,
       },
       angularaxis: {
         gridcolor: COLOR_GRID,
         linecolor: 'rgba(239,233,222,0.10)',
-        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: 10 },
+        // 窄屏角度标签更易相互挤压，缩小字号
+        tickfont: { family: FONT_MONO, color: COLOR_TEXT_DIM, size: narrowRadar ? 9 : plotFont.tick },
       },
     },
   };
   const config = {
     responsive: true,
     displaylogo: false,
+    // 窄屏/触摸端隐藏工具栏，避免遮挡图表；关闭滚轮缩放，防止图表吞掉页面滚动
+    displayModeBar: plotViewportWidth() > PLOT_BP_NARROW ? 'hover' : false,
+    scrollZoom: false,
     toImageButtonOptions: {
       format: 'png',
       filename: 'wt-compare_radar',
@@ -1786,6 +2038,9 @@ async function init() {
 
     // 注册燃油滑动条事件
     initFuelSlider();
+
+    // 注册 Plotly 图表自适应 resize（防抖 150ms；与燃油滑条 resize 监听并列）
+    initPlotResize();
 
     // 注册多机对比控件（加入 / 同步参数 / 清空 / 曲线模式）
     initCompareControls();

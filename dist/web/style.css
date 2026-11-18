@@ -3,9 +3,11 @@
    设计语言：试飞仪表台
    - 暖石墨色阶（纸、蚀刻标签、仪表外壳），一个琥珀强调
    - 平面表面 + 发丝线，不用玻璃、光晕与色晕
-   - 刻度：Inter → IBM Plex Sans / IBM Plex Mono，等宽数字
+   - 刻度：IBM Plex Sans / IBM Plex Mono，等宽数字
    - 签名细节：一条 20px 琥珀细线（记录笔的描迹），只出现在分区标题前
      ／下拉选中项的左侧，并在图表里作为最优爬升路线
+   - 布局：桌面「左图表 + 右 344px 参数仪表 rail」，窄屏单列堆叠；
+     首屏优先保证 3D 主图完整可见，元数据不再吃掉首屏
    ============================================================ */
 
 /* ---------- 设计变量 ---------- */
@@ -41,6 +43,10 @@
   --radius: 8px;
   --radius-lg: 12px;
   --maxw: 1560px;
+  --rail: 344px;
+
+  /* 控件高度：桌面 38，移动端在媒体查询里抬到 44 */
+  --ctl-h: 38px;
 
   /* 动效：全站一条曲线 */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -123,29 +129,30 @@ body {
   gap: 24px;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 16px 32px 12px;
+  padding: 8px 32px 6px;
 }
 
 /* ===== 品牌 ===== */
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .brand-mark {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   color: var(--accent);
 }
 
 .brand-mark svg {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   display: block;
   fill: currentColor;
 }
@@ -157,16 +164,22 @@ body {
 .app-header h1 {
   font-size: 17px;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 1.2;
   letter-spacing: 0;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .brand-sub {
-  margin-top: 2px;
-  font-size: 12px;
+  margin-top: 1px;
+  font-size: 11px;
+  line-height: 1.2;
   color: var(--text-3);
-  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ===== 状态 ===== */
@@ -177,9 +190,10 @@ body {
 .status {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 12px;
+  line-height: 1.4;
   color: var(--text-3);
   white-space: nowrap;
   transition: color 160ms var(--ease);
@@ -229,32 +243,32 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 16px 24px;
+  gap: 8px 18px;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 16px 32px;
+  padding: 8px 32px;
 }
 
 .control-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   min-width: 0;
 }
 
 .control-field > label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
   color: var(--text-3);
   line-height: 1;
 }
 
 .control-nation {
-  flex: 0 0 168px;
+  flex: 0 0 160px;
 }
 
 .control-aircraft {
-  flex: 1 1 280px;
+  flex: 1 1 240px;
 }
 
 .control-fuel {
@@ -292,7 +306,7 @@ body {
 #nation-select,
 .compare-alt-select select {
   width: 100%;
-  height: 36px;
+  height: var(--ctl-h);
   appearance: none;
   -webkit-appearance: none;
   padding: 0 32px 0 12px;
@@ -331,7 +345,7 @@ body {
 
 #aircraft-search {
   width: 100%;
-  height: 36px;
+  height: var(--ctl-h);
   padding: 0 12px 0 36px;
   font-family: var(--font-ui);
   font-size: 14px;
@@ -364,7 +378,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 36px;
+  height: var(--ctl-h);
 }
 
 #fuel-slider {
@@ -375,7 +389,7 @@ body {
   border-radius: 999px;
   outline: none;
   cursor: pointer;
-  /* --fill 由 app.js 同步为当前百分比 */
+  /* --fill 由 app.js 同步为手柄当前位置对应的填充宽度 */
   background:
     linear-gradient(90deg, var(--accent) 0 var(--fill, 50%),
       var(--surface-3) var(--fill, 50%) 100%);
@@ -415,12 +429,12 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 36px;
+  height: var(--ctl-h);
 }
 
 #fuel-input,
 #payload-input {
-  height: 36px;
+  height: var(--ctl-h);
   padding: 0 8px;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -477,7 +491,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 36px;
+  height: var(--ctl-h);
   padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -559,39 +573,48 @@ body {
 .compare-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  gap: 10px;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 0 32px 16px;
+  padding: 0 32px 8px;
 }
 
 .compare-bar-label {
   flex: 0 0 auto;
   font-size: 12px;
+  line-height: 1.5;
   color: var(--text-3);
 }
 
 .compare-chips {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
+  flex-wrap: nowrap;
+  gap: 6px;
   flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.compare-chips::-webkit-scrollbar {
+  display: none;
 }
 
 .compare-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex: 0 0 auto;
   max-width: 100%;
-  padding: 4px 8px;
+  padding: 3px 7px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface);
   font-family: var(--font-mono);
   font-size: 12px;
+  line-height: 1.5;
   color: var(--text);
 }
 
@@ -621,7 +644,8 @@ body {
 
 .compare-chip-params {
   color: var(--text-3);
-  font-size: 11px;
+  font-size: 10.5px;
+  white-space: nowrap;
 }
 
 .compare-chip-remove {
@@ -647,7 +671,8 @@ body {
 .compare-bar-hint {
   flex: 0 0 auto;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.5;
   color: var(--text-3);
 }
 
@@ -769,7 +794,7 @@ body {
   flex-direction: column;
   gap: 8px;
   max-width: var(--maxw);
-  margin: 16px auto 0;
+  margin: 12px auto 0;
   padding: 0 32px;
 }
 
@@ -839,135 +864,22 @@ progress::-moz-progress-bar {
 }
 
 /* ============================================================
-   参数面板
+   仪表台布局：左列图表 + 右列参数 rail
    ============================================================ */
-.metadata-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--rail);
+  align-items: start;
+  gap: 22px;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 24px 32px 0;
+  padding: 18px 32px 0;
 }
 
-.meta-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 分区标题：描迹 + 标签 + 延伸发丝线 */
-.meta-section-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-2);
-}
-
-.meta-section-title::before {
-  content: '';
-  flex: 0 0 auto;
-  width: 20px;
-  height: 1px;
-  background: var(--accent);
-}
-
-.meta-section-title::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
-
-.meta-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
-  gap: 8px;
-}
-
-.meta-item {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  transition: border-color 160ms var(--ease);
-}
-
-.meta-item:hover {
-  border-color: var(--line-strong);
-}
-
-.meta-item .meta-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 12px;
-  color: var(--text-3);
-}
-
-.meta-icon {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
-  color: var(--text-3);
-}
-
-.meta-icon path,
-.meta-icon circle,
-.meta-icon rect,
-.meta-icon line,
-.meta-icon polyline {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.meta-item .meta-value {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.meta-item .meta-sub {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--text-3);
-}
-
-/* 机型卡：跨两列 */
-.meta-item-identity {
-  grid-column: span 2;
-}
-
-.meta-item-identity .meta-value {
-  font-size: 22px;
-  color: var(--text);
-  letter-spacing: 0;
-}
-
-.meta-chip {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 8px;
-  padding: 0 8px;
-  border: 1px solid var(--line-strong);
-  border-radius: 4px;
-  color: var(--text-2);
-  font-family: var(--font-ui);
-  font-size: 11px;
-  font-weight: 400;
-  vertical-align: middle;
+/* 空态（未选飞机）：没有元数据时整页收缩为单列，不留空 rail */
+.dashboard:has(#metadata-panel:empty) {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
 
 /* ============================================================
@@ -977,13 +889,12 @@ progress::-moz-progress-bar {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: var(--maxw);
-  margin: 0 auto;
-  padding: 24px 32px 0;
+  min-width: 0;
 }
 
 .plot-card {
-  padding: 20px;
+  min-width: 0;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -995,8 +906,8 @@ progress::-moz-progress-bar {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1011,12 +922,14 @@ progress::-moz-progress-bar {
 .plot-card h2 {
   font-size: 14px;
   font-weight: 500;
+  line-height: 1.35;
   color: var(--text);
 }
 
 .card-sub {
   font-family: var(--font-mono);
   font-size: 12px;
+  line-height: 1.5;
   color: var(--text-3);
 }
 
@@ -1024,21 +937,20 @@ progress::-moz-progress-bar {
 .plot-area {
   position: relative;
   width: 100%;
-  height: 52vh;
-  min-height: 360px;
-  max-height: 560px;
+  max-width: 100%;
+  height: clamp(380px, 54vh, 560px);
+  height: clamp(380px, 54dvh, 560px);
   border-radius: var(--radius);
   background: var(--bg);
   overflow: hidden;
 }
 
 .plot-area-climb {
-  height: 36vh;
-  min-height: 280px;
-  max-height: 460px;
+  height: clamp(300px, 36vh, 420px);
+  height: clamp(300px, 36dvh, 420px);
 }
 
-/* 无数据时收起绘图区，首屏不留大片空白 */
+/* 无数据时收起绘图区，首屏不留大片空白（优先级高于各尺寸规则） */
 .plot-area:has(.plot-placeholder) {
   height: 220px;
   min-height: 220px;
@@ -1046,9 +958,8 @@ progress::-moz-progress-bar {
 }
 
 .plot-area-radar {
-  height: 44vh;
-  min-height: 340px;
-  max-height: 500px;
+  height: clamp(300px, 34vh, 420px);
+  height: clamp(300px, 34dvh, 420px);
   max-width: 720px;
   margin-inline: auto;
 }
@@ -1074,12 +985,155 @@ progress::-moz-progress-bar {
 }
 
 /* ============================================================
+   参数 / 性能包线 rail
+   ============================================================ */
+.metadata-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  /* 桌面：跟随滚动停在 header 下缘，自身滚动 */
+  position: sticky;
+  top: 130px;
+  max-height: calc(100vh - 148px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.meta-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 分区标题：描迹 + 标签 + 延伸发丝线 */
+.meta-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+}
+
+.meta-section-title::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 20px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.meta-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.meta-item {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition: border-color 160ms var(--ease);
+}
+
+.meta-item:hover {
+  border-color: var(--line-strong);
+}
+
+.meta-item .meta-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-3);
+}
+
+.meta-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: var(--text-3);
+}
+
+.meta-icon path,
+.meta-icon circle,
+.meta-icon rect,
+.meta-icon line,
+.meta-icon polyline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.meta-item .meta-value {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.meta-item .meta-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+/* 机型卡：跨两列 */
+.meta-item-identity {
+  grid-column: span 2;
+}
+
+.meta-item-identity .meta-value {
+  font-size: 20px;
+  color: var(--text);
+  letter-spacing: 0;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+/* ============================================================
    多机对比
    ============================================================ */
 .compare-section {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 24px 32px 0;
 }
 
 .compare-head {
@@ -1087,12 +1141,12 @@ progress::-moz-progress-bar {
   align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
-  padding-top: 8px;
 }
 
 .compare-head h2 {
   font-size: 16px;
   font-weight: 500;
+  line-height: 1.4;
   color: var(--text);
 }
 
@@ -1105,6 +1159,18 @@ progress::-moz-progress-bar {
   margin-right: 12px;
   background: var(--accent);
   vertical-align: middle;
+}
+
+/* 曲线叠加 + 雷达并排 */
+.compare-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.compare-charts > * {
+  min-width: 0;
 }
 
 .compare-tools {
@@ -1157,14 +1223,16 @@ progress::-moz-progress-bar {
   pointer-events: none;
 }
 
-/* ===== 指标对比表 ===== */
+/* ===== 指标对比表：自然列宽 + 横向滚动，首列吸附 ===== */
 .compare-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .compare-table {
-  width: 100%;
-  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   font-family: var(--font-mono);
@@ -1182,8 +1250,8 @@ progress::-moz-progress-bar {
 .compare-table .cmp-metric-col {
   position: sticky;
   left: 0;
-  z-index: 1;
-  width: 32%;
+  z-index: 2;
+  min-width: 148px;
   text-align: left;
   font-family: var(--font-ui);
   font-size: 13px;
@@ -1207,12 +1275,22 @@ progress::-moz-progress-bar {
   color: var(--text);
 }
 
+/* 表头首列同样吸附，需要压在正文首列之上 */
+.compare-table thead th.cmp-metric-col {
+  z-index: 3;
+  background: var(--surface);
+}
+
 .compare-table thead th .cmp-head-sub {
   display: block;
   margin-top: 2px;
+  max-width: 132px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 400;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: var(--text-3);
 }
 
@@ -1259,7 +1337,7 @@ progress::-moz-progress-bar {
   gap: 8px;
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 24px 32px 32px;
+  padding: 20px 32px 24px;
   color: var(--text-3);
   font-size: 12px;
   text-align: center;
@@ -1337,38 +1415,116 @@ progress::-moz-progress-bar {
 /* ============================================================
    响应式
    ============================================================ */
+
+/* 桌面：sticky header 高度补偿，锚点 / 表格定位不被压住 */
+@media (min-width: 1101px) {
+  html {
+    scroll-padding-top: 132px;
+  }
+}
+
+/* 超宽屏：只放宽内容宽度，其余节奏不变 */
+@media (min-width: 1700px) {
+  :root {
+    --maxw: 1720px;
+  }
+}
+
+/* 窄桌面：压缩控件，保证 header 仍是一行 */
+@media (min-width: 1101px) and (max-width: 1280px) {
+  .control-nation {
+    flex-basis: 152px;
+  }
+
+  #fuel-slider {
+    width: 108px;
+  }
+
+  .compare-actions .btn {
+    padding: 0 10px;
+    font-size: 12.5px;
+  }
+}
+
+/* 平板 / 小桌面：取消 sticky header，仪表台单列（图表在前） */
 @media (max-width: 1100px) {
+  .app-header {
+    position: static;
+  }
+
+  .header-inner {
+    padding: 10px 24px 8px;
+  }
+
+  .brand-sub {
+    display: none;
+  }
+
+  .controls-inner {
+    gap: 10px 16px;
+    padding: 10px 24px 12px;
+  }
+
   .control-aircraft {
     flex: 1 1 100%;
     order: -1;
   }
 
   .control-compare {
-    margin-left: 0;
+    margin-left: auto;
+  }
+
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 24px 0;
+  }
+
+  .plots {
+    width: 100%;
+  }
+
+  .metadata-panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .meta-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .compare-section {
+    padding: 16px 24px 0;
+  }
+
+  .compare-charts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compute-progress {
+    padding: 0 24px;
+  }
+
+  .footer-inner {
+    padding: 20px 24px 24px;
   }
 }
 
-@media (max-width: 767px) {
-  body {
-    font-size: 14px;
-  }
-
-  .app-header {
-    position: static;
-  }
-
+/* 平板竖屏：控件两列网格（飞机整行），卡片与图表收紧 */
+@media (max-width: 900px) {
   .header-inner {
-    gap: 8px;
-    padding: 16px 20px 12px;
     flex-wrap: wrap;
+    gap: 6px 12px;
+    padding: 10px 20px 8px;
   }
 
   .brand {
-    flex: 1 1 100%;
-  }
-
-  .header-status {
-    order: 2;
+    flex: 1 1 auto;
   }
 
   .brand-mark {
@@ -1385,106 +1541,384 @@ progress::-moz-progress-bar {
     font-size: 15px;
   }
 
-  .brand-sub {
-    display: none;
+  .header-status {
+    margin-left: auto;
   }
 
   .controls-inner {
-    gap: 12px;
-    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 10px 12px;
+    padding: 10px 20px 12px;
   }
 
-  .control-field,
-  .control-aircraft,
-  .control-nation {
-    flex: 1 1 100%;
+  .control-field {
+    display: flex;
+  }
+
+  .control-aircraft {
+    grid-column: 1 / -1;
+    grid-row: 1;
     order: 0;
   }
 
-  .fuel-control {
-    height: 36px;
+  .control-nation {
+    grid-column: 1 / 2;
+    grid-row: 2;
+    flex-basis: auto;
+  }
+
+  .control-fuel {
+    grid-column: 2 / 3;
+    grid-row: 2;
+  }
+
+  .control-payload {
+    grid-column: 1 / 2;
+    grid-row: 3;
+  }
+
+  .control-compare {
+    grid-column: 2 / 3;
+    grid-row: 3;
+    margin-left: 0;
   }
 
   #fuel-slider {
-    flex: 1;
+    flex: 1 1 auto;
     width: auto;
-    min-width: 120px;
+    min-width: 88px;
   }
 
-  .compare-actions {
-    flex-wrap: wrap;
+  .dashboard {
+    gap: 12px;
+    padding: 14px 20px 0;
   }
 
-  .compare-bar {
-    padding: 0 20px 16px;
+  .plots {
+    gap: 12px;
+  }
+
+  .plot-card {
+    padding: 14px;
+  }
+
+  .card-head {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+
+  .plot-area {
+    height: clamp(320px, 46vh, 460px);
+  }
+
+  .plot-area-climb {
+    height: clamp(280px, 34vh, 380px);
+  }
+
+  .plot-area-radar {
+    height: clamp(280px, 36vh, 400px);
+  }
+
+  .compare-section {
+    gap: 12px;
+    padding: 12px 20px 0;
+  }
+
+  .compare-charts {
+    gap: 12px;
   }
 
   .compute-progress {
-    margin-top: 16px;
     padding: 0 20px;
   }
 
+  .footer-inner {
+    padding: 20px 20px 24px;
+  }
+}
+
+/* 手机：双列控件 + 内联标签，44px 触控高度，图表按宽高比收起 */
+@media (max-width: 600px) {
+  :root {
+    --ctl-h: 44px;
+  }
+
+  .app-header {
+    position: static;
+  }
+
+  .header-inner {
+    gap: 4px 8px;
+    padding: 8px 16px 6px;
+  }
+
+  .brand-mark {
+    width: 20px;
+    height: 20px;
+  }
+
+  .brand-mark svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .app-header h1 {
+    font-size: 14px;
+  }
+
+  .status {
+    font-size: 11px;
+  }
+
+  .controls-inner {
+    padding: 8px 16px 10px;
+    gap: 8px 10px;
+  }
+
+  .control-field {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  .control-field > label {
+    line-height: 1.2;
+  }
+
+  .control-aircraft {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .control-nation {
+    grid-column: 1 / 2;
+    grid-row: 2;
+  }
+
+  .control-payload {
+    grid-column: 2 / 3;
+    grid-row: 2;
+  }
+
+  .control-fuel {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .control-compare {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+
+  .compare-actions {
+    width: 100%;
+  }
+
+  .compare-actions .btn {
+    padding: 0 10px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  #nation-select,
+  .compare-alt-select select,
+  #aircraft-search {
+    font-size: 14px;
+  }
+
+  #fuel-slider {
+    min-width: 72px;
+  }
+
+  .compare-bar {
+    gap: 8px;
+    padding: 0 16px 6px;
+  }
+
+  .compare-bar-hint {
+    font-size: 10.5px;
+  }
+
+  .compare-chips {
+    gap: 5px;
+  }
+
+  .compare-chip {
+    padding: 3px 6px;
+    font-size: 11px;
+    gap: 5px;
+  }
+
+  .compare-chip-params {
+    display: none;
+  }
+
+  .dashboard {
+    gap: 10px;
+    padding: 6px 14px 0;
+  }
+
+  .plots {
+    gap: 10px;
+  }
+
+  .plot-card {
+    padding: 12px;
+  }
+
+  .plot-card h2 {
+    font-size: 13px;
+  }
+
+  .card-head {
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+
+  .card-sub {
+    font-size: 11px;
+  }
+
+  /* 3D 曲面：方形绘图区，高度随卡片宽度走，首屏完整可见 */
+  .plot-area {
+    aspect-ratio: 1 / 1;
+    height: auto;
+    min-height: 280px;
+    max-height: 340px;
+  }
+
+  .plot-area-climb {
+    aspect-ratio: auto;
+    height: clamp(240px, 34vh, 320px);
+    min-height: 240px;
+    max-height: none;
+  }
+
+  .plot-area-radar {
+    aspect-ratio: auto;
+    height: clamp(260px, 34vh, 380px);
+    min-height: 260px;
+    max-height: none;
+    max-width: none;
+  }
+
   .metadata-panel {
-    padding: 20px 20px 0;
-    gap: 20px;
+    gap: 14px;
+  }
+
+  .meta-section {
+    gap: 6px;
   }
 
   .meta-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .meta-item-identity {
-    grid-column: span 2;
+    gap: 6px;
   }
 
   .meta-item {
-    padding: 12px;
+    padding: 10px;
+    border-radius: var(--radius);
+  }
+
+  .meta-item .meta-label {
+    font-size: 10.5px;
   }
 
   .meta-item .meta-value {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .meta-item-identity .meta-value {
     font-size: 18px;
   }
 
-  .plots {
-    padding: 20px 20px 0;
-    gap: 12px;
+  .meta-item .meta-sub {
+    font-size: 10.5px;
+    line-height: 1.45;
   }
 
-  .plot-card {
-    padding: 16px;
+  .compare-section {
+    gap: 10px;
+    padding: 8px 14px 0;
   }
 
-  .card-head {
-    margin-bottom: 12px;
+  .compare-head h2 {
+    font-size: 15px;
   }
 
-  .plot-area {
-    height: 44vh;
-    min-height: 300px;
-  }
-
-  .plot-area-climb {
-    height: 30vh;
-    min-height: 230px;
-  }
-
-  .plot-area-radar {
-    height: 34vh;
-    min-height: 260px;
-    max-height: 380px;
+  .compare-charts {
+    gap: 10px;
   }
 
   .compare-tools {
     width: 100%;
   }
 
+  .seg-btn {
+    padding: 6px 10px;
+    font-size: 11.5px;
+  }
+
+  .compute-progress {
+    margin-top: 10px;
+    padding: 0 14px;
+  }
+
+  .app-footer {
+    margin-top: 24px;
+  }
+
   .footer-inner {
-    padding: 20px 20px 28px;
+    padding: 16px 14px 20px;
+  }
+}
+
+/* 小屏手机：去掉次要注释，避免卡片与队列被撑高 */
+@media (max-width: 420px) {
+  .meta-item .meta-sub {
+    display: none;
+  }
+
+  .compare-bar-label {
+    display: none;
+  }
+
+  .brand-sub {
+    display: none;
+  }
+}
+
+/* 触屏：放大命中区域，滑动条手柄按 22px 处理 */
+@media (pointer: coarse) {
+  :root {
+    --ctl-h: 44px;
+  }
+
+  #fuel-slider::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  #fuel-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  .seg-btn {
+    min-height: 32px;
+  }
+
+  .compare-chip {
+    padding: 5px 8px;
+  }
+
+  .compare-chip-remove {
+    width: 32px;
+    height: 32px;
   }
 }
 
