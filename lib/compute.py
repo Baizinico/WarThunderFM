@@ -14,6 +14,14 @@ import math
 
 import numpy as np
 
+from lib.fmdata import (
+    count_engines,
+    find_engine_dict,
+    find_thrust_data,
+    is_prop_aircraft,
+    total_thrust0_kgf,
+)
+
 # ============================================================
 # 物理常量与节点定义
 # ============================================================
@@ -72,20 +80,13 @@ def isa_atmosphere(altitude_m: float) -> tuple[float, float, float]:
 # 2. 推力双线性插值
 # ============================================================
 def _get_thrust_data(fm: dict) -> dict:
-    """从 fm 中提取推力数据字典。
+    """从 fm 中提取主推力数据（ThrustMax）字典。
 
-    兼容 EngineType0 / EngineType / EngineType1 等命名变体
-    （fm 中可能缺少 EngineType0 而使用其它键名）。
+    委托 ``lib.fmdata.find_thrust_data``：兼容新格式 EngineType0..15
+    （含 Engine{i}.Type 整数索引引用）与老格式 Engine{i}.Main.ThrustMax；
+    多发动机类型时取主引擎类型的推力数据。
     """
-    if not isinstance(fm, dict):
-        return {}
-    for key in ("EngineType0", "EngineType", "EngineType1"):
-        eng = fm.get(key)
-        if isinstance(eng, dict):
-            main = eng.get("Main", {})
-            if isinstance(main, dict) and isinstance(main.get("ThrustMax"), dict):
-                return main["ThrustMax"]
-    return {}
+    return find_thrust_data(fm)
 
 
 def _get_thrust_axes(thrust_data: dict) -> tuple[list[float], list[float]] | None:
@@ -118,19 +119,13 @@ def _get_thrust_axes(thrust_data: dict) -> tuple[list[float], list[float]] | Non
 
 
 def _count_engines(fm: dict) -> int:
-    """统计飞机的引擎实例数量。
+    """统计飞机的发动机台数。
 
-    WT FM 中 Engine0 / Engine1 / ... 为引擎实例，每个实例引用 EngineType0
-    的推力曲线。双发战机（如 Su-27）有两个实例，总推力 = 单发推力 × 实例数。
-    若无 Engine0/Engine1 键，默认 1 发。
+    委托 ``lib.fmdata.count_engines``：按主引擎 Main.Type 判定螺旋桨/喷气；
+    新格式按 ``Engine{i}.Type`` 归并到 EngineType{i}（孤儿类型不计），
+    喷气主类型排除火箭助推与俯仰角 >45° 的垂直升力发动机；至少 1 台。
     """
-    if not isinstance(fm, dict):
-        return 1
-    count = 0
-    for i in range(16):  # 最多检查 16 个引擎槽位
-        if f"Engine{i}" in fm:
-            count += 1
-    return max(1, count)  # 至少 1 发
+    return count_engines(fm)
 
 
 # ============================================================
@@ -142,51 +137,23 @@ ETA_STATIC = 0.75           # 静推力致动盘修正系数
 
 
 def _is_prop_aircraft(fm: dict) -> bool:
-    """判断是否为螺旋桨飞机且缺少 ThrustMaxCoeff 系数网格。
+    """判断是否为螺旋桨飞机。
 
-    只有同时满足以下两个条件才返回 True：
-    1. 飞机有螺旋桨数据（PropellerType0 / Propeller0 / Engine.Propellor）
-    2. ThrustMax 中缺少 ThrustMaxCoeff 网格
+    委托 ``lib.fmdata.is_prop_aircraft``：以主引擎 ``Main.Type`` 为准
+    （Radial/Inline/TurboProp 为螺旋桨，Jet/Rocket/PVRD 为喷气）。
+    没有 Type 信息时回退旧启发式：有螺旋桨数据且 ThrustMax 缺少
+    ThrustMaxCoeff 系数网格 → 螺旋桨。
     """
-    if not isinstance(fm, dict):
-        return False
-    # 条件 1：有螺旋桨
-    has_propeller = False
-    if isinstance(fm.get("PropellerType0"), dict) and fm["PropellerType0"]:
-        has_propeller = True
-    elif isinstance(fm.get("Propeller0"), dict) and fm["Propeller0"]:
-        has_propeller = True
-    else:
-        for i in range(16):
-            eng = fm.get(f"Engine{i}")
-            if isinstance(eng, dict) and isinstance(eng.get("Propellor"), dict):
-                if eng["Propellor"]:
-                    has_propeller = True
-                    break
-    if not has_propeller:
-        return False
-    # 条件 2：缺少 ThrustMaxCoeff 网格（抽查 6 个节点）
-    thrust_data = _get_thrust_data(fm)
-    sample_nodes = [(0, 0), (0, 6), (3, 0), (3, 6), (6, 0), (6, 11)]
-    for a, v in sample_nodes:
-        if thrust_data.get(f"ThrustMaxCoeff_{a}_{v}") is not None:
-            return False
-    return True
+    return is_prop_aircraft(fm)
 
 
 def _find_engine_dict(fm: dict) -> dict:
-    """定位引擎定义字典（EngineType0 / EngineType / EngineType1 / Engine0...）。"""
-    if not isinstance(fm, dict):
-        return {}
-    for key in ("EngineType0", "EngineType", "EngineType1"):
-        e = fm.get(key)
-        if isinstance(e, dict) and e:
-            return e
-    for i in range(16):
-        e = fm.get(f"Engine{i}")
-        if isinstance(e, dict) and e:
-            return e
-    return {}
+    """定位引擎定义字典。
+
+    委托 ``lib.fmdata.find_engine_dict``：新格式返回主 EngineType 条目，
+    老格式返回整个 Engine{i} 实例（含 Main / Compressor）。
+    """
+    return find_engine_dict(fm)
 
 
 def _compile_engine_power(fm: dict) -> tuple[tuple, float]:
@@ -441,26 +408,26 @@ def _bilinear_interp(grid: np.ndarray, x_nodes: list[float], y_nodes: list[float
 def _build_thrust_model(fm: dict) -> dict:
     """把 fm 的推力结构预编译为纯数值模型，供整网格逐点复用。
 
-    避免每个网格点重复执行 _is_prop_aircraft / _count_engines /
-    _get_thrust_data / 引擎查找等字典遍历与类型判断。
+    避免每个网格点重复执行引擎布局解析。螺旋桨台数按 Main.Type 统计，
+    喷气总静推力按每个实例自带的 ThrustMax0 累加（多 Jet 类型逐实例求和，
+    老格式则回退 Engine{i}.Main.ThrustMax）。
     """
     if _is_prop_aircraft(fm):
         stages, base_power = _compile_engine_power(fm)
         radius = _get_prop_radius(fm)
         return {
             "kind": "prop",
-            "n_engines": _count_engines(fm),
+            "n_engines": count_engines(fm),
             "prop_area": math.pi * radius * radius,
             "stages": stages,
             "base_power": base_power,
         }
 
-    thrust_data = _get_thrust_data(fm)
+    thrust_data = find_thrust_data(fm)
     table = _build_thrust_table(fm) if thrust_data else None
-    t0_kgf = float(thrust_data.get("ThrustMax0", 0.0)) if thrust_data else 0.0
     return {
         "kind": "jet",
-        "t0_n": t0_kgf * G * _count_engines(fm),
+        "t0_n": total_thrust0_kgf(fm) * G,
         "table": table,
     }
 

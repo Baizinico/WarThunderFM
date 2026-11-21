@@ -60,25 +60,211 @@ const HP_TO_WATT = 745.7;          // 英美马力 → 瓦特
 const ETA_PROP = 0.82;             // 巡航螺旋桨效率
 const ETA_STATIC = 0.75;           // 静推力致动盘修正系数
 
-function isPropAircraft(fm) {
+// --- 引擎布局解析常量（对应 lib/fmdata.py，兼容老格式与多发动机类型） ---
+const PROP_TYPES = ['Radial', 'Inline', 'TurboProp'];
+const JET_TYPES = ['Jet', 'Rocket', 'PVRD'];
+const ENGINE_SLOTS = 16;              // Engine / EngineType 最大槽位
+const VERTICAL_PITCH_DEG = 45.0;      // 垂直升力喷口俯仰角阈值（度）
+
+function typeMainType(typeDict) {
+  // 取引擎类型字典的 Main.Type（字符串），无则 null。
+  if (!isObject(typeDict)) return null;
+  const main = typeDict.Main;
+  if (!isObject(main)) return null;
+  const t = main.Type;
+  return typeof t === 'string' ? t : null;
+}
+
+function entryMainType(entry) {
+  // 取实例条目的 Main.Type。
+  if (entry == null) return null;
+  return typeMainType(entry.type);
+}
+
+function hasPropeller(fm) {
+  // PropellerType0 / Propeller0 非空 dict，或任一 Engine{i}.Propellor 非空 dict。
   if (!isObject(fm)) return false;
-  // 条件 1：有螺旋桨
-  let hasPropeller = false;
-  if (isObject(fm.PropellerType0) && Object.keys(fm.PropellerType0).length > 0) {
-    hasPropeller = true;
-  } else if (isObject(fm.Propeller0) && Object.keys(fm.Propeller0).length > 0) {
-    hasPropeller = true;
-  } else {
-    for (let i = 0; i < 16; i++) {
-      const eng = fm[`Engine${i}`];
-      if (isObject(eng) && isObject(eng.Propellor) && Object.keys(eng.Propellor).length > 0) {
-        hasPropeller = true;
-        break;
-      }
+  if (isObject(fm.PropellerType0) && Object.keys(fm.PropellerType0).length > 0) return true;
+  if (isObject(fm.Propeller0) && Object.keys(fm.Propeller0).length > 0) return true;
+  for (let i = 0; i < ENGINE_SLOTS; i++) {
+    const eng = fm[`Engine${i}`];
+    if (isObject(eng) && isObject(eng.Propellor) && Object.keys(eng.Propellor).length > 0) {
+      return true;
     }
   }
-  if (!hasPropeller) return false;
-  // 条件 2：缺少 ThrustMaxCoeff 网格（抽查 6 个节点）
+  return false;
+}
+
+function thrustDataOf(typeDict) {
+  // Main.ThrustMax 优先；否则顶层 ThrustMax；否则 {}。
+  if (!isObject(typeDict)) return {};
+  const main = typeDict.Main;
+  if (isObject(main) && isObject(main.ThrustMax)) return main.ThrustMax;
+  if (isObject(typeDict.ThrustMax)) return typeDict.ThrustMax;
+  return {};
+}
+
+function engineTypeEntries(fm) {
+  // 依次扫描 EngineType0..EngineType15、EngineType；只收 dict 且 Main 为 dict 的项。
+  // 返回 [[类型键, 类型字典], ...]。
+  const entries = [];
+  if (!isObject(fm)) return entries;
+  const keys = [];
+  for (let i = 0; i < ENGINE_SLOTS; i++) keys.push(`EngineType${i}`);
+  keys.push('EngineType');
+  for (const key of keys) {
+    const eng = fm[key];
+    if (isObject(eng) && isObject(eng.Main)) entries.push([key, eng]);
+  }
+  return entries;
+}
+
+function engineInstances(fm) {
+  // 解析 Engine0..Engine{i} 实例：
+  //   1) Type 为数字索引 → 引用 EngineType{整数}（新格式）；
+  //   2) 无 Type 但 Main 非空 → 老格式独立引擎（实例本身即类型）；
+  //   3) 其余空 stub → 引用主类型（测试夹具 / 老数据）。
+  // 每项：{index, name, type_key, type, standalone, pitch}。
+  const entries = [];
+  if (!isObject(fm)) return entries;
+
+  const typePairs = engineTypeEntries(fm);
+  const types = {};
+  for (const pair of typePairs) types[pair[0]] = pair[1];
+  let primaryKey = null;
+  let primary = null;
+  if (typePairs.length > 0) {
+    // 优先 EngineType0（扫描顺序首位即 EngineType0），否则第一项
+    primaryKey = typePairs[0][0];
+    primary = typePairs[0][1];
+  }
+
+  for (let i = 0; i < ENGINE_SLOTS; i++) {
+    const inst = fm[`Engine${i}`];
+    if (!isObject(inst)) continue;
+    const name = `Engine${i}`;
+
+    // 喷口俯仰角（绝对值，度）；Direction 形如 [方向角, 俯仰角, ...]
+    let pitch = null;
+    const nozzle = inst.Nozzle0;
+    if (isObject(nozzle)) {
+      const d = nozzle.Direction;
+      if (Array.isArray(d) && d.length >= 2) {
+        const p = Number(d[1]);
+        if (isFinite(p)) pitch = Math.abs(p);
+      }
+    }
+
+    const t = inst.Type;
+    if (t != null && isFinite(Number(t))) {
+      const key = 'EngineType' + Math.trunc(Number(t));
+      if (Object.prototype.hasOwnProperty.call(types, key)) {
+        entries.push({ index: i, name, type_key: key, type: types[key], standalone: false, pitch });
+        continue;
+      }
+    }
+
+    const main = inst.Main;
+    if (isObject(main) && Object.keys(main).length > 0) {
+      entries.push({ index: i, name, type_key: null, type: inst, standalone: true, pitch });
+      continue;
+    }
+
+    if (primary !== null) {
+      entries.push({ index: i, name, type_key: primaryKey, type: primary, standalone: false, pitch });
+    } else {
+      entries.push({ index: i, name, type_key: null, type: inst, standalone: true, pitch });
+    }
+  }
+  return entries;
+}
+
+function primaryEntry(fm) {
+  // 优先 Engine0 对应实例；否则 engine_type_entries 第一项；否则 engine_instances 第一项。
+  if (!isObject(fm)) return null;
+  const entries = engineInstances(fm);
+  for (const e of entries) {
+    if (e.index === 0) return e;
+  }
+  const typePairs = engineTypeEntries(fm);
+  if (typePairs.length > 0) {
+    return {
+      index: -1, name: null, type_key: typePairs[0][0],
+      type: typePairs[0][1], standalone: false, pitch: null,
+    };
+  }
+  if (entries.length > 0) return entries[0];
+  return null;
+}
+
+function mainTypeOf(fm) {
+  // 主引擎类型的 Main.Type（字符串），无则 null。
+  const primary = primaryEntry(fm);
+  if (primary === null) return null;
+  return typeMainType(primary.type);
+}
+
+function massInfo(fm) {
+  // 质量信息 [空重, 最大燃油]：MaxFuelMass0 > 0 优先，回退 MaxFuelMass（老格式）。
+  let mass = {};
+  if (isObject(fm) && isObject(fm.Mass)) mass = fm.Mass;
+  const emptyMass = safeFloat(mass.EmptyMass, 0.0);
+  const maxFuel0 = safeFloat(mass.MaxFuelMass0, 0.0);
+  const maxFuel = safeFloat(mass.MaxFuelMass, 0.0);
+  const maxFuelMass = maxFuel0 > 0 ? maxFuel0 : (maxFuel > 0 ? maxFuel : 0.0);
+  return [emptyMass, maxFuelMass];
+}
+
+function jetInstances(fm) {
+  // 参与喷气推力统计的实例（按主类型过滤火箭助推/垂直升力发动机）。
+  if (!isObject(fm)) return [];
+  const entries = engineInstances(fm);
+  const mtype = mainTypeOf(fm);
+  let cands;
+  if (mtype !== null && JET_TYPES.indexOf(mtype) >= 0) {
+    // 主类型为喷气/火箭：只计同类型实例（排除 Rocket 助推等其它类型）
+    cands = entries.filter(e => entryMainType(e) === mtype);
+  } else if (mtype === null) {
+    // 无 Type 信息（测试夹具 / 老数据）：全部计入
+    cands = entries;
+  } else {
+    // 未知 Type 字符串：排除螺旋桨类型
+    cands = entries.filter(e => PROP_TYPES.indexOf(entryMainType(e)) < 0);
+  }
+  // 垂直升力发动机排除（Yak-141/38）；排除后为空则回退，避免单发垂直起降机推力归零
+  const filtered = cands.filter(e => e.pitch === null || e.pitch <= VERTICAL_PITCH_DEG);
+  return filtered.length > 0 ? filtered : cands;
+}
+
+function propInstances(fm) {
+  // 参与螺旋桨功率统计的实例；主类型为螺旋桨时只计螺旋桨类型实例。
+  if (!isObject(fm)) return [];
+  const entries = engineInstances(fm);
+  const mtype = mainTypeOf(fm);
+  if (mtype !== null && PROP_TYPES.indexOf(mtype) >= 0) {
+    const filtered = entries.filter(e => PROP_TYPES.indexOf(entryMainType(e)) >= 0);
+    if (filtered.length > 0) return filtered;
+  }
+  return entries;
+}
+
+function countEngines(fm) {
+  // 螺旋桨：prop_instances 数量；喷气：jet_instances 数量；至少 1。
+  if (!isObject(fm)) return 1;
+  const n = isPropAircraft(fm) ? propInstances(fm).length : jetInstances(fm).length;
+  return Math.max(1, n);
+}
+
+function isPropAircraft(fm) {
+  if (!isObject(fm)) return false;
+  // 1) 优先按主引擎 Main.Type 判定（新格式 EngineType / 老格式 Engine{i}.Main）
+  const mtype = mainTypeOf(fm);
+  if (mtype !== null) {
+    if (PROP_TYPES.indexOf(mtype) >= 0) return true;
+    if (JET_TYPES.indexOf(mtype) >= 0) return false;
+  }
+  // 2) 无 Type 信息（或未知 Type）时走旧启发式：有螺旋桨且缺少 ThrustMaxCoeff 网格
+  if (!hasPropeller(fm)) return false;
   const thrustData = getThrustData(fm);
   const sampleNodes = [[0, 0], [0, 6], [3, 0], [3, 6], [6, 0], [6, 11]];
   for (const [a, v] of sampleNodes) {
@@ -87,24 +273,82 @@ function isPropAircraft(fm) {
   return true;
 }
 
-function findEngineDict(fm) {
-  // 定位引擎定义字典（EngineType0 / EngineType / EngineType1 / Engine0...）
-  for (const key of ['EngineType0', 'EngineType', 'EngineType1']) {
-    const e = fm[key];
-    if (isObject(e) && Object.keys(e).length > 0) return e;
+function totalThrust0Kgf(fm) {
+  // 对 jet_instances 中每个实例累加其类型各自的 ThrustMax0（不是主类型 T0 × 台数）。
+  // 累加为 0 时回退：find_thrust_data 的 T0 × max(1, 原始 Engine{i} 实例数)。
+  if (!isObject(fm)) return 0.0;
+  let total = 0.0;
+  for (const entry of jetInstances(fm)) {
+    const td = thrustDataOf(entry.type);
+    total += float(td.ThrustMax0 != null ? td.ThrustMax0 : 0.0);
   }
-  for (let i = 0; i < 16; i++) {
+  if (total !== 0.0) return total;
+  const thrustData = getThrustData(fm);
+  const t0Kgf = float(thrustData.ThrustMax0 != null ? thrustData.ThrustMax0 : 0.0);
+  let nEngines = 0;
+  for (let i = 0; i < ENGINE_SLOTS; i++) {
+    if (`Engine${i}` in fm) nEngines++;
+  }
+  return t0Kgf * Math.max(1, nEngines);
+}
+
+function getThrustData(fm) {
+  // 主类型 thrust_data_of 非空则返回；否则 EngineType 顺序第一个非空；
+  // 否则老格式：Engine0..15 的 Main.ThrustMax 第一个非空；否则 {}。
+  if (!isObject(fm)) return {};
+  const primary = primaryEntry(fm);
+  if (primary !== null) {
+    const td = thrustDataOf(primary.type);
+    if (Object.keys(td).length > 0) return td;
+  }
+  for (const pair of engineTypeEntries(fm)) {
+    const td = thrustDataOf(pair[1]);
+    if (Object.keys(td).length > 0) return td;
+  }
+  for (let i = 0; i < ENGINE_SLOTS; i++) {
+    const inst = fm[`Engine${i}`];
+    if (!isObject(inst)) continue;
+    const main = inst.Main;
+    if (isObject(main) && isObject(main.ThrustMax) && Object.keys(main.ThrustMax).length > 0) {
+      return main.ThrustMax;
+    }
+  }
+  return {};
+}
+
+function findEngineDict(fm) {
+  // 主类型 dict 非空则返回；否则 engine_type_entries 第一项；
+  // 否则第一个非空 Engine{i}；否则 {}。
+  if (!isObject(fm)) return {};
+  const primary = primaryEntry(fm);
+  if (primary !== null && isObject(primary.type) && Object.keys(primary.type).length > 0) {
+    return primary.type;
+  }
+  const typePairs = engineTypeEntries(fm);
+  if (typePairs.length > 0) return typePairs[0][1];
+  for (let i = 0; i < ENGINE_SLOTS; i++) {
     const e = fm[`Engine${i}`];
     if (isObject(e) && Object.keys(e).length > 0) return e;
   }
-  return null;
+  return {};
+}
+
+function thrustSummary(fm) {
+  // 推进类型 / 台数 / 海平面总推力的汇总（prop 的 ThrustMax0 恒为 0）。
+  const isProp = isPropAircraft(fm);
+  return {
+    kind: isProp ? 'prop' : 'jet',
+    n_engines: countEngines(fm),
+    thrust_max0_kgf: isProp ? 0.0 : totalThrust0Kgf(fm),
+    main_type: mainTypeOf(fm),
+  };
 }
 
 function compileEnginePower(fm) {
   // 把多级增压器曲线预编译为纯数值数组，供逐高度快速求值。
   // stages 每项：[powerStage, altCrit, ceilingOrNull, powerAtCeiling, slope]
   const eng = findEngineDict(fm);
-  if (eng === null) return { stages: [], basePower: 0.0 };
+  if (!isObject(eng) || Object.keys(eng).length === 0) return { stages: [], basePower: 0.0 };
 
   const main = eng.Main || {};
   const basePower = float(main.Power != null ? main.Power : 0.0);
@@ -244,29 +488,6 @@ function propellerThrust(fm, altM, tasMps, rho, powerHp) {
   return propellerThrustArea(Math.PI * radius * radius, tasMps, rho, powerHp);
 }
 
-function getThrustData(fm) {
-  if (!isObject(fm)) return {};
-  for (const key of ['EngineType0', 'EngineType', 'EngineType1']) {
-    const eng = fm[key];
-    if (isObject(eng)) {
-      const main = eng.Main;
-      if (isObject(main) && isObject(main.ThrustMax)) {
-        return main.ThrustMax;
-      }
-    }
-  }
-  return {};
-}
-
-function countEngines(fm) {
-  if (!isObject(fm)) return 1;
-  let count = 0;
-  for (let i = 0; i < 16; i++) {
-    if (`Engine${i}` in fm) count++;
-  }
-  return Math.max(1, count);
-}
-
 function getThrustAxes(thrustData) {
   const alts = [];
   let i = 0;
@@ -352,10 +573,10 @@ function buildThrustModel(fm) {
       basePower: cp.basePower,
     };
   }
-  const thrustData = getThrustData(fm);
   const table = buildThrustTable(fm);
-  const t0Kgf = float(thrustData.ThrustMax0 != null ? thrustData.ThrustMax0 : 0.0);
-  return { kind: 'jet', t0N: t0Kgf * G * countEngines(fm), table };
+  // 喷气：按 jet 实例逐个累加各自类型的 T0（多类型 / 垂直升力已在 jetInstances 过滤）
+  const t0N = totalThrust0Kgf(fm) * G;
+  return { kind: 'jet', t0N, table };
 }
 
 function thrustFromModel(model, altM, velKmh, rho = null) {
@@ -393,20 +614,53 @@ function interpolateThrust(fm, altM, velKmh, afterburner, table = null) {
 // ============================================================
 function compileMachChannels(polar) {
   // 把一条极曲线的马赫倍增通道预编译为纯数值数组。
-  // 编译期复现原逐点实现的 float 归一化与通道过滤，运行期只做算术。
+  // 编译期复现 Python _compile_mach_channels 的归一化与通道过滤，运行期只做算术。
   const channels = [];
-  const machFactor = float(polar.MachFactor != null ? polar.MachFactor : 3);
+  if (!isObject(polar)) return channels;
+
+  // 与 Python float() 对齐的归一化：不可转换的值返回 null（随后回退或被跳过）。
+  // 数组 / 对象 / 布尔在 Python 里不是可 float 的标量，MachFactor 回退 3.0，
+  // 通道字段则整条通道跳过（WT FM 的稳定性/控制面通道有时是双值数组）。
+  const toMachNum = (raw) => {
+    if (raw == null) return null;
+    if (typeof raw === 'boolean' || Array.isArray(raw) || typeof raw === 'object') return null;
+    if (typeof raw === 'number') return raw;
+    if (typeof raw === 'string') {
+      const text = raw.trim();
+      if (text === '') return null;
+      const value = Number(text);
+      return Number.isNaN(value) ? null : value;
+    }
+    return null;
+  };
+
+  // WT FM 的 MachFactor 偶尔是双值数组（如 b6n2 的 [3, 3]），此时回退 3.0
+  const rawFactor = ('MachFactor' in polar) ? polar.MachFactor : 3.0;
+  const factorNum = toMachNum(rawFactor);
+  const machFactor = factorNum !== null ? factorNum : 3.0;
+
+  // WT FM 的马赫通道索引为 1-7
   for (let i = 1; i <= 7; i++) {
-    const multMax = float(polar[`MultMachMax${i}`] != null ? polar[`MultMachMax${i}`] : 1.0);
-    // 跳过削减通道（MultMachMax < 1.0）
-    if (multMax < 1.0) continue;
-    const machCrit = float(polar[`MachCrit${i}`] != null ? polar[`MachCrit${i}`] : 0);
-    const machMax = float(polar[`MachMax${i}`] != null ? polar[`MachMax${i}`] : 0);
-    if (machCrit <= 0 || machMax <= 0) continue;
-    const multLimit = float(polar[`MultLimit${i}`] != null ? polar[`MultLimit${i}`] : 1.0);
-    const lineCoeff = float(polar[`MultLineCoeff${i}`] != null ? polar[`MultLineCoeff${i}`] : 0.0);
-    // 跳过 LineCoeff > 0 的通道：原始公式产生负倍率
-    if (lineCoeff > 0) continue;
+    // 与 dict.get 一致：键存在但为 null 时不使用默认值（随后按不可转换跳过）
+    const rawValues = [
+      ('MultMachMax' + i) in polar ? polar['MultMachMax' + i] : 1.0,
+      ('MachCrit' + i) in polar ? polar['MachCrit' + i] : 0,
+      ('MachMax' + i) in polar ? polar['MachMax' + i] : 0,
+      ('MultLimit' + i) in polar ? polar['MultLimit' + i] : 1.0,
+      ('MultLineCoeff' + i) in polar ? polar['MultLineCoeff' + i] : 0.0,
+    ];
+    const values = [];
+    let valid = true;
+    for (let k = 0; k < rawValues.length; k++) {
+      const value = toMachNum(rawValues[k]);
+      if (value === null) { valid = false; break; }
+      values.push(value);
+    }
+    if (!valid) continue;
+    const multMax = values[0], machCrit = values[1], machMax = values[2];
+    const multLimit = values[3], lineCoeff = values[4];
+    // 跳过削减通道（MultMachMax < 1.0）/ 无效临界值 / LineCoeff > 0 的异常通道
+    if (multMax < 1.0 || machCrit <= 0 || machMax <= 0 || lineCoeff > 0) continue;
     channels.push([multMax, machCrit, machMax, multLimit, lineCoeff, machFactor]);
   }
   return channels;
@@ -830,33 +1084,13 @@ async function analyzeAircraft(aircraft, fm, params, onProgress = null) {
   const fuelPct = float(params.fuel_pct != null ? params.fuel_pct : 0.0);
   const wtFmVersion = typeof params.wt_fm_version === 'string' ? params.wt_fm_version : String(params.wt_fm_version || '');
 
-  // 从 fm 提取质量信息
-  let mass = {};
-  if (isObject(fm) && isObject(fm.Mass)) mass = fm.Mass;
-  const emptyMass = safeFloat(mass.EmptyMass, 0.0);
-  const maxFuelMass = safeFloat(mass.MaxFuelMass0, 0.0);
+  // 从 fm 提取质量信息（老格式：MaxFuelMass0 非正时回退 MaxFuelMass）
+  const massInfoValues = massInfo(fm);
+  const emptyMass = massInfoValues[0];
+  const maxFuelMass = massInfoValues[1];
 
-  // 从 fm 提取 ThrustMax0（兼容命名变体）
-  let thrustMax0Kgf = 0.0;
-  if (isObject(fm)) {
-    for (const key of ['EngineType0', 'EngineType', 'EngineType1']) {
-      const eng = fm[key];
-      if (!isObject(eng)) continue;
-      const main = eng.Main;
-      if (!isObject(main)) continue;
-      const tm = main.ThrustMax;
-      if (isObject(tm) && tm.ThrustMax0 != null) {
-        const singleThrust = safeFloat(tm.ThrustMax0, 0.0);
-        let nEngines = 0;
-        for (let i = 0; i < 16; i++) {
-          if (`Engine${i}` in fm) nEngines++;
-        }
-        nEngines = Math.max(1, nEngines);
-        thrustMax0Kgf = singleThrust * nEngines;
-        break;
-      }
-    }
-  }
+  // 从 fm 提取总推力（按实例逐类型求和，兼容老格式与多发动机类型）
+  const thrustMax0Kgf = thrustSummary(fm).thrust_max0_kgf;
 
   // 计算衍生质量
   const fuelMassKg = fuelPct * maxFuelMass;

@@ -5,6 +5,7 @@ import math
 import pytest
 
 from lib.compute import (
+    _build_drag_model,
     _extract_drag_components,
     _flat_wing_area,
     _get_wing_data,
@@ -217,3 +218,49 @@ def test_mach_drag_multiplier_interpolates_between_channels():
     # m=1.1：ch1 = 2 + 1·(1-exp(-0.1)) ≈ 2.09516；ch2 = 1 + 3·0.5³ = 1.375
     expected = 2.09516 * 1.375
     assert mach_drag_multiplier(polar, 1.1) == pytest.approx(expected, rel=1e-4)
+
+
+class TestMachFactorArrayNormalization:
+    """回归（task-6）：Aerodynamics.MachFactor 为双值数组时必须回退 3.0。
+
+    b6n2/b6n2a 的整机 MachFactor 是 [3, 3]；修复前 JS 端用 float() 归一化得到
+    0.0，导致跨音速段倍率恒为 MultMachMax（马赫阻力墙形状错误、极速虚高）。
+    Python 侧用同一构造锁定该行为，保证两端归一化口径一致。
+    """
+
+    @staticmethod
+    def _make_fm() -> dict:
+        fm = make_flat_jet_fm()
+        aero = fm["Aerodynamics"]
+        # 老格式整机波阻通道（Python _flat_aircraft_mach_channels 读取顶层）
+        aero["MachFactor"] = [3, 3]
+        aero["MachCrit1"] = 0.7
+        aero["MachMax1"] = 1.0
+        aero["MultMachMax1"] = 3.0
+        aero["MultLimit1"] = 1.0
+        aero["MultLineCoeff1"] = -1.0
+        return fm
+
+    def test_aircraft_channel_factor_is_three(self):
+        model = _build_drag_model(self._make_fm())
+        assert len(model["aero_channels"]) == 1
+        mult_max, mach_crit, mach_max, mult_limit, line_coeff, mach_factor = (
+            model["aero_channels"][0])
+        assert mult_max == pytest.approx(3.0)
+        assert mach_crit == pytest.approx(0.7)
+        assert mach_max == pytest.approx(1.0)
+        assert mult_limit == pytest.approx(1.0)
+        assert line_coeff == pytest.approx(-1.0)
+        # 关键断言：数组 [3,3] 归一化为 3.0，而不是 0.0 / NaN
+        assert mach_factor == pytest.approx(3.0)
+
+    def test_mach_drag_multiplier_curve_is_cubic(self):
+        aero = self._make_fm()["Aerodynamics"]
+        assert mach_drag_multiplier(aero, 0.5) == pytest.approx(1.0)  # < MachCrit
+        # M0.8：t=(0.8-0.7)/(1.0-0.7)=1/3 → 1 + (3-1)·(1/3)³
+        assert mach_drag_multiplier(aero, 0.8) == pytest.approx(
+            1.0 + 2.0 / 27.0, rel=1e-9)
+        # M1.0 = MachMax → MultMachMax
+        assert mach_drag_multiplier(aero, 1.0) == pytest.approx(3.0, rel=1e-9)
+        # 若归一化退化为 0 次幂，M0.8 会错误地等于 3.0（修复前 JS 即如此）
+        assert mach_drag_multiplier(aero, 0.8) != pytest.approx(3.0)

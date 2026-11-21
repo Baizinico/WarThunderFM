@@ -15,8 +15,18 @@ import numpy as np
 import pytest
 
 from lib.compute import compute_accel_grid, compute_climb_route, compute_optimal
+from lib.fmdata import mass_info
 from lib.schema import build_record
-from tests.fixtures import make_flat_jet_fm, make_jet_fm, make_prop_fm
+from tests.fixtures import (
+    make_flat_jet_fm,
+    make_jet_fm,
+    make_multi_type_jet_fm,
+    make_old_format_jet_fm,
+    make_orphan_type_jet_fm,
+    make_prop_fm,
+    make_typed_prop_fm,
+    make_vertical_lift_fm,
+)
 
 NODE = shutil.which("node")
 ROOT = Path(__file__).resolve().parent.parent
@@ -31,9 +41,8 @@ ATOL = 1e-6
 
 def py_analyze(fm: dict, fuel_pct: float, afterburner: bool = True) -> dict:
     """复现 analyzeAircraft 的 Python 等价计算（仅保留可对比字段）。"""
-    mass = fm.get("Mass", {}) or {}
-    empty = float(mass.get("EmptyMass", 0.0))
-    max_fuel = float(mass.get("MaxFuelMass0", 0.0))
+    # 与正式实现一致：MaxFuelMass0 为 0 时回退 MaxFuelMass（FIX_SPEC §5）
+    empty, max_fuel = mass_info(fm)
     mass_kg = empty + fuel_pct * max_fuel
     samples, grid = compute_accel_grid(fm, mass_kg, afterburner=afterburner)
     optimal = compute_optimal(samples, grid)
@@ -119,25 +128,57 @@ def test_flat_jet_analysis_matches():
     _compare_dict(py, js, "flat-jet")
 
 
+NEW_ENGINE_LAYOUT_FIXTURES = [
+    make_old_format_jet_fm,
+    make_multi_type_jet_fm,
+    make_vertical_lift_fm,
+    make_typed_prop_fm,
+    make_orphan_type_jet_fm,
+]
+
+
+@pytest.mark.parametrize(
+    "make_fm",
+    NEW_ENGINE_LAYOUT_FIXTURES,
+    ids=[f.__name__ for f in NEW_ENGINE_LAYOUT_FIXTURES],
+)
+def test_new_engine_layout_matches(make_fm):
+    """新引擎布局（FIX_SPEC §8.3）：Python 与 JS 全记录逐字段一致。"""
+    fm = make_fm()
+    py = py_analyze(fm, 0.5)
+    js = js_analyze(fm, 0.5)
+    _compare_dict(py, js, make_fm.__name__)
+
+
 def test_multi_engine_matches():
     py = py_analyze(make_jet_fm(n_engines=2), 0.5)
     js = js_analyze(make_jet_fm(n_engines=2), 0.5)
     _compare_dict(py, js, "jet-2eng")
 
 
+# 真实机型采样：覆盖不同结构（新格式喷气 / 老格式螺旋桨 / 老格式大口径机炮），
+# 并包含 b6n2/b6n2a —— 其 Aerodynamics.MachFactor 为双值数组 [3, 3]，
+# 是 web/compute.js 数组归一化缺陷（task-6）的回归样本。
+REAL_AIRCRAFT_STEMS = (
+    "b6n2",
+    "b6n2a",
+    "j_10c",
+    "bf-109f-4",
+    "yak-9k",
+)
+
+
 @pytest.mark.skipif(not (ROOT / "data" / "raw").exists(), reason="无原始数据")
-def test_real_aircraft_matches():
+@pytest.mark.parametrize("stem", REAL_AIRCRAFT_STEMS)
+def test_real_aircraft_matches(stem):
     """用真实 .blkx 数据做端到端交叉验证（要求 data/raw 存在）。"""
-    raw_dir = ROOT / "data" / "raw"
-    blkx_files = sorted(raw_dir.glob("*.blkx"))
-    if not blkx_files:
-        pytest.skip("data/raw 为空")
-    # 采样少量真实飞机覆盖不同结构（喷气/螺旋桨/多发）
-    picked = [f for f in blkx_files if f.stem in ("j_10c", "f-16a", "bf-109f-4", "yak-9k", "su-27")]
-    if not picked:
-        picked = blkx_files[:3]
-    for blkx in picked:
-        fm = json.loads(blkx.read_text(encoding="utf-8"))
-        py = py_analyze(fm, 0.5)
-        js = js_analyze(fm, 0.5)
-        _compare_dict(py, js, f"real:{blkx.stem}")
+    blkx = ROOT / "data" / "raw" / f"{stem}.blkx"
+    if not blkx.exists():
+        pytest.skip(f"缺少 data/raw/{stem}.blkx")
+    fm = json.loads(blkx.read_text(encoding="utf-8"))
+    if stem in ("b6n2", "b6n2a"):
+        # 回归前提：整机 MachFactor 为双值数组（修复前 JS 用 float() 归一化为 0.0）
+        assert fm["Aerodynamics"]["MachFactor"] == [3, 3]
+    py = py_analyze(fm, 0.5)
+    js = js_analyze(fm, 0.5)
+    _compare_dict(py, js, f"real:{stem}")

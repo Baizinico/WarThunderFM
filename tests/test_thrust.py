@@ -20,7 +20,13 @@ from lib.compute import (
     interpolate_thrust,
     isa_atmosphere,
 )
-from tests.fixtures import make_flat_jet_fm, make_jet_fm, make_prop_fm
+from tests.fixtures import (
+    make_flat_jet_fm,
+    make_jet_fm,
+    make_old_format_jet_fm,
+    make_prop_fm,
+    make_typed_prop_fm,
+)
 
 
 class TestJetThrust:
@@ -63,6 +69,21 @@ class TestJetThrust:
         assert mil_above == pytest.approx(mil_top, rel=1e-9)
 
 
+class TestOldFormatJetThrust:
+    """老格式喷气（无 EngineType，Engine0/1 自带完整 Main）的推力。"""
+
+    def test_interpolate_thrust_two_engines_910_each(self):
+        fm = make_old_format_jet_fm()
+        mil, ab = interpolate_thrust(fm, 0.0, 0.0, afterburner=True)
+        # 逐实例取各自 Main.ThrustMax.ThrustMax0：2 × 910 kgf × g
+        assert mil == pytest.approx(2.0 * 910.0 * G, rel=1e-9)
+        # 老格式无加力系数网格：加力推力 = 军用推力
+        assert ab == pytest.approx(mil, rel=1e-9)
+
+    def test_count_engines_old_format(self):
+        assert _count_engines(make_old_format_jet_fm()) == 2
+
+
 class TestDynamicThrustAxes:
     """datamine 新格式：ThrustMax 自带 Altitude_*/Velocity_* 轴（9×13 等）。"""
 
@@ -103,6 +124,10 @@ class TestPropThrust:
     def test_is_prop_aircraft(self):
         assert _is_prop_aircraft(make_prop_fm()) is True
         assert _is_prop_aircraft(make_jet_fm()) is False
+
+    def test_is_prop_aircraft_with_type_field(self):
+        # Main.Type="Radial" 的判定优先于占位 ThrustMax0/系数网格
+        assert _is_prop_aircraft(make_typed_prop_fm()) is True
 
     def test_prop_radius_from_propeller_type0(self):
         assert _get_prop_radius(make_prop_fm()) == pytest.approx(1.5)

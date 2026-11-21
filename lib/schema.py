@@ -6,7 +6,8 @@
   - build_record：从 fm / samples / grid / optimal 组装合规 dict
   - save_json / load_json：带校验的 JSON 读写
 
-仅依赖标准库（json、datetime、pathlib、math）。
+仅依赖标准库（json、datetime、pathlib、math），引擎/质量解析通过同样
+只依赖标准库的 lib.fmdata 共享。
 """
 
 from __future__ import annotations
@@ -16,6 +17,8 @@ import math
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+
+from lib.fmdata import mass_info, thrust_summary
 
 # ============================================================
 # 1. 常量定义
@@ -398,42 +401,18 @@ def build_record(aircraft: str, fm: dict, samples: list[dict], grid: dict,
         符合统一 schema 的 dict。
 
     说明:
-        - 从 fm 提取 Mass.EmptyMass / Mass.MaxFuelMass0；
-        - 从 fm 提取 EngineType0.Main.ThrustMax.ThrustMax0，
-          兼容 EngineType0 / EngineType / EngineType1 命名变体（用 .get 兜底）；
+        - 从 fm 提取 Mass.EmptyMass / MaxFuelMass0（缺失时回退 MaxFuelMass）；
+        - 静推力由 lib.fmdata.thrust_summary 汇总，兼容新格式 EngineType{i}
+          与老格式 Engine{i}.Main，按实例逐台累加（多发动机类型不重复计数）；
         - fuel_mass_kg = fuel_pct * max_fuel_mass；
         - flight_mass_kg = empty_mass + fuel_mass_kg；
         - computed_at 使用北京时间（UTC+8）的 ISO 8601 字符串。
     """
-    # 从 fm 提取质量信息（用 .get 兜底）
-    mass = fm.get("Mass", {}) if isinstance(fm, dict) else {}
-    if not isinstance(mass, dict):
-        mass = {}
-    empty_mass = _safe_float(mass.get("EmptyMass", 0.0), 0.0)
-    max_fuel_mass = _safe_float(mass.get("MaxFuelMass0", 0.0), 0.0)
+    # 从 fm 提取质量信息（MaxFuelMass0 缺失/为 0 时回退 MaxFuelMass）
+    empty_mass, max_fuel_mass = mass_info(fm)
 
-    # 从 fm 提取 ThrustMax0（兼容 EngineType0 / EngineType / EngineType1 变体）
-    # 多发战机的总推力 = 单发 ThrustMax0 × 引擎实例数（Engine0/Engine1/...）
-    thrust_max0_kgf = 0.0
-    if isinstance(fm, dict):
-        for key in ("EngineType0", "EngineType", "EngineType1"):
-            eng = fm.get(key)
-            if not isinstance(eng, dict):
-                continue
-            main = eng.get("Main", {})
-            if not isinstance(main, dict):
-                continue
-            tm = main.get("ThrustMax", {})
-            if isinstance(tm, dict) and tm.get("ThrustMax0") is not None:
-                single_thrust = _safe_float(tm.get("ThrustMax0"), 0.0)
-                # 统计引擎实例数
-                n_engines = 0
-                for i in range(16):
-                    if f"Engine{i}" in fm:
-                        n_engines += 1
-                n_engines = max(1, n_engines)
-                thrust_max0_kgf = single_thrust * n_engines
-                break
+    # 从 fm 提取静推力（老格式引擎定位 + 按类型逐实例累加，螺旋桨为 0）
+    thrust_max0_kgf = float(thrust_summary(fm)["thrust_max0_kgf"])
 
     # 从 params 提取参数
     afterburner = bool(params.get("afterburner", False))

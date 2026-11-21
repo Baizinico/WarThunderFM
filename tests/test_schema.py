@@ -154,6 +154,27 @@ class TestBuildRecord:
         # 5000 kgf × 2 发
         assert record["metadata"]["thrust_max0_kgf"] == pytest.approx(10000.0)
 
+    def test_fuel_mass_falls_back_to_max_fuel_mass(self):
+        """MaxFuelMass0=0 时 fuel_mass_kg 应改用 MaxFuelMass（FIX_SPEC §5）。"""
+        fm = make_jet_fm()
+        fm["Mass"] = {
+            "EmptyMass": 10000.0,
+            "MaxFuelMass0": 0.0,
+            "MaxFuelMass": 2000.0,
+        }
+        record = build_record(
+            "test_jet", fm, [], {"altitudes_m": [], "machs": []},
+            {"max_speed_per_alt": [], "best_alt_per_mach": []},
+            {"afterburner": True, "fuel_pct": 0.5, "wt_fm_version": "test"},
+        )
+        meta = record["metadata"]
+        assert meta["empty_mass_kg"] == pytest.approx(10000.0)
+        # 0.5 × MaxFuelMass(2000)，而不是 0.5 × MaxFuelMass0(0)
+        assert meta["fuel_mass_kg"] == pytest.approx(1000.0)
+        assert meta["flight_mass_kg"] == pytest.approx(11000.0)
+        # 推力元数据不受质量回退影响
+        assert meta["thrust_max0_kgf"] == pytest.approx(5000.0)
+
     def test_computed_at_is_beijing_time(self):
         record = make_record()
         assert record["metadata"]["computed_at"].endswith("+08:00")

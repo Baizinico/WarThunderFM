@@ -14,6 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, ".")
 from lib.compute import compute_accel_grid, compute_climb_route, compute_optimal
+from lib.fmdata import mass_info
 from lib.schema import build_record, save_json
 
 RAW_DIR = Path("data/raw")
@@ -39,12 +40,8 @@ def compute_one(aircraft: str) -> tuple[str, bool, str]:
     except Exception as e:
         return aircraft, False, f"read error: {e}"
 
-    # 提取质量
-    mass_node = fm.get("Mass", {})
-    if not isinstance(mass_node, dict):
-        mass_node = {}
-    empty_mass = float(mass_node.get("EmptyMass", 0.0))
-    max_fuel = float(mass_node.get("MaxFuelMass0", 0.0))
+    # 提取质量（MaxFuelMass0 缺失/为 0 时回退 MaxFuelMass）
+    empty_mass, max_fuel = mass_info(fm)
     if empty_mass <= 0:
         return aircraft, False, "no mass data"
     mass_kg = empty_mass + 0.5 * max_fuel

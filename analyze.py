@@ -22,6 +22,7 @@ from pathlib import Path
 from lib.compare import build_comparison, format_comparison_table, save_comparison
 from lib.compute import compute_accel_grid, compute_climb_route, compute_optimal
 from lib.downloader import DEFAULT_RAW_DIR, download_fm
+from lib.fmdata import mass_info
 from lib.schema import build_record, load_json, save_json
 
 # ============================================================
@@ -131,13 +132,12 @@ def update_manifest() -> dict:
 # _build_record_for_fm：由 FM + 质量推导完整记录（供 compute / compare 复用）
 # ============================================================
 def _mass_info(fm: dict) -> tuple[float, float]:
-    """从 FM 提取 (空重 kg, 最大内油质量 kg)。"""
-    mass_node = fm.get("Mass", {}) if isinstance(fm, dict) else {}
-    if not isinstance(mass_node, dict):
-        mass_node = {}
-    empty_mass = float(mass_node.get("EmptyMass", 0.0))
-    max_fuel = float(mass_node.get("MaxFuelMass0", 0.0))
-    return empty_mass, max_fuel
+    """从 FM 提取 (空重 kg, 最大内油质量 kg)。
+
+    委托 ``lib.fmdata.mass_info``：``MaxFuelMass0`` 缺失/为 0 时回退
+    ``MaxFuelMass``（老格式 FM）。
+    """
+    return mass_info(fm)
 
 
 def _build_record_for_fm(aircraft: str, fm: dict, mass_kg: float,

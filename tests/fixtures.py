@@ -159,3 +159,228 @@ def make_prop_fm() -> dict:
             },
         },
     }
+
+
+# ============================================================
+# FIX_SPEC §8.1 新增夹具（新引擎布局：老格式 / 多类型 / 垂直升力等）
+# ============================================================
+def _small_coeff_grid(n_alt: int, n_vel: int, value: float = 1.0,
+                      prefix: str = "ThrustMaxCoeff") -> dict:
+    """生成 n_alt×n_vel 恒定值系数网格（新夹具用的占位网格）。"""
+    return {f"{prefix}_{a}_{v}": value for a in range(n_alt) for v in range(n_vel)}
+
+
+def make_old_format_jet_fm() -> dict:
+    """老格式双发喷气（me-262a-1a 型）：无 EngineType，Engine0/1 自带完整 Main。
+
+    每台 Main.Type="Jet"、Power=1200（占位）、ThrustMax0=910 + 6×7 恒定系数网格；
+    另有占位 Propellor 字段（不得影响“喷气”判定）。总推力应为 2×910=1820 kgf。
+    """
+    engine = {
+        "Main": {
+            "Type": "Jet",
+            "Power": 1200.0,
+            "ThrustMax": {
+                "ThrustMax0": 910.0,
+                **_small_coeff_grid(6, 7),
+            },
+        },
+        # 老格式里常见的占位螺旋桨字段：有 Type=Jet 时必须判为喷气
+        "Propellor": {"Diameter": 3.0},
+    }
+    fm = make_jet_fm()
+    fm.pop("EngineType0", None)
+    fm["Mass"] = {"EmptyMass": 7000.0, "MaxFuelMass0": 2000.0}
+    fm["Engine0"] = engine
+    fm["Engine1"] = {
+        "Main": {
+            "Type": "Jet",
+            "Power": 1200.0,
+            "ThrustMax": {
+                "ThrustMax0": 910.0,
+                **_small_coeff_grid(6, 7),
+            },
+        },
+        "Propellor": {"Diameter": 3.0},
+    }
+    return fm
+
+
+def make_multi_type_jet_fm() -> dict:
+    """多发动机类型：EngineType0=Jet(4590)、EngineType1=Rocket(453)。
+
+    Engine0/1 引用 Type=0 共 2 台，Engine2..13 引用 Type=1 共 12 台。
+    Rocket 类型应被喷气统计排除 → count=2、总推力 2×4590=9180 kgf。
+    """
+    fm = make_jet_fm()
+    fm["Mass"] = {"EmptyMass": 20000.0, "MaxFuelMass0": 5000.0}
+    fm["EngineType0"] = {
+        "Main": {
+            "Type": "Jet",
+            "ThrustMax": {
+                "ThrustMax0": 4590.0,
+                **_small_coeff_grid(7, 12),
+                **_small_coeff_grid(7, 12, 1.5, "ThrAftMaxCoeff"),
+            },
+        }
+    }
+    fm["EngineType1"] = {
+        "Main": {
+            "Type": "Rocket",
+            "ThrustMax": {
+                "ThrustMax0": 453.0,
+                **_small_coeff_grid(7, 12),
+                **_small_coeff_grid(7, 12, 1.5, "ThrAftMaxCoeff"),
+            },
+        }
+    }
+    fm.pop("Engine0", None)
+    for i in range(14):
+        fm[f"Engine{i}"] = {"Type": 0 if i < 2 else 1}
+    return fm
+
+
+def make_vertical_lift_fm() -> dict:
+    """垂直起降（Yak-141 型）：主升力发动机 + 2 台升力发动机。
+
+    EngineType0=Jet(10960)，EngineType1=Jet(4260)；
+    Engine0 引用 Type0 俯仰 0°，Engine1/2 引用 Type1 俯仰 76°（>45° 应排除）。
+    → count=1、总推力 10960 kgf。
+    """
+    fm = make_jet_fm()
+    fm["Mass"] = {"EmptyMass": 15000.0, "MaxFuelMass0": 4000.0}
+    fm["EngineType0"] = {
+        "Main": {
+            "Type": "Jet",
+            "ThrustMax": {
+                "ThrustMax0": 10960.0,
+                **_small_coeff_grid(7, 12),
+                **_small_coeff_grid(7, 12, 1.5, "ThrAftMaxCoeff"),
+            },
+        }
+    }
+    fm["EngineType1"] = {
+        "Main": {
+            "Type": "Jet",
+            "ThrustMax": {
+                "ThrustMax0": 4260.0,
+                **_small_coeff_grid(7, 12),
+                **_small_coeff_grid(7, 12, 1.5, "ThrAftMaxCoeff"),
+            },
+        }
+    }
+    fm["Engine0"] = {
+        "Type": 0,
+        "Nozzle0": {"Direction": [0.0, 0.0, -1.0]},   # 俯仰 0°
+    }
+    for i in (1, 2):
+        fm[f"Engine{i}"] = {
+            "Type": 1,
+            "Nozzle0": {"Direction": [0.0, 76.0, 0.0]},  # 俯仰 76°（垂直升力）
+        }
+    return fm
+
+
+def make_typed_prop_fm() -> dict:
+    """带 Type 的螺旋桨（a5m4 型）：EngineType0.Main.Type="Radial"。
+
+    Power=619、占位 ThrustMax0=2700 + 4×5 系数网格、PropellerType0；
+    1 台 Type=0 实例 → 螺旋桨、count=1。
+    """
+    fm = make_prop_fm()
+    fm["EngineType0"] = {
+        "Main": {
+            "Type": "Radial",
+            "Power": 619.0,
+            "ThrustMax": {
+                "ThrustMax0": 2700.0,
+                **_small_coeff_grid(4, 5),
+            },
+        },
+    }
+    fm["Engine0"] = {"Type": 0}
+    return fm
+
+
+def make_old_format_prop_fm() -> dict:
+    """老格式双发螺旋桨（a2d 型）：无 EngineType，Engine0/1 自带 Main。
+
+    每台 Main.Type="TurboProp"、Power=256（占位）、ThrustMax0=256；
+    顶层 Propeller0 → 螺旋桨、count=2。
+    """
+    fm = make_prop_fm()
+    fm.pop("EngineType0", None)
+    fm.pop("PropellerType0", None)
+    for i in (0, 1):
+        fm[f"Engine{i}"] = {
+            "Main": {
+                "Type": "TurboProp",
+                "Power": 256.0,
+                "ThrustMax": {"ThrustMax0": 256.0},
+            },
+        }
+    fm["Propeller0"] = {"Geometry": {"Radius": 1.5}}
+    return fm
+
+
+def make_multi_jet_type_fm() -> dict:
+    """两个 Jet 类型各 1 台：EngineType0(1652) + EngineType1(821)。
+
+    总推力应为 1652+821=2473 kgf（不能只取主类型 × 台数）。
+    """
+    fm = make_jet_fm()
+    fm["Mass"] = {"EmptyMass": 8000.0, "MaxFuelMass0": 2500.0}
+    fm["EngineType0"] = {
+        "Main": {
+            "Type": "Jet",
+            "ThrustMax": {
+                "ThrustMax0": 1652.0,
+                **_small_coeff_grid(7, 12),
+                **_small_coeff_grid(7, 12, 1.5, "ThrAftMaxCoeff"),
+            },
+        }
+    }
+    fm["EngineType1"] = {
+        "Main": {
+            "Type": "Jet",
+            "ThrustMax": {
+                "ThrustMax0": 821.0,
+                **_small_coeff_grid(7, 12),
+                **_small_coeff_grid(7, 12, 1.5, "ThrAftMaxCoeff"),
+            },
+        }
+    }
+    fm["Engine0"] = {"Type": 0}
+    fm["Engine1"] = {"Type": 1}
+    return fm
+
+
+def make_orphan_type_jet_fm() -> dict:
+    """孤儿类型：仅 Engine0 引用 Type=0，另有未被引用的 EngineType1(9999)。
+
+    未被引用的类型不得计入 → count=1、总推力 1200 kgf。
+    """
+    fm = make_jet_fm()
+    fm["Mass"] = {"EmptyMass": 9000.0, "MaxFuelMass0": 3000.0}
+    fm["EngineType0"] = {
+        "Main": {
+            "Type": "Jet",
+            "ThrustMax": {
+                "ThrustMax0": 1200.0,
+                **_small_coeff_grid(7, 12),
+                **_small_coeff_grid(7, 12, 1.5, "ThrAftMaxCoeff"),
+            },
+        }
+    }
+    fm["EngineType1"] = {
+        "Main": {
+            "Type": "Jet",
+            "ThrustMax": {
+                "ThrustMax0": 9999.0,
+                **_small_coeff_grid(7, 12),
+                **_small_coeff_grid(7, 12, 1.5, "ThrAftMaxCoeff"),
+            },
+        }
+    }
+    fm["Engine0"] = {"Type": 0}
+    return fm
